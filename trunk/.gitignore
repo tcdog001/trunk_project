@@ -3,7 +3,6 @@
 .DS_Store
 .*.swp
 /env
-/dl
 /.config.old
 /bin
 /build_dir

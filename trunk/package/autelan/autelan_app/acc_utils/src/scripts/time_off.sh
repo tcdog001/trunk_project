@@ -1,5 +1,6 @@
 #!/bin/sh
 
+/sbin/wifi down
 /sbin/led_off.sh
 /sbin/cdma_off.sh
 
