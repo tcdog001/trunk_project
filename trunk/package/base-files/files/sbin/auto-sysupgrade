@@ -1,0 +1,98 @@
+#!/bin/sh
+
+. /lib/ar71xx.sh
+
+#if [ $# -ne 1 ] ;then
+#	echo "Usage: sysupgrade version"
+#	exit 1
+#fi
+
+FIRMWARE_FILE=new_firmware.tar
+UCI="uci -c /tmp/"
+FLASH_READ=""
+SERVER_ADDR=""
+#PRODUCT_MODEL="`partool -part mtd8 -show product.model`" > /dev/null 2>&1
+#PRODUCT_MAC="`partool -part mtd8 -show product.mac`" > /dev/null 2>&1
+#PRODUCT_SN="`partool -part mtd8 -show product.sn`" > /dev/null 2>&1
+
+get_domain_from_ac()
+{
+	i=1
+	SERVER_ADDR=$(cut -d , -f $i $1)
+	while :
+	do
+		SERVER_ADDR=$(cut -d , -f $i $1)
+		if [ "$SERVER_ADDR" = "" ]; then
+			echo "cannot get domain from ac"
+			exit
+		fi
+		
+		#echo "SERVER_ADDR $SERVER_ADDR"
+		
+		cd /tmp
+		#wget -O addrinfo http://$SERVER_ADDR/md5sums
+		wget -O addrinfo "http://$SERVER_ADDR:9082/information.php?product=$PRODUCT_MODEL&mac=$PRODUCT_MAC&sn=$PRODUCT_SN&key=minios_sysupgrade"
+		
+		#if [ -z addrinfo ] || [ ! -f addrinfo ]; then
+		#	i=$(($i+1))
+		#else
+		#	echo "get domain from ac"
+		#	break
+		#fi
+		
+		if [ $? -ne 0 ]; then
+			i=$(($i+1))
+		else
+			echo "get domain from ac"
+			break
+		fi
+	done
+}
+
+get_image_from_domain()
+{
+	#SERVER_ADDR_FROM_AC="$(partool -part mtd2 -show recovery.domain.ac)"
+	#if [ "$SERVER_ADDR_FROM_AC" != "" ] && [ "$SERVER_ADDR_FROM_AC" != "recovery.domain.ac not exist" ]; then
+	#	cd /tmp
+	#	echo $SERVER_ADDR_FROM_AC > addr_from_ac
+	#	
+	#	get_domain_from_ac addr_from_ac
+	#	#SERVER_ADDR="$SERVER_ADDR_FROM_AC"
+	#fi
+	#echo $SERVER_ADDR > server_addr
+	#cd /tmp
+	##SERVER_PATH="$(partool -part mtd2 -show recovery.path)"
+	#SERVER_PATH="$(cat /tmp/addrinfo)"
+	#if [ $? -ne 0 ] || [ "$SERVER_PATH" = "" ] || [ "$SERVER_PATH" = "recovery.path not exist" ]; then
+	#	echo "no path"
+	#else
+	#	wget -O db120-sysupgarde.image $SERVER_PATH
+	#	if [ $? -ne 0 ]; then
+	#		echo "cannot get image"
+	#		#wget -O imageinfo http://$SERVER_ADDR/md5sums
+	#		wget -O imageinfo "http://$SERVER_ADDR:9082/information.php?product=$PRODUCT_MODEL&mac=$PRODUCT_MAC&sn=$PRODUCT_SN&key=cannot_get_image"
+	#		exit
+	#	else
+	#		echo "get the image"
+	#		#wget -O imageinfo http://$SERVER_ADDR/md5sums
+	#		wget -O imageinfo "http://$SERVER_ADDR:9082/information.php?product=$PRODUCT_MODEL&mac=$PRODUCT_MAC&sn=$PRODUCT_SN&key=get_the_image"
+	#	fi
+	#fi
+	
+	SERVER_PATH="$(cat /etc/.system/pathinfo)"
+	SERVER_ADDR="$(cat /etc/.system/addrinfo)"
+	IMAGE_NAME="$(cat /etc/.system/imageinfo)"
+	cd /tmp
+	
+	tftp -gr lte/lte-openwrt.img 192.168.46.220
+	
+	#tftp -gr $SERVER_PATH $SERVER_ADDR
+	mv $IMAGE_NAME db120-sysupgarde.image
+}
+
+
+	
+get_image_from_domain
+
+/sbin/autelan-sysupgrade db120-sysupgarde.image
+

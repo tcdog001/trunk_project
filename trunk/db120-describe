@@ -1,0 +1,8 @@
+config spec hardware
+	option hardtype		db120
+	option flashsize	16M
+	option flashcount	1
+config spec software
+	#option platform		newso
+	option ha	single
+	option version	1.1.6

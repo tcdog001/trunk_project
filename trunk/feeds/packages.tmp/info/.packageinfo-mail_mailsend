@@ -1,0 +1,27 @@
+Source-Makefile: feeds/packages/mail/mailsend/Makefile
+Package: mailsend
+Version: 1.17b15-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +MAILSEND_SSL:libopenssl
+Menu-Depends: 
+Provides: 
+Section: mail
+Category: Mail
+Title: A command-line mail sender
+Maintainer: Ted Hess <thess@kitschensync.net>
+Source: mailsend-1.17b15.tar.gz
+Type: ipkg
+Description:   Mailsend is a simple command line program to send mail via SMTP protocol.
+  SSL is supported via OpenSSL (optional).
+https://github.com/muquit/mailsend
+Ted Hess <thess@kitschensync.net>
+@@
+Config:
+config MAILSEND_SSL
+        bool "SSL support"
+        depends on PACKAGE_mailsend
+        default n
+        help
+          Implements SSL support in mailsend (using libopenssl).
+@@
+
+

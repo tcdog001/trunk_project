@@ -1,0 +1,18 @@
+Source-Makefile: feeds/packages/net/ibrdtn-tools/Makefile
+Package: ibrdtn-tools
+Version: 0.12.1-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +ibrdtn +libarchive
+Menu-Depends: 
+Provides: 
+Section: net
+Category: Network
+Title: DTN Tools
+Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+Source: ibrdtn-tools-0.12.1.tar.gz
+Type: ipkg
+Description:  The IBR-DTN Tools include functionality for sending and receiving files (dtnsend/dtnrecv)
+ and a tools to ping a DTN node (dtnping).
+Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+@@
+
+

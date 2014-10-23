@@ -1,0 +1,264 @@
+--- a/arch/mips/ath79/mach-db120.c
++++ b/arch/mips/ath79/mach-db120.c
+@@ -37,14 +37,46 @@
+ #include "dev-usb.h"
+ #include "dev-wmac.h"
+ #include "machtypes.h"
++#include <linux/i2c.h> //add by autelan
++#include <linux/i2c-gpio.h> //add by autelan
++#include <linux/i2c/pca953x.h> //add by autelan
+ 
++#if 0
+ #define DB120_GPIO_LED_USB		11
+ #define DB120_GPIO_LED_WLAN_5G		12
+ #define DB120_GPIO_LED_WLAN_2G		13
+ #define DB120_GPIO_LED_STATUS		14
+ #define DB120_GPIO_LED_WPS		15
++#define DB120_GPIO_BTN_WPS		16
++#endif
++
++#define DB120_GPIO_BTN_RESET		4
++
++#define DB120_GPIO_I2C_SCL			11
++#define DB120_GPIO_I2C_SDA			12
++#define DB120_GPIO_SIM2				13
++#define DB120_GPIO_SIM1				14
++#define DB120_GPIO_ACC				17
++#define DB120_GPIO_POWER			18
++#define DB120_GPIO_FORCE_SHUTDOWN	19
++
++#if 0 //add by autelan
++#define DB120_GPIO_GPS_RX		15
++#define DB120_GPIO_GPS_TX		16
++#endif
++
++#define DB120_GPIO_EXP_BASE      	AR934X_GPIO_COUNT
++#define DB120_IIC_OFFDELAY			(DB120_GPIO_EXP_BASE + 2)
++#define DB120_IIC_PSECON			(DB120_GPIO_EXP_BASE + 3)
++#define DB120_IIC_ALARM				(DB120_GPIO_EXP_BASE + 8)
++#define DB120_IIC_GPS				(DB120_GPIO_EXP_BASE + 13)
++#define DB120_IIC_LAN4				(DB120_GPIO_EXP_BASE + 9)
++#define DB120_IIC_LAN3				(DB120_GPIO_EXP_BASE + 10)
++#define DB120_IIC_LAN2				(DB120_GPIO_EXP_BASE + 11)
++#define DB120_IIC_LAN1				(DB120_GPIO_EXP_BASE + 12)
++#define DB120_IIC_WIFI_5G			(DB120_GPIO_EXP_BASE + 14)
++#define DB120_IIC_WIFI_2G			(DB120_GPIO_EXP_BASE + 15)
+ 
+-#define DB120_GPIO_BTN_WPS		16
+ 
+ #define DB120_KEYS_POLL_INTERVAL	20	/* msecs */
+ #define DB120_KEYS_DEBOUNCE_INTERVAL	(3 * DB120_KEYS_POLL_INTERVAL)
+@@ -54,7 +86,41 @@
+ #define DB120_WMAC_CALDATA_OFFSET	0x1000
+ #define DB120_PCIE_CALDATA_OFFSET	0x5000
+ 
++static struct i2c_gpio_platform_data db120_i2c_gpio_data = {
++        .sda_pin        = DB120_GPIO_I2C_SDA,
++        .scl_pin        = DB120_GPIO_I2C_SCL,
++};
++
++static struct platform_device db120_i2c_gpio_device = {
++        .name           = "i2c-gpio",
++        /*i2c busnum = 0*/
++		.id             = 0,
++        .dev = {
++                .platform_data  = &db120_i2c_gpio_data,
++        }
++};
++
++#if 1 //add by autelan
++static struct pca953x_platform_data db120_tca1116pwr_data = {
++        .gpio_base      = DB120_GPIO_EXP_BASE,
++};
++static struct i2c_board_info db120_i2c_board_info[] __initdata = {
++        {
++//                I2C_BOARD_INFO("tca1116pwr", 0x74),
++                I2C_BOARD_INFO("tca6416", 0x74),
++				.platform_data  = &db120_tca1116pwr_data,
++		},
++        {
++                I2C_BOARD_INFO("adc081c", 0x52),
++        },
++        {
++                I2C_BOARD_INFO("tcn75avoa", 0x49),
++        },
++};
++#endif
++
+ static struct gpio_led db120_leds_gpio[] __initdata = {
++#if 0
+ 	{
+ 		.name		= "db120:green:status",
+ 		.gpio		= DB120_GPIO_LED_STATUS,
+@@ -66,24 +132,84 @@
+ 		.active_low	= 1,
+ 	},
+ 	{
++		.name		= "db120:green:usb",
++		.gpio		= DB120_GPIO_LED_USB,
++		.active_low	= 1,
++	},
++#endif
++	{
+ 		.name		= "db120:green:wlan-5g",
+-		.gpio		= DB120_GPIO_LED_WLAN_5G,
++		.gpio		= DB120_IIC_WIFI_5G,
+ 		.active_low	= 1,
+ 	},
+ 	{
+ 		.name		= "db120:green:wlan-2g",
+-		.gpio		= DB120_GPIO_LED_WLAN_2G,
++		.gpio		= DB120_IIC_WIFI_2G,
+ 		.active_low	= 1,
+ 	},
+ 	{
+-		.name		= "db120:green:usb",
+-		.gpio		= DB120_GPIO_LED_USB,
++		.name		= "db120:green:lan4",
++		.gpio		= DB120_IIC_LAN4,
++		.active_low	= 1,
++	},
++	{
++		.name		= "db120:green:lan3",
++		.gpio		= DB120_IIC_LAN3,
++		.active_low	= 1,
++	},
++	{
++		.name		= "db120:green:lan2",
++		.gpio		= DB120_IIC_LAN2,
++		.active_low	= 1,
++	},
++	{
++		.name		= "db120:green:lan1",
++		.gpio		= DB120_IIC_LAN1,
++		.active_low	= 1,
++	},
++	{
++		.name		= "db120:green:alarm",
++		.gpio		= DB120_IIC_ALARM,
+ 		.active_low	= 1,
+-	}
++	},
++	{
++		.name		= "db120:green:gps",
++		.gpio		= DB120_IIC_GPS,
++		.active_low	= 1,
++	},
++	{
++		.name		= "db120:green:power",
++		.gpio		= DB120_GPIO_POWER,
++		.active_low	= 0,
++	},
++	{
++		.name		= "db120:green:shutdown",
++		.gpio		= DB120_GPIO_FORCE_SHUTDOWN,
++		.active_low	= 0,
++	},
++	{
++		.name		= "db120:green:psecon",
++		.gpio		= DB120_IIC_PSECON,
++		.active_low	= 0,
++	},
++	{
++		.name		= "db120:green:offdelay",
++		.gpio		= DB120_IIC_OFFDELAY,
++		.active_low	= 1,
++	},
+ };
+ 
+ static struct gpio_keys_button db120_gpio_keys[] __initdata = {
+ 	{
++		.desc           = "reset",
++		.type           = EV_KEY,
++		.code           = KEY_RESTART,
++		.debounce_interval = DB120_KEYS_DEBOUNCE_INTERVAL,
++		.gpio           = DB120_GPIO_BTN_RESET,
++		.active_low     = 1,
++	},
++#if 0  //modify by autelan
++	{
+ 		.desc		= "WPS button",
+ 		.type		= EV_KEY,
+ 		.code		= KEY_WPS_BUTTON,
+@@ -91,8 +217,10 @@
+ 		.gpio		= DB120_GPIO_BTN_WPS,
+ 		.active_low	= 1,
+ 	},
++#endif
+ };
+ 
++#if 0  //modify by autelan
+ static struct ar8327_pad_cfg db120_ar8327_pad0_cfg = {
+ 	.mode = AR8327_PAD_MAC_RGMII,
+ 	.txclk_delay_en = true,
+@@ -128,12 +256,26 @@
+ 		.platform_data = &db120_ar8327_data,
+ 	},
+ };
++#endif
+ 
+ static void __init db120_setup(void)
+ {
+ 	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+ 
+-	ath79_gpio_output_select(DB120_GPIO_LED_USB, AR934X_GPIO_OUT_GPIO);
++//	ath79_gpio_output_select(DB120_GPIO_LED_USB, AR934X_GPIO_OUT_GPIO);
++#if 1 //modify by autelan
++	ath79_gpio_output_select(DB120_GPIO_SIM2, AR934X_GPIO_OUT_GPIO);
++	ath79_gpio_output_select(DB120_GPIO_SIM1, AR934X_GPIO_OUT_GPIO);
++
++	/*i2c busnum = 0*/
++	i2c_register_board_info(0, db120_i2c_board_info,
++							ARRAY_SIZE(db120_i2c_board_info));
++					
++	ath79_gpio_output_select(DB120_GPIO_I2C_SCL, AR934X_GPIO_OUT_GPIO);
++	ath79_gpio_output_select(DB120_GPIO_I2C_SDA, AR934X_GPIO_OUT_GPIO);
++	platform_device_register(&db120_i2c_gpio_device);
++#endif
++
+ 	ath79_register_m25p80(NULL);
+ 
+ 	ath79_register_leds_gpio(-1, ARRAY_SIZE(db120_leds_gpio),
+@@ -145,6 +287,7 @@
+ 	ath79_register_wmac(art + DB120_WMAC_CALDATA_OFFSET, NULL);
+ 	ap91_pci_init(art + DB120_PCIE_CALDATA_OFFSET, NULL);
+ 
++#if 0  //modify by autelan
+ 	ath79_setup_ar934x_eth_cfg(AR934X_ETH_CFG_RGMII_GMAC0 |
+ 				   AR934X_ETH_CFG_SW_ONLY_MODE);
+ 
+@@ -158,7 +301,7 @@
+ 
+ 	/* GMAC0 is connected to an AR8327 switch */
+ 	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_RGMII;
+-	ath79_eth0_data.phy_mask = BIT(0);
++	ath79_eth0_data.phy_mask = BIT(0); 
+ 	ath79_eth0_data.mii_bus_dev = &ath79_mdio0_device.dev;
+ 	ath79_eth0_pll_data.pll_1000 = 0x06000000;
+ 	ath79_register_eth(0);
+@@ -170,6 +313,25 @@
+ 	ath79_eth1_data.duplex = DUPLEX_FULL;
+ 
+ 	ath79_register_eth(1);
++#else
++	ath79_register_mdio(1, 0x0);
++	ath79_setup_ar934x_eth_cfg(AR934X_ETH_CFG_SW_ONLY_MODE);
++
++	/* WAN: GMAC0 is connected to the PHY4 of the internal switch */
++	ath79_init_mac(ath79_eth0_data.mac_addr, art + DB120_MAC0_OFFSET, 0);
++	ath79_switch_data.phy4_mii_en = 1;
++	ath79_switch_data.phy_poll_mask = BIT(4);
++
++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
++	ath79_eth0_data.phy_mask = BIT(4);
++	ath79_eth0_data.mii_bus_dev = &ath79_mdio1_device.dev;
++	ath79_register_eth(0);
++	
++	/* LAN: GMAC1 is connected to the internal switch */
++	ath79_init_mac(ath79_eth1_data.mac_addr, art + DB120_MAC1_OFFSET, 0);
++	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
++	ath79_register_eth(1);
++#endif
+ 
+ 	ath79_register_nfc();
+ }

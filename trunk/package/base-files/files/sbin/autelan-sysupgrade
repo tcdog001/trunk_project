@@ -1,0 +1,129 @@
+#!/bin/sh
+
+. /lib/ar71xx.sh
+
+if [ $# -ne 1 ] ;then
+	echo "Usage: sysupgrade version"
+	exit 1
+fi
+
+FIRMWARE_FILE=new_firmware.tar
+UCI="uci -c /tmp/"
+FLASH_READ=""
+#SERVER_ADDR="$(cat /tmp/server_addr)"
+#PRODUCT_MODEL="`partool -part mtd8 -show product.model`" > /dev/null 2>&1
+#PRODUCT_MAC="`partool -part mtd8 -show product.mac`" > /dev/null 2>&1
+#PRODUCT_SN="`partool -part mtd8 -show product.sn`" > /dev/null 2>&1
+
+
+check_autelan_image()
+{
+
+	local board=$(ar71xx_board_name)
+	
+	if [ -z $1 ] || [ ! -f $1 ]; then
+		logger -s "$0 <firmware-file>"
+
+		exit 1
+	fi
+	
+	if [ -z $2 ] || [ ! -f $2 ]; then
+		logger -s "no describe file"
+
+		exit 1
+	fi
+	
+	if [ -z sysupgrade.md5 ] || [ ! -f sysupgrade.md5 ]; then
+		logger -s "no md5 file"
+
+		exit 1
+	fi
+	
+	cd /tmp
+	cp /etc/.system/spec /tmp/
+	
+	touch 2
+	echo "Extracting the firmware files."
+	
+	#tar zxvf $1
+	
+	echo "Checking for firmware file contents."
+	
+	touch 4
+	md5sum -c sysupgrade.md5 < $1
+	if [ $? -ne 0 ]; then
+		logger -s "ERROR: invalid md5sum of $1"
+		cat sysupgrade.md5 | logger -s
+		rm -f $1
+
+		exit 1
+	fi
+	touch 5
+	
+	
+	HARD_TYPE="`$UCI get $2.hardware.hardtype`" > /dev/null 2>&1
+	
+	if [ "$HARD_TYPE" = "" ] || [ "$board" != "$HARD_TYPE" ]; then
+		logger -s "Invalid board"
+	
+		rm -f $1
+		exit 2
+	fi
+	
+	FLASH_SIZE="`$UCI get $2.hardware.flashsize`" > /dev/null 2>&1
+	FLASH_COUNT="`$UCI get $2.hardware.flashcount`" > /dev/null 2>&1
+	
+	BOARD_FLASH_SIZE="`$UCI get spec.flash.size`" > /dev/null 2>&1
+	BOARD_FLASH_COUNT="`$UCI get spec.flash.count`" > /dev/null 2>&1
+	
+	if [ "$FLASH_SIZE" = "" ] || [ "$FLASH_COUNT" = "" ] || [ "$BOARD_FLASH_SIZE" = "" ] || [ "$BOARD_FLASH_COUNT" = "" ] || [ "$FLASH_COUNT" != "$BOARD_FLASH_COUNT" ] || [ "$FLASH_SIZE" != "$BOARD_FLASH_SIZE" ]; then
+		logger -s "Invalid board"
+
+		rm -f $1
+		exit 2
+	fi
+	
+	touch 6
+}
+image_sysupgrade()
+{
+	if [ -e $1 ]; then
+		echo "file exist"
+		cd /tmp/
+		mv $1 version.tar
+		size=$(ls -l version.tar | awk -F " " '{print $5}')
+		echo $size
+		if [ $size -lt 2097152 ] || [ $size -gt 15794176 ];then
+			logger -s "wrong size"
+
+			exit 1
+		fi
+		tar -zxvf version.tar
+		if [ $? -ne 0 ]; then
+			logger -s "tar version faild"
+
+			exit 1
+		fi
+		sleep 1
+		rm version.tar
+		
+		[ ! -e openwrt-ar71xx-generic-db120-squashfs-sysupgrade.bin ] || [ ! -e db120-describe ]
+		if [ $? -ne 1 ]; then
+			logger -s "Invalid firmware file"
+
+			rm -f $1
+			exit 2
+		fi
+		
+		
+		check_autelan_image openwrt-ar71xx-generic-db120-squashfs-sysupgrade.bin db120-describe
+		cd /tmp/
+		if [ -e "/tmp/lte_sysupgrade" ]; then
+			/tmp/lte_sysupgrade openwrt-ar71xx-generic-db120-squashfs-sysupgrade.bin
+		else
+			/sbin/sysupgrade openwrt-ar71xx-generic-db120-squashfs-sysupgrade.bin
+		fi
+	fi
+}
+
+image_sysupgrade $1

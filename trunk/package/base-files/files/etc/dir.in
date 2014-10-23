@@ -1,0 +1,49 @@
+#!/bin/sh
+
+if [ -n "${__ETC_DIR_IN__}" ]; then
+	return
+else
+	__ETC_DIR_IN__="$0"
+fi
+
+#
+# setup tftp root dir
+#       if change it, should change /etc/xinetd.d/tftp_udp too
+#
+readonly dir_tftp=/tmp/tftp
+
+readonly dir_service=${dir_root}/service
+readonly dir_service_log=${dir_service}/log # link to /tmp${dir_service_log}
+readonly dir_service_gps=${dir_service}/gps # link to /tmp${dir_service_gps}
+
+#
+# setup autelan private dir
+#
+readonly dir_autelan_log=${dir_tftp}/autelan/log
+
+setup_dir() {
+	local dir
+
+	mkdir -p ${dir_service}
+
+	#
+	# setup service dir and tmp dir
+	#
+	for dir in ${!dir_service_*}; do
+		mkdir -p /tmp${dir}
+	done
+
+	#
+	# link service dir to tmp dir
+	#
+	ln -s ${dir_service_log} /tmp${dir_service_log}
+	ln -s ${dir_service_gps} /tmp${dir_service_gps}
+
+	#
+	# setup all dir
+	#
+	for dir in ${!dir_*}; do
+		mkdir -p ${dir}
+	done
+}
+

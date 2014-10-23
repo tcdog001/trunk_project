@@ -1,0 +1,50 @@
+
+config wifi-device 'radio0'
+	option type 'mac80211'
+	option channel '11'
+	option hwmode '11ng'
+	option path 'platform/ar934x_wmac'
+	option htmode 'HT20'
+	list ht_capab 'LDPC'
+	list ht_capab 'SHORT-GI-20'
+	list ht_capab 'SHORT-GI-40'
+	list ht_capab 'TX-STBC'
+	list ht_capab 'RX-STBC1'
+	list ht_capab 'DSSS_CCK-40'
+	option txpower '30'
+	option country 'US'
+
+config wifi-iface
+	option device 'radio0'
+	option network 'v2'
+	option mode 'ap'
+	option ssid 'config.9797168.com'
+	option hidden '1'
+	option encryption 'psk-mixed'
+	option key 'Fayxzx00'
+
+config wifi-iface
+	option device 'radio0'
+	option network 'v1'
+	option mode 'ap'
+	option ssid '9797168.com'
+
+config wifi-device 'radio1'
+	option type 'mac80211'
+	option hwmode '11na'
+	option path 'pci0000:00/0000:00:00.0'
+	option htmode 'HT20'
+	list ht_capab 'LDPC'
+	list ht_capab 'SHORT-GI-20'
+	list ht_capab 'SHORT-GI-40'
+	list ht_capab 'TX-STBC'
+	list ht_capab 'RX-STBC1'
+	list ht_capab 'DSSS_CCK-40'
+       #option disabled '0'
+
+config wifi-iface
+	option device 'radio1'
+	option network 'v1'
+	option mode 'ap'
+	option ssid '9797168.com'
+

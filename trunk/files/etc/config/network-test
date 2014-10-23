@@ -1,0 +1,80 @@
+
+config interface 'loopback'
+	option ifname 'lo'
+	option proto 'static'
+	option ipaddr '127.0.0.1'
+	option netmask '255.0.0.0'
+
+config globals 'globals'
+	option ula_prefix 'fd0a:b5a3:3187::/48'
+
+config interface 've0'
+	option ifname 'eth0'
+	option proto 'static'
+	option ipaddr '1.0.0.1'
+	option netmask '255.255.255.252'
+
+config interface 'v2'
+	option ifname 'eth1.1'
+	option type 'bridge'
+	option proto 'static'
+	option ipaddr '192.168.200.1'
+	option netmask '255.255.255.0'
+
+config interface 'lan'
+	option ifname 'eth1'
+
+config switch
+	option name 'switch0'
+	option reset '1'
+	option enable_vlan '1'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '1'
+	option ports '0t 1'
+	option vid '1'
+
+config interface 'evdo'
+	option proto '3g'
+	option device '/dev/ttyUSB0'
+	option service 'evdo'
+	option username 'card'
+	option password 'card'
+
+config route
+	option interface 've0'
+	option target '192.168.0.0'
+	option netmask '255.255.255.0'
+	option gateway '1.0.0.2'
+
+
+config switch_vlan
+        option device 'switch0'
+        option vlan '2'
+        option ports '0t 2'
+        option vid '2'
+
+config switch_vlan
+        option device 'switch0'
+        option vlan '3'
+        option ports '0t 3'
+        option vid '3'
+
+config switch_vlan
+        option device 'switch0'
+        option vlan '4'
+        option ports '0t 4'
+        option vid '4'
+
+config interface 'LAN2'
+        option proto 'static'
+        option ifname 'eth1.2'
+
+config interface 'LAN3'
+        option proto 'static'
+        option ifname 'eth1.3'
+
+config interface 'LAN4'
+        option proto 'static'
+        option ifname 'eth1.4'

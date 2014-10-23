@@ -1,0 +1,117 @@
+Source-Makefile: feeds/packages/multimedia/gstreamer1/Makefile
+Package: libgst1check
+Version: 1.2.3-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +BUILD_NLS:libiconv-full +BUILD_NLS:libintl-full +libgstreamer1
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:libintl
+Section: multimedia
+Category: Multimedia
+Title: GStreamer check unit testing library (core)
+Maintainer: W. Michael Petullo <mike@flyn.org>
+Source: gstreamer-1.2.3.tar.xz
+Type: ipkg
+Description:     GStreamer open source multimedia framework
+   .
+   This package contains the GStreamer check unit testing library.
+http://gstreamer.freedesktop.org/
+W. Michael Petullo <mike@flyn.org>
+@@
+
+Package: libgst1controller
+Version: 1.2.3-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +BUILD_NLS:libiconv-full +BUILD_NLS:libintl-full +libgstreamer1
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:libintl
+Section: multimedia
+Category: Multimedia
+Title: GStreamer dynamic parameter control library (core)
+Maintainer: W. Michael Petullo <mike@flyn.org>
+Source: gstreamer-1.2.3.tar.xz
+Type: ipkg
+Description:     GStreamer open source multimedia framework
+   .
+   This package contains the GStreamer dynamic parameter control library.
+http://gstreamer.freedesktop.org/
+W. Michael Petullo <mike@flyn.org>
+@@
+
+Package: libgst1net
+Version: 1.2.3-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +BUILD_NLS:libiconv-full +BUILD_NLS:libintl-full +libgstreamer1
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:libintl
+Section: multimedia
+Category: Multimedia
+Title: GStreamer network classes library (core)
+Maintainer: W. Michael Petullo <mike@flyn.org>
+Source: gstreamer-1.2.3.tar.xz
+Type: ipkg
+Description:     GStreamer open source multimedia framework
+   .
+   This package contains the GStreamer network classes library.
+http://gstreamer.freedesktop.org/
+W. Michael Petullo <mike@flyn.org>
+@@
+
+Package: libgstreamer1
+Version: 1.2.3-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +BUILD_NLS:libiconv-full +BUILD_NLS:libintl-full +glib2 +libpthread +libxml2
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:libintl
+Section: multimedia
+Category: Multimedia
+Title: GStreamer library (core)
+Maintainer: W. Michael Petullo <mike@flyn.org>
+Source: gstreamer-1.2.3.tar.xz
+Type: ipkg
+Description:  GStreamer open source multimedia framework
+ .
+ This package contains the GStreamer core library.
+http://gstreamer.freedesktop.org/
+W. Michael Petullo <mike@flyn.org>
+@@
+
+Package: gstreamer1
+Version: 1.2.3-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +BUILD_NLS:libiconv-full +BUILD_NLS:libintl-full +libgstreamer1 +libgst1check +libgst1controller +libgst1net
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:libintl
+Section: multimedia
+Category: Multimedia
+Title: GStreamer framework
+Maintainer: W. Michael Petullo <mike@flyn.org>
+Source: gstreamer-1.2.3.tar.xz
+Type: ipkg
+Description:  GStreamer open source multimedia framework
+ .
+ This meta package contains only dependencies on the other GStreamer
+ componenents.
+http://gstreamer.freedesktop.org/
+W. Michael Petullo <mike@flyn.org>
+@@
+
+Package: gstreamer1-utils
+Version: 1.2.3-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +BUILD_NLS:libiconv-full +BUILD_NLS:libintl-full +libgstreamer1
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:libintl
+Section: multimedia
+Category: Multimedia
+Title: GStreamer utilities
+Maintainer: W. Michael Petullo <mike@flyn.org>
+Source: gstreamer-1.2.3.tar.xz
+Type: ipkg
+Description:  GStreamer open source multimedia framework
+ .
+ This package contains the GStreamer utilities.
+http://gstreamer.freedesktop.org/
+W. Michael Petullo <mike@flyn.org>
+@@
+
+

@@ -1,0 +1,20 @@
+Source-Makefile: feeds/packages/lang/micropython-lib/Makefile
+Package: micropython-lib
+Version: 2014-08-12-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +micropython
+Menu-Depends: 
+Provides: 
+Section: lang
+Category: Languages
+Title: micropython-lib
+Maintainer: Roger D <rogerdammit@gmail.com>
+Source: micropython-lib-2014-08-12-7bc0c0a45894ec10eb3fd3515428a087a24ac228.tar.gz
+Type: ipkg
+Description:     This package contains micropython-lib, a project to develop a non-monolothic
+    standard library for Micro Python. Note that this is a work in progress and
+    several libraries may be missing, incomplete or buggy.
+https://github.com/micropython/micropython-lib
+Roger D <rogerdammit@gmail.com>
+@@
+
+

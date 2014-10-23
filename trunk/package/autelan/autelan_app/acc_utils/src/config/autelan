@@ -1,0 +1,6 @@
+
+config acc
+        option timer 30
+        #"controller none" means no controller
+        list controller none
+	

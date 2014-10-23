@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+
+load_acc() {
+	local timer
+	local controller
+
+	config_get timer $1 timer
+	config_get controller $1 controller
+
+#	echo "timer:$timer"
+#	echo "controller:$controller"
+}
+
+start() {
+	config_load autelan
+	config_foreach load_acc acc
+	/bin/ubus call autelan.acc reload
+}

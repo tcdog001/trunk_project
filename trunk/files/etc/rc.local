@@ -1,0 +1,26 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+
+/etc/init.d/wifidog start
+/bin/echo 17 > /sys/class/gpio/export 
+
+# this is for gps data
+/bin/mknod /dev/ttyS1 c 4 65
+/usr/sbin/rgps -d /dev/ttyS1 -t 30 -l /tmp/gps.log &
+
+# this is for acc and vcc
+/usr/sbin/acc_monitor -l /tmp/vcc.log &
+
+# this is for 3g
+/bin/mkdir -p /tmp/.ppp/
+
+# this is for xinetd and json
+/etc/jsock/jsock_init.sh
+
+# this is for gps report
+/sbin/upload_gps.sh &
+
+# check version & upgrade
+# /sbin/version_handler.sh &
+
+exit 0

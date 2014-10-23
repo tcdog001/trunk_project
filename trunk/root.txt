@@ -1,0 +1,3 @@
+./build_dir/target-mips_34kc_uClibc-0.9.33.2/linux-ar71xx_generic/gpio-button-hotplug/ipkg-ar71xx/kmod-gpio-button-hotplug/etc/modules-boot.d/30-gpio-button-hotplug
+./staging_dir/toolchain-mips_34kc_gcc-4.8-linaro_uClibc-0.9.33.2/lib64
+./staging_dir/toolchain-mips_34kc_gcc-4.8-linaro_uClibc-0.9.33.2/lib32

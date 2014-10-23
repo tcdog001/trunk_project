@@ -1,0 +1,17 @@
+Source-Makefile: feeds/packages/net/ibrdtnd/Makefile
+Package: ibrdtnd
+Version: 0.12.1-1
+Depends: +libc +USE_EGLIBC:librt +USE_EGLIBC:libpthread +dtndht +ibrdtn +libsqlite3
+Menu-Depends: 
+Provides: 
+Section: net
+Category: Network
+Title: DTN Deamon
+Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+Source: ibrdtnd-0.12.1.tar.gz
+Type: ipkg
+Description:  The implementation of the bundle protocol of the IBR (TU Braunschweig).
+Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+@@
+
+
