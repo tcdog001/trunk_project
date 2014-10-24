@@ -30,7 +30,7 @@ $(call Package/e2fsprogs/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Ext2/3/4 filesystem utilities
-  DEPENDS:=+libuuid +libext2fs
+  DEPENDS:=+libuuid +libext2fs +libubacktrace
 endef
 
 define Package/e2fsprogs/description
