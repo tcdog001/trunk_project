@@ -15,7 +15,7 @@ if [ -z "${DEBUG_LEVEL}" ]; then
 fi
 
 if [ -z "${DEBUG_MODULE}" ]; then
-	DEBUG_MODULE=$(get_file_value ${__ROOTFS__}/etc/utils/.DEBUG_MODULE __all__)
+	DEBUG_MODULE=$(get_file_value ${__ROOTFS__}/etc/utils/.DEBUG_MODULE)
 fi
 
 if [ -z "${DEBUG_SUBMODULE}" ]; then

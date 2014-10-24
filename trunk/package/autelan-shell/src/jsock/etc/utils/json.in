@@ -21,16 +21,9 @@ json_check() {
 		return ${e_bad_json}
 	fi
 
-	echo ${json} | jq '.|objects' > /dev/null 2>&1 || {
+	echo "${json}" | jq '.|objects' > /dev/null 2>&1 || {
 		debug_error "bad json:${json}"
 
 		return ${e_bad_json}
 	}
-
-	local query="$(echo ${json} | jq '.|objects')"
-	if [ -z "${query}" ]; then
-		debug_error "bad json:${json}"
-
-		return ${e_bad_json}
-	fi
 }
