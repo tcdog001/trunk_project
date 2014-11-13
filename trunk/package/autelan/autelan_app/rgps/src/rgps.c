@@ -579,7 +579,7 @@ void gps_report(char * url, int status)
 
 	memset(temp_str, 0, sizeof(temp_str));
 	if (0 == status) {
-		sprintf(temp_str, "{\"dmac\":\"%s\",\"status\":\"%d\"}", rgps.str_host, status);
+		sprintf(temp_str, "{\"dmac\":\"%s\",\"status\":\"%d\",\"latitude\":\"\",\"east_west\":\"\",\"date\":\"\",\"speed\":\"\",\"north_south\":\"\",\"longitude\":\"\",\"height\":\"\"}", rgps.str_host, status);
 		printf("%s\n", temp_str);
 		system("/sbin/gps_invalid.sh");
 	} else {
