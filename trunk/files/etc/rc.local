@@ -1,7 +1,7 @@
 # Put your custom commands here that should be executed once
 # the system init finished. By default this file does nothing.
 
-/etc/init.d/wifidog start
+# delay off gpio
 /bin/echo 17 > /sys/class/gpio/export 
 
 # this is for gps data
@@ -20,7 +20,24 @@
 # this is for gps report
 /sbin/upload_gps.sh &
 
-# check version & upgrade
-# /sbin/version_handler.sh &
+# this is for on_off log
+/bin/mkdir /root/onoff
+
+# this is for vcc log
+/bin/mkdir /root/vcc
+
+# check the last time drop reason
+/sbin/drop_off.sh &
+/sbin/get_time.sh &
+
+# this is upload OFF&VCC log
+/sbin/upload_tftp.sh &
+
+# traffic control
+/usr/sbin/set_tc_3g.sh
+/usr/sbin/set_tc_local.sh
+
+# monitor 3g status and wifidog
+/sbin/sync_3gstatus_AP.sh &
 
 exit 0

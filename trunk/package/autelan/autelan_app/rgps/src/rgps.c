@@ -62,7 +62,7 @@ int print_timestr(char *str)
 	}
 
 	//printf("Time      %02d:%02d:%02d \n", tm_int[0], tm_int[1], tm_int[2]);
-	sprintf(rgps.gps_Time, "%02d-%02d-%02d", tm_int[0], tm_int[1], tm_int[2]);
+	sprintf(rgps.gps_Time, "%02d:%02d:%02d", tm_int[0], tm_int[1], tm_int[2]);
 
 	return 0;
 }
@@ -577,14 +577,18 @@ void gps_report(char * url, int status)
 {
 	char temp_str[256] = {0};
 
-	memset(temp_str, 0, sizeof(temp_str));
+	if (((rgps.east_west != 'E')&&(rgps.east_west != 'W'))||((rgps.north_south != 'N')&&(rgps.north_south != 'S'))) {
+		status =0;
+	}
+
 	if (0 == status) {
-		sprintf(temp_str, "{\"dmac\":\"%s\",\"status\":\"%d\",\"latitude\":\"\",\"east_west\":\"\",\"date\":\"\",\"speed\":\"\",\"north_south\":\"\",\"longitude\":\"\",\"height\":\"\"}", rgps.str_host, status);
+		sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"%s\",\"east_west\":\"%c\",\"date\":\"%s-%s\",\"speed\":\"%s\",\"north_south\":\"%c\",\"longitude\":\"%s\",\"height\":\"%s\"}", status, rgps.gps_Lat, rgps.east_west, rgps.gps_Date, rgps.gps_Time, rgps.gps_Velocity, rgps.north_south, rgps.gps_Lng, rgps.gps_Elevation);
+		//sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"\",\"east_west\":\"\",\"date\":\"\",\"speed\":\"\",\"north_south\":\"\",\"longitude\":\"\",\"height\":\"\"}", status);
 		printf("%s\n", temp_str);
 		system("/sbin/gps_invalid.sh");
 	} else {
-		sprintf(temp_str, "{\"dmac\":\"%s\",\"status\":\"%d\",\"latitude\":\"%s\",\"east_west\":\"%c\",\"date\":\"%s-%s\",\"speed\":\"%s\",\"north_south\":\"%c\",\"longitude\":\"%s\",\"height\":\"%s\"}",
-		rgps.str_host, status, rgps.gps_Lat, rgps.east_west, rgps.gps_Date, rgps.gps_Time, rgps.gps_Velocity, rgps.north_south, rgps.gps_Lng, rgps.gps_Elevation);
+		sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"%s\",\"east_west\":\"%c\",\"date\":\"%s-%s\",\"speed\":\"%s\",\"north_south\":\"%c\",\"longitude\":\"%s\",\"height\":\"%s\"}",
+		status, rgps.gps_Lat, rgps.east_west, rgps.gps_Date, rgps.gps_Time, rgps.gps_Velocity, rgps.north_south, rgps.gps_Lng, rgps.gps_Elevation);
 		printf("%s\n", temp_str);
 		system("/sbin/gps_valid.sh");
 	}

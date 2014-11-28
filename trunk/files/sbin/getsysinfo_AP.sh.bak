@@ -141,30 +141,15 @@ get_GPS_Velocity() {
 }
 
 get_GPS_Time() {
-#	GPSTime=`cat /tmp/gps_info |grep -i "GPGGA" |awk -F ',' '{print $2}' |sed -n '$p'`
-	local gps_file=/tmp/gps_info
-
-	gps_year=$(cat /tmp/gps_info |awk -F ',' '/GPRMC/{print $10}' |sed -n '$p')
-	gps_Y=$(echo ${gps_year} |awk -F '' '{print $5$6}')
-	gps_M=$(echo ${gps_year} |awk -F '' '{print $3$4}')
-	gps_D=$(echo ${gps_year} |awk -F '' '{print $1$2}')
-
-	gps_strings=$( cat ${gps_file} |awk -F ',' '/GPGGA/{print $2}' |sed -n '$p' |awk -F '.' '{print $1}' )
-	gps_h=$(echo ${gps_strings} |awk -F '' '{print $1$2}')
-	gps_m=$(echo ${gps_strings} |awk -F '' '{print $3$4}')
-	gps_s=$(echo ${gps_strings} |awk -F '' '{print $5$6}')
-	CN_h=$(awk 'BEGIN{printf("%d",'$gps_h'+'8')}')
-	
-	GPSTime=$(echo 20${gps_Y}-${gps_M}-${gps_D}-${CN_h}:${gps_m}:${gps_s})
-
-	if [[ -z "${GPSTime}" ]];then
+	GPSTime=`cat /tmp/gps_info |grep -i "GPGGA" |awk -F ',' '{print $2}' |sed -n '$p'`
+	if [ -z "$GPSTime" ];then
 		GPSTime="GPS Time FAIL"
 	fi
-	echo "${GPSTime}"
+	echo "$GPSTime"
 }
 
 get_3G_Connection() {
-	Connection3G=`ifconfig 3g-evdo |grep addr 2>/dev/null`
+	Connection3G=`ifconfig |grep 3g-evdo 2>/dev/null`
 	if [ -z "$Connection3G" ];then
 		Connection3G="NO"
 	else

@@ -54,7 +54,8 @@ get_mem_sn() {
 }
 
 get_board_sn() {
-	echo "1234567890"
+#	echo "1234567890"
+	get_host_sn
 }
 
 # eth1(lan) mac

@@ -460,7 +460,7 @@ void signal_f(int signum)
 		time(&tt);
 		t = localtime(&tt);
 
-		sprintf(Timereport, "%4d-%02d-%02d-%02d-%02d-%02d", 
+		sprintf(Timereport, "%4d-%02d-%02d-%02d:%02d:%02d", 
 			t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
 		if (Timereport) {
 			memset(vcc.Timeaccoff, 0, sizeof(vcc.Timeaccoff));
@@ -565,7 +565,7 @@ void vcc_report(void)
 
 	time(&tt);
 	t = localtime(&tt);
-	sprintf(Timereport, "%4d-%02d-%02d-%02d-%02d-%02d", 
+	sprintf(Timereport, "%4d-%02d-%02d-%02d:%02d:%02d", 
 		t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
 	printf("time report: %s\n", Timereport);
 	printf("voltage:%f level:%d\n", acc.voltage, vcc.vcc_level);

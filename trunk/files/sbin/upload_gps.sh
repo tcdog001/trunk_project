@@ -5,24 +5,24 @@ LOCAL_GPS_FILE=/tmp/gps.log
 REP_INTVAL=30
 
 do_tftp() {
-	local LOCAL_TMP_FILE=/tmp/gps
-	local PEER_TMP_PATH=/tmp/tftp/log/gps
+	local LOCAL_TMP_FILE=/tmp/gps-$Time.log
+	local PEER_TMP_FILE=/tmp/tftp/log/gps/gps-$Time.log
 	local PEER_OPT_PATH=/opt/log/gps
 
 	[ -z "$PEER" ] && PEER=1.0.0.2
 
 	if [ "$Status" ] && [ "$Time" ]; then
-		/bin/cp $LOCAL_GPS_FILE  $LOCAL_TMP_FILE-$Time.log 2> /dev/null
-		echo "$0: /usr/bin/tftp -pl $LOCAL_TMP_FILE-$Time.log -r $PEER_TMP_PATH/gps-$Time.log $PEER" >> $DEBUG_LOG_LOCAL
-		/usr/bin/tftp -pl $LOCAL_TMP_FILE-$Time.log -r $PEER_TMP_PATH/gps-$Time.log $PEER
+		/bin/cp $LOCAL_GPS_FILE  $LOCAL_TMP_FILE 2> /dev/null
+		echo "$0: /usr/bin/tftp -pl $LOCAL_TMP_FILE -r $PEER_TMP_FILE $PEER" >> $DEBUG_LOG_LOCAL
+		/usr/bin/tftp -pl $LOCAL_TMP_FILE -r $PEER_TMP_FILE $PEER
 		if [ $? = 0 ];then
 			echo "$0: TFTP OK" >> $DEBUG_LOG_LOCAL
-			echo "" > $LOCAL_GPS_FILE
-			DEBUG=on /etc/jsock/jcmd.sh syn mv $PEER_TMP_PATH/gps-$Time.log $PEER_OPT_PATH &
+			> $LOCAL_GPS_FILE
+			DEBUG=on /etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &
 		else
 			echo "$0: TFTP NOK" >> $DEBUG_LOG_LOCAL
 		fi
-		/bin/rm -rf $LOCAL_TMP_FILE-$Time.log >> $DEBUG_LOG_LOCAL
+		/bin/rm -rf $LOCAL_TMP_FILE >> $DEBUG_LOG_LOCAL
 	else
 		exit -1
 	fi
@@ -30,14 +30,15 @@ do_tftp() {
 
 get_status() {
 
-	Status=` /bin/cat $LOCAL_GPS_FILE |/usr/bin/awk -F ',' '{print $1}' | /bin/sed -n '$p' `
+	Status=$(/bin/cat $LOCAL_GPS_FILE |/usr/bin/awk -F ',' '{print $1}' | /bin/sed -n '$p')
 	echo "$0: $Status" >> $DEBUG_LOG_LOCAL
 }
 
 do_service() {
 	local SER_INTVAL=300
 
-	while [ 1 == 1 ]; do
+	while :
+	do
 		/bin/sleep $SER_INTVAL
 		get_status
 		get_time
@@ -47,11 +48,11 @@ do_service() {
 
 stop_service() {
 
-	local PID=` /bin/ps | /usr/bin/awk '/rgps/{if($5=="/usr/sbin/rgps"){print $1}}' | /usr/bin/awk '{if(NR==1){print $1}}' `
+	local PID=$(/bin/ps | /usr/bin/awk '/rgps/{if($5=="/usr/sbin/rgps"){print $1}}' | /usr/bin/awk '{if(NR==1){print $1}}')
 	kill -9 $PID 2> /dev/null
 	echo "kill /usr/bin/rgps" >> $DEBUG_LOG_LOCAL
 
-	local PID=` /bin/ps | /usr/bin/awk '/rgps/{if($5=="rgps"){print $1}}' | /usr/bin/awk '{if(NR==1){print $1}}' `
+	local PID=$(/bin/ps | /usr/bin/awk '/rgps/{if($5=="rgps"){print $1}}' | /usr/bin/awk '{if(NR==1){print $1}}')
 	kill -9 $PID 2> /dev/null
 	echo "kill rgps" >> $DEBUG_LOG_LOCAL
 }
@@ -79,6 +80,5 @@ main() {
 	fi	
 }
 
-main $@
-exit 0
+main "$@"
 
