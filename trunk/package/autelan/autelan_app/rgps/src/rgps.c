@@ -27,6 +27,7 @@ static struct gps_struct {
 	char gps_Velocity[10];
 	char gps_Orientation[10];
 	char gps_Elevation[10];
+	int gps_satellite;
 }rgps;
 static FILE* logfp;
 int flag_GPGGA;
@@ -180,6 +181,7 @@ void print_gpsinfo(char *buf)
 				//printf("Locate status %c \n", GPS_status);
 				flag_GPGGA=1;
 
+				rgps.gps_satellite = atoi(GPS_sv);
 				memset(rgps.gps_Lng, 0, sizeof(rgps.gps_Lng));
 				memcpy(rgps.gps_Lng, GPS_jd, strlen(GPS_jd));
 				memset(rgps.gps_Lat, 0, sizeof(rgps.gps_Lat));
@@ -573,12 +575,12 @@ int WEBQuest(const char * Url, const char * pUrl)
 	return ture;
 }
 
-void gps_report(char * url, int status)
+int gps_report(char * url, int status)
 {
 	char temp_str[256] = {0};
 
 	if (((rgps.east_west != 'E')&&(rgps.east_west != 'W'))||((rgps.north_south != 'N')&&(rgps.north_south != 'S'))) {
-		status =0;
+		status = 0;
 	}
 
 	if (0 == status) {
@@ -596,11 +598,42 @@ void gps_report(char * url, int status)
 		(void)fprintf(logfp, "%s\n", temp_str);
 		(void)fflush(logfp);
 	}
-	if (url == NULL) {
+	if (url) {
 		//printf("-----------warning: url is null, cannot report-----------\n");
-		return;
+		WEBQuest(url, temp_str);
 	}
-	WEBQuest(url, temp_str);
+	
+	return status;
+}
+
+const char *path_str = "/tmp/.gps";
+void tmp_gps_files(int status)
+{
+	char temp_str[256] = {0};
+	char Timereport[30] = {0};
+	struct tm *t;
+	time_t tt;
+
+	time(&tt);
+	t = localtime(&tt);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	if (10 == (strlen(rgps.gps_Date))&&(8 == strlen(rgps.gps_Time))) {
+		sprintf(temp_str, "echo %s-%s > %s/gps_time", rgps.gps_Date, rgps.gps_Time, path_str);
+	} else if (8 == strlen(rgps.gps_Time)) {
+		sprintf(Timereport, "%4d-%02d-%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday);
+		sprintf(temp_str, "echo %s-%s > %s/gps_time", Timereport, rgps.gps_Time, path_str);
+	} else {
+		sprintf(Timereport, "%4d-%02d-%02d-%02d:%02d:%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+		sprintf(temp_str, "echo %s > %s/gps_time", Timereport, path_str);
+	}
+	system(temp_str);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	sprintf(temp_str, "echo %d > %s/gps_satellite", rgps.gps_satellite, path_str); 	
+	system(temp_str);
+
+	return;
 }
 
 int main(int argc, char *argv[])
@@ -608,7 +641,7 @@ int main(int argc, char *argv[])
 	int opt, sleep_time = 15;
 	char temp_str[256] = {0};
 	char temp_str1[256] = {0};
-	int fd1, nread, i = 0, j = 0;
+	int fd1, nread, i = 0, j = 0, status = 0;
 	char buf[RD_SIZE];
 	char buf1[RD_SIZE] = {0};
 	char *dev_path = (char*)0;
@@ -663,6 +696,9 @@ int main(int argc, char *argv[])
 			(void) fprintf( stderr, "%s: logfile is not an absolute path, you may not be able to re-open it\n", argv[0] );
 		}
 	}
+	sprintf(temp_str1, "mkdir -p %s", path_str);
+	system(temp_str1);
+
 #ifdef TEST
 
 	while (1) {
@@ -673,9 +709,10 @@ int main(int argc, char *argv[])
 		print_gpsinfo(buf2);
 		print_gpsinfo(buf3);
 		if((1 == flag_GPGGA) && (1 == flag_GPRMC))
-			gps_report(url, 1);
+			status = gps_report(url, 1);
 		else
-			gps_report(url, 0);
+			status = gps_report(url, 0);
+		tmp_gps_files(status);
 		sleep(sleep_time);
 	}
 
@@ -685,6 +722,7 @@ int main(int argc, char *argv[])
 	PopenFile(temp_str, rgps.str_host, sizeof(rgps.str_host));
 
 	printf("\n GPS positioning ...\n");
+	memset(temp_str1, 0, sizeof(temp_str1));
 	sprintf(temp_str1, "head -n 30 %s > %s ; cp %s %s", dev_path, dev_path1, dev_path1, dev_path2);
 
 #if 0
@@ -699,7 +737,6 @@ int main(int argc, char *argv[])
 
 	while(1) {
 		printf("\n GPS waiting ...\n");
-		sleep(sleep_time);
 		flag_GPGGA = 0;
 		flag_GPRMC = 0;
 		gettimeofday(&tv_begin, NULL);
@@ -738,9 +775,10 @@ int main(int argc, char *argv[])
 					nread --;
 				}
 				if ((1 == flag_GPGGA)&&(1 == flag_GPRMC)) {
-					gps_report(url, 1);
+					status = gps_report(url, 1);
+					tmp_gps_files(status);
 					break;
-				}
+				}				
 			}
 			else
 				printf("\n read fail %d\n", nread);
@@ -749,11 +787,13 @@ int main(int argc, char *argv[])
 			tv_intval = tv_end.tv_sec - tv_begin.tv_sec;
 			printf("begin:%d, end:%d, interval:%d\n", tv_begin.tv_sec, tv_end.tv_sec, tv_intval);
 			if (tv_intval > 3) {
-				gps_report(url, 0);
+				status = gps_report(url, 0);				
+				tmp_gps_files(status);
 				break;
 			}
 		} while ((1 != flag_GPGGA)||(1 != flag_GPRMC));
 		printf("\n GPS closeing ...\n");
+		sleep(sleep_time);
 	}
 
 #endif

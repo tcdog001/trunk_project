@@ -13,6 +13,7 @@
 
 # this is for 3g
 /bin/mkdir -p /tmp/.ppp/
+/bin/mkdir -p /root/ppp/
 
 # this is for xinetd and json
 /etc/jsock/jsock_init.sh
@@ -39,5 +40,8 @@
 
 # monitor 3g status and wifidog
 /sbin/sync_3gstatus_AP.sh &
+
+# ap system log
+/sbin/systemlog_ap.sh &
 
 exit 0
