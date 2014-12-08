@@ -5,19 +5,22 @@ offtime_file=/root/onoff/ap-off
 ontime_file=/root/onoff/ap-on
 
 get_ontime() {
+	local time=""
+
 	sleep 30
-	get_time
-	echo ${Time} >>${ontime_file} 2>/dev/null
+	time=$(get_time)
+	echo ${time} >>${ontime_file} 2>/dev/null
 	sleep 5
-	get_time
-	echo ${Time} >${offtime_file} 2>/dev/null
+	time=$(get_time)
+	echo ${time} >${offtime_file} 2>/dev/null
 }
 
 get_offtime() { 
+	local time=""
 	while :
 	do
-		get_time
-		echo ${Time} >${offtime_file} 2>/dev/null
+		time=$(get_time)
+		echo ${time} >${offtime_file} 2>/dev/null
 		sleep 60
 	done
 }

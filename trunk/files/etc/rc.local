@@ -1,6 +1,11 @@
 # Put your custom commands here that should be executed once
 # the system init finished. By default this file does nothing.
 
+# ap syslogd
+/bin/mkdir -p /root/log/init
+/bin/mkdir -p /root/log/ulog
+dmesg_syslogd.sh &
+
 # delay off gpio
 /bin/echo 17 > /sys/class/gpio/export 
 
@@ -41,7 +46,7 @@
 # monitor 3g status and wifidog
 /sbin/sync_3gstatus_AP.sh &
 
-# ap system log
+# monitor ap in every 5 mins
 /sbin/systemlog_ap.sh &
 
 exit 0

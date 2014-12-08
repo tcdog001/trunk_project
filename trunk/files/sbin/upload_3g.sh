@@ -6,13 +6,14 @@ upload_3g_downflow=
 upload_3g_upflow=
 
 do_tftp() {
-	local LOCAL_TMP_FILE=/tmp/3g-flow-$Time.log
-	local PEER_TMP_FILE=/tmp/tftp/log/flow/3g/3g-flow-$Time.log
+	local time=$(get_time)
+	local LOCAL_TMP_FILE=/tmp/3g-flow-${time}.log
+	local PEER_TMP_FILE=/tmp/tftp/log/flow/3g/3g-flow-${time}.log
 	local PEER_OPT_PATH=/opt/log/flow/3g
 
-	[ -z "$PEER" ] && PEER=1.0.0.2
+	[ -z ${PEER} ] && PEER=1.0.0.2
 
-	if [ "$Time" ]; then
+	if [ ${time} ]; then
 		/bin/cp $LOCAL_TMP_LOG  $LOCAL_TMP_FILE 2> /dev/null
 		if [ -f $LOCAL_TMP_FILE ];then
 			echo "$0: /usr/bin/tftp -pl $LOCAL_TMP_FILE -r $PEER_TMP_FILE $PEER" >> $DEBUG_LOG_LOCAL
@@ -20,8 +21,8 @@ do_tftp() {
 			if [ $? = 0 ];then
 				echo "$0: TFTP OK" >> $DEBUG_LOG_LOCAL
 				> $LOCAL_TMP_LOG
-				echo "$0: DEBUG=on /etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &" >> $DEBUG_LOG_LOCAL
-				DEBUG=on /etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &
+				echo "$0: /etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &" >> $DEBUG_LOG_LOCAL
+				/etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &
 			
 			else
 				echo "$0: TFTP NOK" >> $DEBUG_LOG_LOCAL
@@ -50,8 +51,8 @@ get_flow() {
 }
 
 json_string() {
-	get_time
-	echo "$Time" > $PPPTMPPATH/endtime
+	local time=$(get_time)
+	echo "${time}" > $PPPTMPPATH/endtime
 
 	local STTIME=$(cat $PPPTMPPATH/starttime)
 	local EDTIME=$(cat $PPPTMPPATH/endtime)
@@ -63,18 +64,17 @@ json_string() {
 do_service() {
 	local SER_INTVAL=30
 	local intval_count=0
+	local time=$(get_time)
 
 	if [ ! -f $PPPTMPPATH/starttime_all ]; then
-		sleep 30	
-		get_time
-		echo "$Time" > $PPPTMPPATH/starttime_all
-	else
-		get_time
+		sleep 30
+		time=$(get_time)
+		echo ${time} > $PPPTMPPATH/starttime_all
 	fi
-	echo "$Time" > $PPPTMPPATH/starttime
+	echo ${time} > $PPPTMPPATH/starttime
 	
 	while [ $? == "0" ]; do
-		/bin/sleep $SER_INTVAL
+		/bin/sleep ${SER_INTVAL}
 		get_flow
 		((intval_count++))
 		if [ ${intval_count} -ge 10 ]; then
@@ -87,12 +87,14 @@ do_service() {
 }
 
 main() {
+	local time=""
+
 	check_interface
 	if [ $? == "0" ]; then
 		echo "true" > $PPPTMPPATH/access
-		get_time
-		#echo "$0: DEBUG=on /etc/jsock/jmsg.sh asyn 3g_up {\"date\":\"$Time\"}" >> $DEBUG_LOG_LOCAL
-		#DEBUG=on /etc/jsock/jmsg.sh asyn 3g_up {\"date\":\"$Time\"}	
+		#time=$(get_time)
+		#echo "$0: /etc/jsock/jmsg.sh asyn 3g_up {\"date\":\"${time}\"}" >> $DEBUG_LOG_LOCAL
+		#/etc/jsock/jmsg.sh asyn 3g_up {\"date\":\"${time}\"}
 		#/etc/init.d/wifidog stop
 		do_service
 	fi

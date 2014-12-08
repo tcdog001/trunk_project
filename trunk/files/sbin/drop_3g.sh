@@ -4,8 +4,9 @@
 LOCAL_TMP_LOG=/tmp/3g-drop.log
 
 do_tftp() {
-	local LOCAL_TMP_FILE=/tmp/3g-drop-$Time.log
-	local PEER_TMP_FILE=/tmp/tftp/log/drop/3g/3g-drop-$Time.log
+	local time=$(get_time)
+	local LOCAL_TMP_FILE=/tmp/3g-drop-${time}.log
+	local PEER_TMP_FILE=/tmp/tftp/log/drop/3g/3g-drop-${time}.log
 	local PEER_OPT_PATH=/opt/log/drop/3g
 
 	[ -z "$PEER" ] && PEER=1.0.0.2
@@ -17,8 +18,8 @@ do_tftp() {
 		if [ $? = 0 ];then
 			echo "$0: TFTP OK" >> $DEBUG_LOG_LOCAL
 			> $LOCAL_TMP_LOG
-			echo "$0: DEBUG=on /etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &" >> $DEBUG_LOG_LOCAL
-			DEBUG=on /etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &
+			echo "$0: /etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &" >> $DEBUG_LOG_LOCAL
+			/etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &
 			
 		else
 			echo "$0: TFTP NOK" >> $DEBUG_LOG_LOCAL
@@ -62,19 +63,18 @@ do_calc() {
 }
 
 main() {
+	local time=$(get_time)
 	local PID=$(/bin/ps | /usr/bin/awk '/upload_3g.sh/{if($5=="{upload_3g.sh}"){print $1}}' | /usr/bin/awk '{if(NR==1){print $1}}')
 	kill -9 $PID 2> /dev/null
 
 	do_calc
-	get_time
-	#echo "$0: DEBUG=on /etc/jsock/jmsg.sh asyn 3g_down {\"date\":\"$Time\"}" >> $DEBUG_LOG_LOCAL
-	#DEBUG=on /etc/jsock/jmsg.sh asyn 3g_down {\"date\":\"$Time\"}
+	#echo "$0: /etc/jsock/jmsg.sh asyn 3g_down {\"date\":\"${time}\"}" >> $DEBUG_LOG_LOCAL
+	#/etc/jsock/jmsg.sh asyn 3g_down {\"date\":\"${time}\"}
 	#/etc/init.d/wifidog start
-	NOWTIME=$Time
+	NOWTIME=${time}
 	do_service
 	echo "false" > $PPPTMPPATH/access
 }
 
-main $@
-exit 0
+main "$@"
 

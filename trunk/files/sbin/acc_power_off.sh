@@ -6,8 +6,7 @@ file_path=/root/onoff
 get_onoff_log() {
 	local ontime_file=/root/onoff/ap-on
 	local ontime=$( cat ${ontime_file} |sed -n '$p' )       
-	get_time
-	local offtime=${Time}
+	local offtime=$(get_time)
 
 	local line=$( grep -n "" ${ontime_file} |wc -l )
 	local del_line=$(awk 'BEGIN{printf("%d",'$line'-'2')}')
