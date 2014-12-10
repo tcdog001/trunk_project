@@ -17,6 +17,7 @@ readonly DOWNFLOWTMP=${PPPTMPPATH}/down_now
 readonly UPFLOWTMP=${PPPTMPPATH}/up_now
 readonly DMESGPATH=/root/log/init
 readonly SYSLOGDPATH=/root/log/ulog
+readonly LASTSYNTIME=/root/log/ulog/timesyn
 readonly SYNTIME=/tmp/timesyn
 
 ppp_json_string() {
@@ -37,11 +38,39 @@ get_time() {
 	echo ${Time}
 }
 
+#
+# $1: file, content time like 2014-12-10 15:37:37
+# output time like 2014-12-10-15:37:37
+#
+modify_time() {
+	local file="$1"
+	sed -i 's/ /-/g' ${file}
+}
+
 get_syntime() {
 	local file=${SYNTIME}
+	local time=""
 
-	sed -i 's/ /-/g' ${file}
-	cat ${file}
+	if [ -f ${file} ]; then
+		modify_time ${file}
+		cat ${file}
+	else
+		time=$(get_time)
+		echo ${time}
+	fi
+}
+
+get_last_syntime() {
+	local file=${LASTSYNTIME}
+	local time=""
+
+	if [ -f ${file} ]; then
+		modify_time ${file}
+		cat ${file}
+	else
+		time=$(get_time)
+		echo ${time}
+	fi
 }
 
 save_init_log() {
@@ -53,7 +82,7 @@ save_init_log() {
 }
 
 save_last_syslog() {
-	local time=$(get_syntime)
+	local time=$(get_last_syntime)
 	local file=${SYSLOGDPATH}/messages
 	
 	# save last syslogd message
@@ -75,6 +104,7 @@ restart_prepare() {
 	ppp_json_string
 
 	mv /tmp/log/messages ${SYSLOGDPATH}/
+	mv ${SYNTIME} ${SYSLOGDPATH}/
 	sleep 5
 }
 
