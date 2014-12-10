@@ -17,6 +17,7 @@ readonly DOWNFLOWTMP=${PPPTMPPATH}/down_now
 readonly UPFLOWTMP=${PPPTMPPATH}/up_now
 readonly DMESGPATH=/root/log/init
 readonly SYSLOGDPATH=/root/log/ulog
+readonly SYNTIME=/tmp/timesyn
 
 ppp_json_string() {
 	local time=$(get_time)
@@ -36,8 +37,15 @@ get_time() {
 	echo ${Time}
 }
 
+get_syntime() {
+	local file=${SYNTIME}
+
+	sed -i 's/ /-/g' ${file}
+	cat ${file}
+}
+
 save_init_log() {
-	local time=$(get_time)
+	local time=$(get_syntime)
 	local path=${DMESGPATH}
 
 	# save init log
@@ -45,7 +53,7 @@ save_init_log() {
 }
 
 save_last_syslog() {
-	local time=$(get_time)
+	local time=$(get_syntime)
 	local file=${SYSLOGDPATH}/messages
 	
 	# save last syslogd message
