@@ -1,0 +1,7 @@
+#!/bin/bash
+
+main() {
+	echo 1 > /sys/class/leds/db120\:green\:alarm/brightness
+}
+
+main "$@"
