@@ -7,7 +7,7 @@
 dmesg_syslogd.sh &
 
 # delay off gpio
-/bin/echo 17 > /sys/class/gpio/export 
+/bin/echo 17 > /sys/class/gpio/export
 
 # this is for gps data
 /bin/mknod /dev/ttyS1 c 4 65
@@ -32,10 +32,6 @@ dmesg_syslogd.sh &
 # this is for vcc log
 /bin/mkdir /root/vcc
 
-# check the last time drop reason
-/sbin/drop_off.sh &
-/sbin/get_time.sh &
-
 # this is upload OFF&VCC log
 /sbin/upload_tftp.sh &
 
@@ -43,8 +39,15 @@ dmesg_syslogd.sh &
 /usr/sbin/set_tc_3g.sh
 /usr/sbin/set_tc_local.sh
 
+# From power began to wait 12 hours
+/sbin/auto_reboot_ap.sh &
+
 # monitor 3g status and wifidog
 /sbin/sync_3gstatus_AP.sh &
+
+# check the last time drop reason
+/sbin/drop_off.sh &
+/sbin/get_time.sh &
 
 # monitor ap in every 5 mins
 /sbin/systemlog_ap.sh &

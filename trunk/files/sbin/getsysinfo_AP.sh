@@ -1,143 +1,133 @@
 #!/bin/sh
 
 get_cpu_Frequency() {
-	cpuFrequency=`cat /proc/cpuinfo |awk -F ':' '/BogoMIPS/{print $2}`
-	if [ -z "$cpuFrequency" ];then
+	cpuFrequency=$(cat /proc/cpuinfo |awk -F ':' '/BogoMIPS/{print $2}')
+	if [[ -z "${cpuFrequency}" ]];then
 		cpuFrequency="278.93"
 	fi
-	echo "$cpuFrequency"
+	echo "${cpuFrequency}"
 }
 
 get_cpu_use() {
-	cpuUse=`top -n 1 |awk '{print $7}' |sed '1,4d' |awk '{sum += $1};END {print sum}'`
-	if [ -z "$cpuUse" ];then
+	cpuUse=$(top -n 1 |awk '{print $7}' |sed '1,4d' |awk '{sum += $1};END {print sum}')
+	if [[ -z "${cpuUse}" ]];then
 		cpuUse="NULL"
 	fi
-	echo "$cpuUse%"
+	echo "${cpuUse}%"
 }
 
 get_memory_size() {
-	memorySize=`free |awk -F ' ' '/Mem:/{print $2}'`
-	if [ -z "$memorySize" ];then
+	memorySize=$(free |awk -F ' ' '/Mem:/{print $2}')
+	if [[ -z "${memorySize}" ]];then
 		memorySize="126467"
 	fi
-	echo "$memorySize"
+	echo "${memorySize}"
 }
 
 get_memory_use() {
-	memoryUse=`free |awk -F ' ' '/Mem:/{print $3}'`
-	memoryUsage1=`awk 'BEGIN{printf "%.2f\n",'$memoryUse'/'$memorySize'*100}'`
-	memoryUsage="`echo $memoryUsage1%`"
-	if [ -z "$memoryUsage" ];then	
+	memoryUse=$(free |awk -F ' ' '/Mem:/{print $3}')
+	memoryUsage1=$(awk 'BEGIN{printf "%.2f\n",'$memoryUse'/'$memorySize'*100}')
+	memoryUsage="$(echo ${memoryUsage1}%)"
+	if [[ -z "${memoryUsage}" ]];then
 		memoryUsage="0%"
 	fi
-	echo "$memoryUsage"
+	echo "${memoryUsage}"
 }
 
 get_board_temperature() {
 	boardTemperature=``
-	if [ -z "$boardTemperature" ];then
+	if [[ -z "$boardTemperature" ]];then
 		boardTemperature="0"
 	fi
 	echo "$boardTemperature"
 }
 
-get_board_ONOFFtime() {
-	boardONtime=`cat /data/startime |sed -n '$p'`
-	boardOFFtime=`cat /data/lastSuccessTime`
-	if [ -z "$boardONOFFtime" ];then
-		boardONtime="NO ON TIME"
-		boardOFFtime="NO OFF TIME"
-	fi
-	echo "$boardONtime" "$boardOFFtime"
-}
-
 get_networkWIFI0_state() {
-	networkstation1=`iw dev wlan0-1 station dump |grep -r "Station"`
-	network1=`iw dev wlan0-1 station dump |grep -r "inactive"`
-	networkstation2=`echo $network1 |awk '{gsub(/ /,"")}1'`
-	networkcardLow="$networkstation1$networkstation2"
-	if [ -z "$networkcardLow" ];then
+	networkstation1=$(iw dev wlan0-1 station dump |grep -r "Station")
+	network1=$(iw dev wlan0-1 station dump |grep -r "inactive")
+	networkstation2=$(echo $network1 |awk '{gsub(/ /,"")}1')
+	networkcardLow="${networkstation1}${networkstation2}"
+	if [[ -z "${networkcardLow}" ]];then
 		networkcardLow="WIFI0 NO STA"
 	fi
-	echo "$networkcardLow"
+	echo "${networkcardLow}"
 }
 
 get_APLow_info() {
-	APLow=`iw dev |grep -i 'channel' |sed -n '$p'`
-	APLowinfo=`echo $APLow |awk '{gsub (/ /,"")}1'`
-	if [ -z "$APLowinfo" ];then
+	APLow=$(iw dev |grep -i 'channel' |sed -n '$p')
+	APLowinfo=$(echo $APLow |awk '{gsub (/ /,"")}1')
+	if [[ -z "${APLowinfo}" ]];then
 			APLowinfo="WIFI0 DOWN"
 	fi
-	echo "$APLowinfo"
+	echo "${APLowinfo}"
 }
 
 get_APLow_STAnum() {
-	APLowSTAnum=`iw dev wlan0-1 station dump |grep -i 'station' |wc -l`
-	if [ -z "$APLowSTAnum" ];then
+	APLowSTAnum=$(iw dev wlan0-1 station dump |grep -i 'station' |wc -l)
+	if [[ -z "${APLowSTAnum}" ]];then
 		APLowSTAnum="WIFI0 NO STA"
 	fi
-	echo "$APLowSTAnum"
+	echo "${APLowSTAnum}"
 }
 
 get_networkWIFI1_state() {                                        
-        networkstation1=`iw dev wlan1 station dump |grep -r "Station"`  
-        network2=`iw dev wlan1 station dump |grep -r "inactive"`         
-        networkstation2=`echo $network2 |awk '{gsub(/ /,"")}1'`                   
-        networkcardHigh="$networkstation1$networkstation2"                                
-        if [ -z "$networkcardHigh" ];then                                                 
+        networkstation1=$(iw dev wlan1 station dump |grep -r "Station")
+        network2=$(iw dev wlan1 station dump |grep -r "inactive")
+        networkstation2=$(echo $network2 |awk '{gsub(/ /,"")}1')
+        networkcardHigh="${networkstation1}${networkstation2}"
+        if [[ -z "${networkcardHigh}" ]];then
                 networkcardHigh="WIFI1 NO STA"                                            
         fi                                                                                
-        echo "$networkcardHigh"                                   
+        echo "${networkcardHigh}"
 }
 
 get_APHigh_info() {
-	APHigh=`iw dev |grep -i 'channel' |sed -n '1p'`
-	APHighinfo=`echo $APHigh |awk '{gsub (/ /,"")}1'`
-	if [ -z "$APHighinfo" ];then
+	APHigh=$(iw dev |grep -i 'channel' |sed -n '1p')
+	APHighinfo=$(echo $APHigh |awk '{gsub (/ /,"")}1')
+	if [[ -z "${APHighinfo}" ]];then
 			APHighinfo="WIFI1 DOWN"
 	fi
-	echo "$APHighinfo"
+	echo "${APHighinfo}"
 }
 
 get_APHigh_STAnum() {
-	APHighSTAnum=`iw dev wlan1 station dump |grep -i 'station' |wc -l`
-	if [ -z "$APHighSTAnum" ];then
+	APHighSTAnum=$(iw dev wlan1 station dump |grep -i 'station' |wc -l)
+	if [[ -z "${APHighSTAnum}" ]];then
 		APHighSTAnum="WIFI1 NO STA"
 	fi
-	echo "$APHighSTAnum"
+	echo "${APHighSTAnum}"
 }
 
 get_GPS_Satellite() {
-	GPSSatellite=`cat /tmp/gps_info |grep -i "GPGGA" |awk -F ',' '{print $8}' |tail -n 1 |sed -n '$p'`
-	if [ -z "$GPSSatellite" ];then
+	GPSSatellite=$(cat /tmp/gps_info |grep -i "GPGGA" |awk -F ',' '{print $8}' |sed -n '$p')
+	if [[ -z "${GPSSatellite}" ]];then
 		GPSSatellite="00"
 	fi
-	echo "$GPSSatellite"
+	echo "${GPSSatellite}"
 }
 
 get_GPS_Location() {
-	GPSLocation=`cat /tmp/gps_info |grep -i "GPGGA" |awk -F ',' '{print $4$3$6$5}' |sed -n '$p'`
-	if [ -z "$GPSLocation" ];then                                                              
+	GPSLocation=$(cat /tmp/gps_info |grep -i "GPGGA" |awk -F ',' '{print $4$3$6$5}' |sed -n '$p')
+	if [[ -z "${GPSLocation}" ]];then
 		GPSLocation="GPS Location FAIL"                                                    
 	fi                                     
-	echo "$GPSLocation"                    
+	echo "${GPSLocation}"
 }
 
 get_GPS_Height() {
-	GPSHeight=`cat /tmp/gps_info |grep -i "GPGGA" |awk -F ',' '{print $10}' |sed -n '$p'`
-	if [ -z "$GPSHeight" ];then
+	GPSHeight=$(cat /tmp/gps_info |grep -i "GPGGA" |awk -F ',' '{print $10}' |sed -n '$p')
+	if [[ -z "${GPSHeight}" ]];then
 		GPSHeight="GPS Height FAIL"
 	fi
-	echo "$GPSHeight"
+	echo "${GPSHeight}"
 }
 
 get_GPS_Velocity() {
-	GPSVelocity=`cat /tmp/gps_info |grep -i "GPRMC" |awk -F ',' '{print $8}' |sed -n '$p'`
-	if [ -z "$GPSVelocity" ];then
+	GPSVelocity=$(cat /tmp/gps_info |grep -i "GPRMC" |awk -F ',' '{print $8}' |sed -n '$p')
+	if [[ -z "${GPSVelocity}" ]];then
 		GPSVelocity="GPS Velocity FAIL"
 	fi
-	echo "$GPSVelocity"
+	echo "${GPSVelocity}"
 }
 
 get_GPS_Time() {
@@ -153,36 +143,36 @@ get_GPS_Time() {
 	gps_h=$(echo ${gps_strings} |awk -F '' '{print $1$2}')
 	gps_m=$(echo ${gps_strings} |awk -F '' '{print $3$4}')
 	gps_s=$(echo ${gps_strings} |awk -F '' '{print $5$6}')
-	CN_h=$(awk 'BEGIN{printf("%d",'$gps_h'+'8')}')
+	CN_h=$(awk 'BEGIN{printf("%d",'${gps_h}'+'8')}')
 	
 	GPSTime=$(echo 20${gps_Y}-${gps_M}-${gps_D}-${CN_h}:${gps_m}:${gps_s})
 
-	if [[ -z "${GPSTime}" ]];then
+	if [[ -z "${gps_h}" ]];then
 		GPSTime="GPS Time FAIL"
 	fi
 	echo "${GPSTime}"
 }
 
 get_3G_Connection() {
-	Connection3G=`ifconfig 3g-evdo |grep addr 2>/dev/null`
-	if [ -z "$Connection3G" ];then
+	Connection3G=$(ifconfig 3g-evdo |grep addr 2>/dev/null)
+	if [[ -z "${Connection3G}" ]];then
 		Connection3G="NO"
 	else
 		Connection3G="YES"
 	fi	
-	echo "$Connection3G"
+	echo "${Connection3G}"
 }
 
 get_3G_Signal() {
-	Signal3G=`at_ctrl at^hdrcsq |awk -F ':' '/HDRCSQ/{print $2}'`
-	if [ -z "$Signal3G" ];then
+	Signal3G=$(at_ctrl at^hdrcsq |awk -F ':' '/HDRCSQ/{print $2}')
+	if [[ -z "${Signal3G}" ]];then
 		Signal3G="0"
 	fi
-	echo "$Signal3G"
+	echo "${Signal3G}"
 }
 
 get_APinfo_News() {                         
-        local cpuFrequency=$(get_cpu_Frequency)
+	local cpuFrequency=$(get_cpu_Frequency)
 	local cpuUse=$(get_cpu_use)
 	local memorySize=$(get_memory_size)
 	local memoryUse=$(get_memory_use)

@@ -7,9 +7,10 @@ ontime_file=/root/onoff/ap-on
 get_ontime() {
 	local time=""
 
-	sleep 30
+	sleep 20
 	time=$(get_time)
 	echo ${time} >>${ontime_file} 2>/dev/null
+	
 	sleep 5
 	time=$(get_time)
 	echo ${time} >${offtime_file} 2>/dev/null
