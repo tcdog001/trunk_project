@@ -3,10 +3,9 @@
 . /sbin/autelan_functions.sh
 
 main() {
-	get_time
-	DEBUG=on /etc/jsock/jmsg.sh asyn acc_off {\"date\":\"$Time\"}
+	local time=$(get_time)
+	/etc/jsock/jmsg.sh asyn acc_off {\"date\":\"${time}\"}
 }
 
-#main $@
-exit 0
+#main "$@"
 

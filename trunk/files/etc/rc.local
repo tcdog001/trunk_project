@@ -1,6 +1,11 @@
 # Put your custom commands here that should be executed once
 # the system init finished. By default this file does nothing.
 
+# ap syslogd
+/bin/mkdir -p /root/log/init
+/bin/mkdir -p /root/log/ulog
+dmesg_syslogd.sh &
+
 # delay off gpio
 /bin/echo 17 > /sys/class/gpio/export
 
@@ -13,6 +18,7 @@
 
 # this is for 3g
 /bin/mkdir -p /tmp/.ppp/
+/bin/mkdir -p /root/ppp/
 
 # this is for xinetd and json
 /etc/jsock/jsock_init.sh
@@ -42,5 +48,8 @@
 # check the last time drop reason
 /sbin/drop_off.sh &
 /sbin/get_time.sh &
+
+# monitor ap in every 5 mins
+/sbin/systemlog_ap.sh &
 
 exit 0

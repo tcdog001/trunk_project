@@ -5,20 +5,21 @@ LOCAL_GPS_FILE=/tmp/gps.log
 REP_INTVAL=30
 
 do_tftp() {
-	local LOCAL_TMP_FILE=/tmp/gps-$Time.log
-	local PEER_TMP_FILE=/tmp/tftp/log/gps/gps-$Time.log
+	local time=$(get_time)
+	local LOCAL_TMP_FILE=/tmp/gps-${time}.log
+	local PEER_TMP_FILE=/tmp/tftp/log/gps/gps-${time}.log
 	local PEER_OPT_PATH=/opt/log/gps
 
 	[ -z "$PEER" ] && PEER=1.0.0.2
 
-	if [ "$Status" ] && [ "$Time" ]; then
+	if [ ${Status} ] && [ ${time} ]; then
 		/bin/cp $LOCAL_GPS_FILE  $LOCAL_TMP_FILE 2> /dev/null
 		echo "$0: /usr/bin/tftp -pl $LOCAL_TMP_FILE -r $PEER_TMP_FILE $PEER" >> $DEBUG_LOG_LOCAL
 		/usr/bin/tftp -pl $LOCAL_TMP_FILE -r $PEER_TMP_FILE $PEER
 		if [ $? = 0 ];then
 			echo "$0: TFTP OK" >> $DEBUG_LOG_LOCAL
 			> $LOCAL_GPS_FILE
-			DEBUG=on /etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &
+			/etc/jsock/jcmd.sh syn mv $PEER_TMP_FILE $PEER_OPT_PATH &
 		else
 			echo "$0: TFTP NOK" >> $DEBUG_LOG_LOCAL
 		fi
@@ -41,7 +42,6 @@ do_service() {
 	do
 		/bin/sleep $SER_INTVAL
 		get_status
-		get_time
 		do_tftp
 	done
 }
