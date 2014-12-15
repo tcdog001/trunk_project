@@ -135,3 +135,16 @@ tftp_RtoM() {
 		return 1
 	fi
 }
+
+get_3g_net() {
+    local code=$(cat /root/ppp/iccid 2> /dev/null | awk -F '' '{print $5$6}')
+    local net=""
+    
+    [[ "${code}" = "01" ]] && net=WCDMA
+    [[ "${code}" = "03" ]] && net=CDMA2000
+    [[ "${code}" = "00" ]] && net=GSM/TD-SCDMA
+    [[ "${code}" = "02" ]] && net=GSM/TD-SCDMA
+    [[ "${code}" = "07" ]] && net=TD-SCDMA
+    echo ${net}
+}
+

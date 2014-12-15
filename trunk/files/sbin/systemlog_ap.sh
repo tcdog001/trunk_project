@@ -1,5 +1,6 @@
 #!/bin/bash
 
+. ${__ROOTFS__}/sbin/autelan_functions.sh
 . ${__ROOTFS__}/etc/jsock/msg/msg.in
 ERROR_NOSUPPORT="Not supported"
 
@@ -58,18 +59,6 @@ get_wifi() {
     local mode=$(get_wifi_mode ${device})
     local signal=$(get_wifi_signal ${device})
     echo "${mode}/${signal}"
-}
-
-get_3g_net() {
-    local code=$(cat /root/ppp/iccid | awk -F '' '{print $5$6}')
-    local net=""
-    
-    [[ "${code}" = "01" ]] && net=WCDMA
-    [[ "${code}" = "03" ]] && net=CDMA2000
-    [[ "${code}" = "00" ]] && net=GSM/TD-SCDMA
-    [[ "${code}" = "02" ]] && net=GSM/TD-SCDMA
-    [[ "${code}" = "07" ]] && net=TD-SCDMA
-    echo ${net}
 }
 
 get_3g_hdrcsq() {

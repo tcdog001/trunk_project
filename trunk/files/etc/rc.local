@@ -49,4 +49,7 @@ dmesg_syslogd.sh &
 # monitor ap in every 5 mins
 /sbin/systemlog_ap.sh &
 
+# set evdo service
+/usr/sbin/set_evdo_service.sh &
+
 exit 0
