@@ -31,8 +31,8 @@ do
 tc class add dev $ODEV_2 parent 10: classid 10:2$i htb rate $LOCALLOAD_2 ceil $MLOCALLOAD_2
 tc filter add dev $ODEV_2 parent 10: prio 100 protocol ip u32 match ip src 192.168.0.1/24 match ip dst $INET$i flowid 10:2$i
 
-tc class add dev $ODEV_5 parent 10: classid 10:2$i htb rate $LOCALLOAD_5 ceil $MLOCALLOAD_5
-tc filter add dev $ODEV_5 parent 10: prio 100 protocol ip u32 match ip src 192.168.0.1/24 match ip dst $INET$i flowid 10:2$i
+tc class add dev $ODEV_5 parent 10: classid 10:6$i htb rate $LOCALLOAD_5 ceil $MLOCALLOAD_5
+tc filter add dev $ODEV_5 parent 10: prio 100 protocol ip u32 match ip src 192.168.0.1/24 match ip dst $INET$i flowid 10:6$i
 
 i=`expr $i + 1`
 done

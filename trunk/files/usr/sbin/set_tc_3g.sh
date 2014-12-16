@@ -11,7 +11,13 @@ DOWN="90mbit"
 DOWNLOAD="400kbit"
 MDOWNLOAD="400kbit"
 
- 
+#the user 3g upload speed
+UPLOAD="400kbit"
+MUPLOAD="400kbit"
+
+#the user wifi upload speed
+UPLOAD_WIFI="4mbit"
+MUPLOAD_WIFI="4mbit"
 #IP
 INET="192.168.0."
  
@@ -28,8 +34,14 @@ i=$IPS;
 while [ $i -le $IPE ]
 do
 
-tc class add dev $IDEV parent 10: classid 10:2$i htb rate $DOWNLOAD ceil $MDOWNLOAD
-tc filter add dev $IDEV parent 10: prio 100 protocol ip u32 match ip dst $INET$i flowid 10:2$i
+tc class add dev $IDEV parent 10: classid 10:5$i htb rate $DOWNLOAD ceil $MDOWNLOAD
+tc filter add dev $IDEV parent 10: prio 100 protocol ip u32 match ip dst $INET$i flowid 10:5$i
+
+tc class add dev $IDEV parent 10: classid 10:3$i htb rate $UPLOAD_WIFI ceil $MUPLOAD_WIFI
+tc filter add dev $IDEV parent 10: prio 50 protocol ip u32 match ip dst 192.168.0.1/24 match ip src $INET$i flowid 10:3$i
+
+tc class add dev $IDEV parent 10: classid 10:4$i htb rate $UPLOAD ceil $MUPLOAD
+tc filter add dev $IDEV parent 10: prio 100 protocol ip u32 match ip src $INET$i flowid 10:4$i
 
 i=`expr $i + 1`
 done
