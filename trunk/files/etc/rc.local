@@ -55,4 +55,10 @@ dmesg_syslogd.sh &
 # set evdo service
 /usr/sbin/set_evdo_service.sh &
 
+# usr connlimit
+/usr/sbin/set_connlimit.sh
+
+# usr flow report
+/usr/sbin/get_usr_flow.sh &
+
 exit 0
