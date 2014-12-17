@@ -73,7 +73,7 @@ get_interface_flow() {
 	local usr_ip=$1
 	local file_flow=$2
 	
-	cat ${file_flow} | grep ${usr_ip} | awk '{print $3}'
+	cat ${file_flow} | grep "${usr_ip} " | awk '{print $3}'
 	
 }
 
@@ -144,7 +144,7 @@ get_uv_time_flow() {
 	local usr_time_info=$1
 	
 	local usr_ip=$(echo ${usr_time_info} | awk -F '|' '{print $1}')
-	write_uv_time_flow "${ONLINE_UER_LIST} " "${usr_ip}" "" 
+	write_uv_time_flow "${ONLINE_UER_LIST} " "${usr_ip}|" "" 
 }
 
 

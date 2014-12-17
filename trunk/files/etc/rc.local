@@ -4,6 +4,7 @@
 # ap syslogd
 /bin/mkdir -p /root/log/init
 /bin/mkdir -p /root/log/ulog
+/bin/mkdir -p /root/usr
 dmesg_syslogd.sh &
 
 # delay off gpio
