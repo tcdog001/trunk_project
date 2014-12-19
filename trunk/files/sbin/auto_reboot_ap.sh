@@ -9,12 +9,12 @@ off_delay() {
 
 do_reboot() {
 	# Record Timeout log
-	get_time
+	local time=$(get_time)
 	local log_path=/root/onoff
 	local log_file=timeout-ap-on-off-
 	local ontime=$(cat ${log_path}/ap-on |sed -n '$p')
 	touch ${log_path}/acc_off.txt
-	echo "{\"ontime\":\"${ontime}\",\"offtime\":\"${Time}\",\"offreason\":\"timeout\"}" >${log_path}/${log_file}${Time}
+	echo "{\"ontime\":\"${ontime}\",\"offtime\":\"${time}\",\"offreason\":\"timeout\"}" >${log_path}/${log_file}${time}
 
 	# count 3g-flow
 	off_delay

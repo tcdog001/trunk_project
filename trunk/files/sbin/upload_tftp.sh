@@ -63,11 +63,11 @@ tftp_timeout() {
 	local line=$(ls -la /root/onoff |wc -l)
 
 	[ -z "${PEER}" ] && PEER=1.0.0.2
-	get_time
+	local time=$(get_time)
 
 	ls ${LOCAL_ROOT_PATH} |grep timeout-ap-on-off- >/dev/null 2>&1
 	if [[ $? = 0 ]];then
-		echo "$0: /usr/bin/tftp -pl ${LOCAL_ROOT_PATH}/timeout-ap-on-off-${Time} -r ${PEER_TMP_PATH}/timeout-ap-on-off-${Time} ${PEER}" >>${TFTP_LOG}
+		echo "$0: /usr/bin/tftp -pl ${LOCAL_ROOT_PATH}/timeout-ap-on-off-${time} -r ${PEER_TMP_PATH}/timeout-ap-on-off-${time} ${PEER}" >>${TFTP_LOG}
 		for file in $(ls ${LOCAL_ROOT_PATH} |grep timeout-ap-on-off-)
 		do
 			/usr/bin/tftp -p -l ${LOCAL_ROOT_PATH}/${file} -r ${PEER_TMP_PATH}/${file} ${PEER} 2>/dev/null
