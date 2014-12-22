@@ -19,8 +19,6 @@ do_reboot() {
 	# count 3g-flow
 	off_delay
 	sleep 5
-	echo "*****$(uptime)*****"
-	echo "*****timeout now reboot*****"
 	reboot
 }
 
@@ -30,11 +28,8 @@ main() {
 	if [[ -z $1 ]];then
 		power_time=43200
 	fi
-	sleep ${power_time};re=$?
-
-	if [[ ${re} -eq 0 ]];then
-		do_reboot
-	fi
+	sleep ${power_time}
+	do_reboot
 }
 
 main "$@"
