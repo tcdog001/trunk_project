@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cdma_off(){
 	GPIO=$1

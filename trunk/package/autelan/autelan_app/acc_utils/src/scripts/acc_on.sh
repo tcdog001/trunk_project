@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cdma_on(){
 	GPIO=$1

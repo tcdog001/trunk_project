@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 main() {
 	local val=` /bin/cat /sys/devices/platform/i2c-gpio.0/i2c-0/0-0052/iio\:device0/in_voltage_raw 2> /dev/null `

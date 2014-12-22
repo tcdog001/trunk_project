@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 /sbin/wifi down
 /sbin/led_off.sh
