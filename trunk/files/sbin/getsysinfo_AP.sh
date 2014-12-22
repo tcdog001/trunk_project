@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 get_cpu_Frequency() {
 	cpuFrequency=$(cat /proc/cpuinfo |awk -F ':' '/BogoMIPS/{print $2}')

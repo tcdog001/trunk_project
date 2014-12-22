@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 . /sbin/autelan_functions.sh
 FILENAME=/tmp/vcc.log
@@ -6,8 +6,8 @@ local_file_path=/root/vcc
 
 save_file() {
 	local time="$@"
-	local cmd1="/bin/cp ${FILENAME} ${local_file_path}/vcc-quality-${time} 2> /dev/null"
-	local cmd2="/bin/cp ${local_file_path}/vcc-quality-${time} ${local_file_path}/vcc.log"
+	local cmd1="/bin/cp ${FILENAME} ${local_file_path}/vcc-quality-${time}"
+	local cmd2="/bin/cp ${FILENAME} ${local_file_path}/vcc.log"
 
 	echo "$0: ${cmd1}"
 	${cmd1} &

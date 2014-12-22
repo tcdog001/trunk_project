@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cp /etc/config/network-test  /etc/config/network 2>/dev/null
 cp /etc/config/wireless-test-2g /etc/config/wireless 2>/dev/null

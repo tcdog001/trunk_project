@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 . /sbin/autelan_functions.sh
 LOCAL_TMP_LOG=/tmp/3g-drop.log

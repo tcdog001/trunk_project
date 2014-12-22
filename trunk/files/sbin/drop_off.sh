@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-local file_path=/root/onoff
+file_path=/root/onoff
 
 get_onoff_log() {
 	local file_on=ap-on

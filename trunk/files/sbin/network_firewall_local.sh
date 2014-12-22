@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cp /rom/etc/config/network.dev /etc/config/network
 cp /rom/etc/config/firewall.dev /etc/config/firewall

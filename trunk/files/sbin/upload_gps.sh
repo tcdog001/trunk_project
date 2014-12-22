@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 . /sbin/autelan_functions.sh
 LOCAL_GPS_FILE=/tmp/gps.log

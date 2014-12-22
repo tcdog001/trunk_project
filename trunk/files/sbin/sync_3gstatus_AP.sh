@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 del_core() {
         local core_file=/tmp/wifidog.*.core
