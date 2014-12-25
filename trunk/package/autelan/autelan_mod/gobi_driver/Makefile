@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=gobi_driver
+PKG_NAME:=gobi_driver_140321
 PKG_VERSION:=2014-07-25
 PKG_RELEASE:=1
 
@@ -9,7 +9,7 @@ PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-define KernelPackage/gobi_driver
+define KernelPackage/gobi_driver_140321
   SECTION:=base
   CATEGORY:=Autelan Modules
   TITLE:=GobiSerial.ko
@@ -41,10 +41,10 @@ define Build/Compile
 	$(MAKE) $(MAKE_OPTS)
 endef
 
-define KernelPackage/gobi_driver/install
+define KernelPackage/gobi_driver_140321/install
 #	$(INSTALL_DIR) $(1)/lib/modules/3.10.21
 #	$(CP) $(PKG_BUILD_DIR)/GobiSerial.ko $(1)/lib/modules/3.10.21
 endef
 
-$(eval $(call KernelPackage,gobi_driver))
+$(eval $(call KernelPackage,gobi_driver_140321))
 

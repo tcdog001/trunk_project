@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [[ -n "${__JSOCK_SIG_KEEPALIVE_IN__}" ]]; then
+	return
+else
+	__JSOCK_SIG_KEEPALIVE_IN__="$0"
+fi
+
+. ${__ROOTFS__}/etc/jsock/jsock.in
+
+readonly keepalive_interval=10
+readonly keepalive_threshold=3
+
+readonly file_keepalive_drop=/tmp/.keepalive_drop
+readonly file_keepalive_good=/tmp/.keepalive_good
+readonly file_keepalive_send=/tmp/.keepalive_send
+readonly file_keepalive_recv=/tmp/.keepalive_recv
+
+readonly file_keepalive_seq=/tmp/.keepalive_seq
+readonly file_keepalive_state=/tmp/.keepalive_state
+readonly file_keepalive_count=/tmp/.keepalive_count
+readonly file_keepalive_threshold=/tmp/.keepalive_threshold

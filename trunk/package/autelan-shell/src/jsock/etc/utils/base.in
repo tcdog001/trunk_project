@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -n "${__UTILS_BASE_IN__}" ]; then
+if [[ -n "${__UTILS_BASE_IN__}" ]]; then
 	return
 else
 	__UTILS_BASE_IN__="$0"
@@ -10,9 +10,13 @@ do_nothing() {
 	return
 }
 
+do_silent() {
+	eval "$@ &> /dev/null"
+}
+
 #
 #$1:tag
-#....
+#[$2:info...]
 #
 do_logger() {
 	local tag="$1"; shift
@@ -22,18 +26,86 @@ do_logger() {
 
 #
 #$1:tag
-#....
+#[$2:info...]
 #
 echo_logger() {
-	local tag="$1"; shift
-	local info="$*"
+	echo "$@"
+	do_logger "$@"
+}
 
-	echo "${info}"
-	do_logger "${tag}" "${info}"
+#
+#$1:cb
+#   cb or ok_cb:err_cb
+#$2:tag
+#$3:action...
+#
+do_with_cb() {
+	local cb="$1"
+	local tag="$2"; shift 2
+	local action="$*"
+	local err=0
+
+	local ok_cb err_cb
+	if [[ "${cb}" == "${cb#*:}" ]]; then
+		#
+		# cb is NOT include :
+		#   so, both ok_cb and err_cb is cb
+		#
+		ok_cb=${cb}
+		err_cb=${cb}
+	else
+		#
+		# cb is include :
+		#   so, cb is ok_cb:err_cb
+		#
+		ok_cb=${cb%:*}; ok_cb=${ok_cb:-do_nothing}
+		err_cb=${cb#*:}; err_cb=${err_cb:-do_nothing}
+	fi
+
+	eval "${action}"; err=$?
+	if ((0==err)); then
+		${ok_cb} "${tag}" "OK: ${action}"
+	else
+		${err_cb} "${tag}" "ERROR[${err}]: ${action}"
+	fi
+
+	return ${err}
 }
 
 get_board_type() {
 	cat ${__ROOTFS__}/etc/boardtype
+}
+
+#
+#$1:board_type
+#
+__board_check() {
+	local board_type="$1"
+
+	if [[ "${board_type}" != "$(get_board_type)" ]]; then
+		return 1
+	fi
+}
+
+ap_board_check() {
+	__board_check ap || return $?
+}
+
+md_board_check() {
+	__board_check md || return $?
+}
+
+get_peer() {
+	echo "$(get_file_value ${__ROOTFS__}/etc/peer ${PEER})"
+}
+
+#
+#$1:prefix
+#
+get_varlist_with_prefix() {
+	local prefix="$1"
+
+	eval "echo \${!${prefix}*}"
 }
 
 #
@@ -51,7 +123,6 @@ gettaskcount() {
 	fi
 }
 
-
 #
 #$1:task
 #[$2:app...]
@@ -62,10 +133,10 @@ monitortask() {
 	local count
 
 	count=$(gettaskcount ${task}) || {
-		if [ -z "${app}" ]; then
-			${task} &
+		if [[ -z "${app}" ]]; then
+			eval "${task} &"
 		else
-			${app} &
+			eval "${app} &"
 		fi
 
 		echo_logger "monitor" "monitor ${task} is dead, restart it"
@@ -76,7 +147,7 @@ monitortask() {
 #$1:lockfile
 #$2:action...
 #
-exec_with_flock() {
+do_with_flock() {
 	local lockfile="$1"; shift
 	local action="$*"
 	local err=0
@@ -89,6 +160,9 @@ exec_with_flock() {
 			return ${e_flock_failed}
 		}
 
+		#
+		# can NOT eval, the action maybe include json
+		#
 		${action}; err=$?
 	} 3<>${lockfile}
 

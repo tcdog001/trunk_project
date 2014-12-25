@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ${__ROOTFS__}/etc/jsock/msg/msg.in
+. ${__ROOTFS__}/etc/jsock/jsock.in
 
 #
 # ap==>md, callback on md
@@ -9,7 +9,6 @@
 #
 main() {
     local body="$*"
-    local self="$(basename $0)"
 
 	jsock_md_recive_check || {
 		return ${e_bad_board}
@@ -17,7 +16,6 @@ main() {
 
     echo ${LINK_UP} > ${file_status_3g}
 
-    jmsg_logger "recive message:${self%%.*}, body:${body}"
 #    echo "recive message:${self%%.*}, body:${body}" >> /tmp/mytest.log
     /bin/cp /etc/dnsmasq.conf.3gup /etc/dnsmasq.conf 2>/dev/null
     /bin/chmod 777 /etc/dnsmasq.conf 2>/dev/null

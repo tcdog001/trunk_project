@@ -1,0 +1,16 @@
+#!/bin/bash
+
+. ${__ROOTFS__}/etc/fagent/fagent.in
+
+#
+# call by inotifyd
+#
+#$1:mask
+#$2:dir
+#$3:file
+#
+main() {
+	fagent_cb send "$@"
+}
+
+main "$@"

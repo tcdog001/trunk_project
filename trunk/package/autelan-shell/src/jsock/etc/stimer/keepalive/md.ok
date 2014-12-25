@@ -1,0 +1,2 @@
+#alias          delay   interval    limit   command
+timesyn         0       30          0       /usr/sbin/syn_ap_time.sh

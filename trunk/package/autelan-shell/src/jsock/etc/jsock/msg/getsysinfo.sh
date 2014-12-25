@@ -1,6 +1,6 @@
 #!/bin/bash
 	
-. ${__ROOTFS__}/etc/jsock/msg/msg.in
+. ${__ROOTFS__}/etc/jsock/jsock.in
 
 main() {
 	jsock_ap_send_check || {

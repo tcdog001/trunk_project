@@ -1,0 +1,97 @@
+#!/bin/bash
+
+if [[ -n "${__ETC_FAGENT_IN__}" ]]; then
+	return
+else
+	__ETC_FAGENT_IN__="$0"
+fi
+
+. ${__ROOTFS__}/etc/utils/utils.in
+
+#
+#$1:action
+#
+get_fagent_conf() {
+	local action="$1"
+
+	echo "${__ROOTFS__}/etc/fagent/conf/$(get_board_type).${action}.conf"
+}
+
+#
+#$1:action
+#
+get_fagent_cb() {
+	local action="$1"
+
+	echo "${__ROOTFS__}/etc/fagent/cb/${action}.cb"
+}
+
+#
+#$1:action
+#
+fagent_init_by() {
+	local action="$1"
+	local config=$(get_fagent_conf ${action})
+	local cb=$(get_fagent_cb ${action})
+
+	local dir=$(sed '/#/d;/^$/d' ${config} | awk '{print $1}')
+	if [[ -n "${dir}" ]]; then
+		inotifyd ${cb} ${dir} &
+	fi
+}
+
+fagent_init() {
+	fagent_init_by send
+	fagent_init_by recv
+}
+
+#
+#$1:buildin
+#$2:dir
+#$3:file
+#$4:target dir
+#[$5:new file name]
+#
+fagent_buildin() {
+	local buildin="$1"
+	local dir="$2"
+	local file="$3"
+	local target="$4"
+	local new="$5"; new=${new:-${file}}
+
+	case ${buildin} in
+	send)
+		tftp -p -l ${dir}/${file} -r ${dir}/${new} $(get_peer) || return $?
+		;;
+	move)
+		mv ${dir}/${file} ${target}/${new} || return $?
+		;;
+	*)
+		if [[ -x "${buildin}" ]]; then
+			${buildin} ${dir} ${file} ${target} ${new} || return $?
+		else
+			return ${e_inval}
+		fi
+		;;
+	esac
+}
+
+#
+#$1:action
+#$2:mask, inotify mask
+#$3:dir,  inotify dir
+#$4:file, inotify file
+#
+fagent_cb() {
+	local action="$1"
+	local mask="$2"
+	local dir="$3"
+	local file="$4"
+
+	local line=$(sed '/#/d;/^$/d' ${config} | grep ${dir})
+		  line=$(list_tail ${line})
+	local buildin=$(list_first ${line})
+	local args=$(list_tail ${line})
+
+	fagent_buildin ${buildin} ${dir} ${file} ${args}
+}

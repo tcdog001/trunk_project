@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ${__ROOTFS__}/etc/jsock/sig/sig.in
+. ${__ROOTFS__}/etc/jsock/jsock.in
 
 #
 #call by jsock.cb
@@ -12,7 +12,7 @@ main() {
 		return ${e_bad_board}
 	}
 
-	${__ROOTFS__}/etc/jsock/jsig_asyn.sh "super_recover_reboot"
+	${__ROOTFS__}/etc/jsock/jsig.sh asyn "super_recover_reboot"
 }
 
 main "$@"

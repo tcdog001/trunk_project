@@ -1,0 +1,2 @@
+#alias          delay   interval    limit   command
+sysinfo         0       10          10      /etc/jsock/msg/getsysinfo.sh

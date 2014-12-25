@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -n "${__UTILS_FILE_IN__}" ]; then
+if [[ -n "${__UTILS_FILE_IN__}" ]]; then
 	return
 else
 	__UTILS_FILE_IN__="$0"
@@ -31,132 +31,159 @@ getfilesuffix() {
 #
 #$1:file
 #
-touchfile() {
+mkfile() {
 	local file=$1
-	local err=0
 
-	if [ ! -f "${file}" ]; then
-		mkdir -p $(dirname file) > /dev/null 2>&1; err=$?
+	if [[ ! -f "${file}" ]]; then
+		local dir=$(dirname file)
+		if [[ ! -d "${dir}" ]]; then
+			mkdir -p ${dir} &>/dev/null
+		fi
+
+		touch "${file}" &>/dev/null
 	fi
 
-	return ${err}
+	echo "${file}"
 }
 
 #
-#$1:file(include path)
-#[$2:file default value]
+#$1:file
+#$2:state when file exist
+#$3:state when file not exist
 #
-get_file_value() {
-	local file=$1; shift
-	local deft="$*"
+get_file_state() {
+	local file="$1"
+	local exist="$2"
+	local noexist="$3"
 
-	if [ -f "${file}" ]; then
-		cat ${file}
+	if [[ -f "${file}" ]]; then
+		echo "${exist}"
 	else
-		echo ${deft}
-	fi
-}
-
-#
-#$1:file(include path)
-#$2:value ...
-#
-set_file_value() {
-	local file=$1; shift
-	local value="$*"
-	local err
-
-	touchfile ${file}; err=$?
-	if ((0!=err)); then
-		return ${err}
-	fi
-
-	echo ${value} > ${file}
-	fsync ${file}
-}
-
-#
-#$1:file(include path)
-#$2:file default value ...
-#
-getfilevalue() {
-	local file=$1; shift
-	local deft="$*"
-
-	if [ -f "${file}" ]; then
-		cat ${file}
-	else
-		set_file_value "${file}" "${deft}"
-
-		echo ${deft}
+		echo "${noexist}"
 	fi
 }
 
 #
 #$1:file
-#$2:added
+#$2:state when file exist
+#$3:state when file not exist
+#$4:state
+#
+set_file_state() {
+	local file="$1"
+	local exist="$2"
+	local noexist="$3"
+	local state="$4"
+
+	if [[ "${exist}" == "${state}" ]]; then
+		touch ${file}
+	else
+		rm -f ${file}
+	fi
+}
+
+#
+#$1:file(include path)
+#[$2:default value]
+#
+get_file_value() {
+	local file=$1; shift
+	local deft="$*"
+
+	if [[ -f "${file}" ]]; then
+		cat ${file}
+	else
+		echo ${deft}
+	fi
+}
+
+#
+#$1:file(include path)
+#[$2:value ...]
+#
+set_file_value() {
+	local file=$1; shift
+	local value="$*"
+	local err=0
+
+	echo ${value} > $(mkfile ${file}); err=$?; fsync ${file}
+
+	return ${err}
+}
+
+#
+#$1:file(include path)
+#[$2:default value ...]
+#
+getfilevalue() {
+	local file=$1; shift
+	local deft="$*"
+
+	if [[ -f "${file}" ]]; then
+		cat ${file}
+	else
+		set_file_value "${file}" ${deft}
+
+		echo ${deft}
+	fi
+}
+
+#
+#read file old value and write file new value
+#
+#$1:file(include path)
+#[$2:new value ...]
+#
+setfilevalue() {
+	local file=$1; shift
+	local new="$*"
+
+	if [[ -f "${file}" ]]; then
+		cat ${file}
+	else
+		echo ${new}
+	fi
+
+	set_file_value "${file}" ${new}
+}
+
+#
+#$1:file
+#[$2:added]
 #
 readnumberfile_andadd() {
 	local file=$1
-	local added=$2
+	local added=$2; added=${added:-1}
 
 	local number=$(getfilevalue ${file} 0)
 	echo ${number}
 
-	((number++))
-	set_file_value ${file} ${number}
+	set_file_value ${file} $((number + added))
+}
+
+
+#
+#$1:file
+#
+readnumberfile_andaddone() {
+	readnumberfile_andadd "$1" 1
 }
 
 #
-#get command's out(stdout) and error(stderr) infomation
+#$1:file
+#$2:info...
 #
-#$1:array name
-#$2:funcname or cmdname
-#$3:args...
-#
-# after call,
-#	array[0] save errno
-#	array[1] save stdout infomation
-#	array[2] save stderr infomation
-#
-get_out_and_error() {
-	local arrayname="$1"
-	local callname="$2"; shift 2
-	local args="$*"
+log_with_limit() {
+	local file="$1"; shift
+	local info="$*"
 
-	local tmpout=$(mktemp)
-	local tmperr=$(mktemp)
-	local err=0
+	local count=$(sed -n '$=' ${file} 2>/dev/null)
+	if ((count>1000)); then
+		sed -i "1,100d" ${file} &> /dev/null
+	fi
 
-	(${callname} ${args}) >${tmpout} 2>${tmperr}; err=$?
-
-#	eval "${arrayname}=([0]=${err} [1]='$(cat ${tmpout})' [2]='$(cat ${tmperr})')"
-	eval "${arrayname}=([0]=${err} [1]='$(<${tmpout})' [2]='$(<${tmperr})')"
-
-	rm -f ${tmpout} ${tmperr}
-
-	return ${err}
+	echo "${info}" >> ${file}; fsync ${file}
 }
-
-#
-# no used, now
-#
-get_out_and_error2() {
-	local arrayname="$1"
-	local tmpout=$(mktemp)
-	local tmperr=$(mktemp)
-	local err=0
-
-	eval "\${${arrayname}[0]} >${tmpout} 2>${tmperr}; err=\$?"
-	eval "${arrayname}[1]='$(<${tmpout})'"
-	eval "${arrayname}[2]='$(<${tmperr})'"
-	eval "${arrayname}[3]=${err}"
-
-	rm -f ${tmpout} ${tmperr}
-
-	return ${err}
-}
-
 
 #
 #$1:src
@@ -177,7 +204,7 @@ LN_DIR() {
 	local src="$1"
 	local dst="$2"
 
-	if [ -d "${dst}" ]; then
+	if [[ -d "${dst}" ]]; then
 		rm -fr ${dst}
 	fi
 
@@ -202,4 +229,16 @@ do_dd() {
 	sync
 
 	return ${err}
+}
+
+#
+#$1:file
+#$2:value
+#
+delete_file_line_byvalue() {
+	local file="$1"; shift
+	local value="$*"
+	local replace=__.__.__.__
+
+	sed -i "s#${value}#${replace}#g;/${replace}/d" ${file}
 }

@@ -77,6 +77,7 @@ get_sim_iccid() {
     local sim_iccid=""
 
     [[ "${mode}" = "C5300V" ]] && sim_iccid=$(at_ctrl at+iccid | awk '/SCID:/{print $2}')
+    [[ "${mode}" = "DM111" ]] && sim_iccid=$(at_ctrl at+iccid | awk '/ICCID:/{print $2}')
     [[ "${mode}" = "MC271X" ]] && sim_iccid=$(at_ctrl at+zgeticcid | awk '/ZGETICCID/{print $2}')
 
     if [[ ${sim_iccid} ]]; then
