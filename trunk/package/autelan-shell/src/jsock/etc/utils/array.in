@@ -67,7 +67,7 @@ aa_get() {
 #
 #$1:array name
 #$2:array key
-#$3:array value
+#$3:array value...
 #
 aa_set() {
 	local name="$1"
@@ -105,18 +105,36 @@ aa_count() {
 }
 
 #
-#$1:dst
-#$2:src
+# merge src to dst
 #
-aa_copy() {
+#$1:src
+#$2:dst
+#
+aa_merge() {
 	local src="$1"
 	local dst="$2"
 
 	local key
 	for key in $(aa_keys ${src}); do
-		local value=$(aa_get ${src} ${key})
+		aa_set ${dst} ${key} "$(aa_get ${src} ${key})"
+	done
+}
 
-		aa_set ${dst} ${key} "${value}"
+#
+# complete dst from src
+#
+#$1:src
+#$2:dst
+#
+aa_complete() {
+	local src="$1"
+	local dst="$2"
+
+	local key
+	for key in $(aa_keys ${src}); do
+		if [[ -z "$(aa_get ${dst} ${key})" ]]; then
+			aa_set ${dst} ${key} "$(aa_get ${src} ${key})"
+		fi
 	done
 }
 
@@ -140,17 +158,16 @@ aa_show() {
 #
 aa_serialize() {
 	local aa="$1"
-	local file="$2"
+	local file=$(mkfile "$2") || return $?
 
 	>${file}
 
-	local keys=$(aa_keys ${aa})
 	local key
-	for key in ${keys}; do
-		local value=$(aa_get ${aa} ${key})
-
-		echo "${key} ${value}" >> ${file}
+	for key in $(aa_keys ${aa}); do
+		echo "${key} $(aa_get ${aa} ${key})" >> ${file}
 	done
+
+	fsync ${file}
 }
 
 #

@@ -6,7 +6,7 @@
 #[$1:config]
 #
 main() {
-	fsync_init
+	fagent_init
 }
 
 main "$@"

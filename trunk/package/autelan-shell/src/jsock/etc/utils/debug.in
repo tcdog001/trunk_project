@@ -7,9 +7,7 @@ else
 fi
 
 dir_debug=${dir_debug:-/tmp/.debug}
-if [[ ! -d "${dir_debug}" ]]; then
-	mkdir -p ${dir_debug}
-fi
+makedir "${dir_debug}"
 
 DEBUG=${DEBUG:-$(getfilevalue ${dir_debug}/.debug)}
 DEBUG_LEVEL=${DEBUG_LEVEL:-$(getfilevalue ${dir_debug}/.debug_level __ok__,__error__,__trace__)}
@@ -116,17 +114,9 @@ debug_echo() {
 		return 0
 	fi
 
-	debug_match DEBUG_LEVEL level || {
-		return 0
-	}
-
-	debug_match DEBUG_MODULE module || {
-		return 0
-	}
-
-	debug_match DEBUG_SUBMODULE sub || {
-		return 0
-	}
+	debug_match DEBUG_LEVEL level || return
+	debug_match DEBUG_MODULE module || return
+	debug_match DEBUG_SUBMODULE sub || return
 
 	local tag="${module}.${sub}.${level}"
 	do_logger "${tag}" "$@"
@@ -165,7 +155,7 @@ debug_var() {
 #	at least one var
 #
 debug_varlist() {
-	local var_name_list=$*
+	local var_name_list="$*"
 	local var_name
 
 	for var_name in ${var_name_list}; do
@@ -180,34 +170,22 @@ debug_varlist() {
 debug_do() {
 	local module="$1"; shift
 	local action="$*"
-	local err
+	local err=0
+	local prefix
 
-	if [[ __all__ == "${module}" ]]; then
-		module=
-	else
-		module="${module}_"
+	if [[ "__all__" != "${module}" ]]; then
+		prefix="${module}_"
 	fi
 
-	${module}debug_trace "[BEFORE]${action}"
+	${prefix}debug_trace "[BEFORE]${action}"
 	eval "${action}"; err=$?
 
 	local after="...[AFTER:${err}]"
 	if [[ "0" == "${err}" ]]; then
-		${module}debug_trace "${after}"
+		${prefix}debug_trace "${after}"
 	else
-		${module}debug_error "${after}"
+		${prefix}debug_error "${after}"
 	fi
 
 	return ${err}
 }
-
-#
-# command || {
-#	enter here when command failed
-# }
-#
-# command && {
-#	enter here when command success
-# }
-#
-

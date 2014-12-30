@@ -37,7 +37,7 @@ mkfile() {
 	if [[ ! -f "${file}" ]]; then
 		local dir=$(dirname file)
 		if [[ ! -d "${dir}" ]]; then
-			mkdir -p ${dir} &>/dev/null
+			mkdir -p ${dir} &>/dev/null || return $?
 		fi
 
 		touch "${file}" &>/dev/null

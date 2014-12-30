@@ -22,7 +22,7 @@ dmesg_syslogd.sh &
 /bin/mkdir -p /root/ppp/
 
 # this is for xinetd and json
-/etc/jsock/jsock_init.sh
+/etc/stimer/stimer_system_startup.sh &
 
 # this is for gps report
 /sbin/upload_gps.sh &

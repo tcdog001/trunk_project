@@ -18,11 +18,6 @@ file_jsock_peer_state=/tmp/.jsock_peer_state
 readonly list_jsock_mode="asyn ack syn"
 readonly list_jsock_type="sig msg cmd"
 
-#
-# ${!VAR*}==>VARxxx VARyyy VARzzz ...
-#
-VARLIST_JSOCK_PATH="${!JSOCK_*} ${!DEBUG*}"
-
 jsock_debug_ok() {
 	debug_echo __jsock__ __all__ __ok__ "$@"
 }
@@ -222,27 +217,19 @@ jsock() {
 	local body="$*"
 	local err=0
 
-	__jsock_check_mode "${mode}" || {
-		return $? 
-	}
-	__jsock_check_type "${type}" || {
-		return $?
-	}
-
 	if [[ -z "${name}" ]]; then
 		return ${e_jsock_bad_name}
 	fi
-
-	json_check "${body}" || {
-		return $?
-	}
+	__jsock_check_mode "${mode}" || return $?
+	__jsock_check_type "${type}" || return $?
+	json_check "${body}" || return $?
 
 	local json=$(__jsock_json "${mode}" "${type}" "${name}" "${body}")
 
 	#
 	# open
 	#
-	exec 8<>/dev/${JSOCK_PROTOCOL}/${host}/${JSOCK_PORT}
+	exec 8<>/dev/${JSOCK_PROTOCOL}/${host}/${JSOCK_PORT} 2>/dev/null || return $?
 	#
 	# send
 	#
@@ -372,8 +359,4 @@ jsock_md_send_check() {
 	}
 }
 
-main() {
-	debug_varlist ${VARLIST_JSOCK_PATH}
-}
-
-main "$@"
+#debug_varlist ${!JSOCK_*} ${!list_jsock_*}

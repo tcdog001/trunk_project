@@ -34,10 +34,12 @@ fagent_init_by() {
 	local config=$(get_fagent_conf ${action})
 	local cb=$(get_fagent_cb ${action})
 
-	local dir=$(sed '/#/d;/^$/d' ${config} | awk '{print $1}')
-	if [[ -n "${dir}" ]]; then
-		inotifyd ${cb} ${dir} &
-	fi
+	local dir mask buildin
+	sed '/#/d;/^$/d' ${config} | while read dir mask buildin; do
+		if [[ -d "${dir}" ]]; then
+			inotifyd ${cb} ${dir}:${mask} &
+		fi
+	done
 }
 
 fagent_init() {

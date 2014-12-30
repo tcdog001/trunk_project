@@ -41,3 +41,14 @@ setup_dir_with_prefix() {
 		fi
 	done
 }
+
+#
+#$1:dir
+#
+makedir() {
+	local dir="$1"
+
+	if [[ ! -d "${dir}" ]]; then
+		mkdir -p ${dir}
+	fi
+}
