@@ -66,36 +66,6 @@ get_3g_hdrcsq() {
     [[ ${hdrcsq} ]] && echo ${hdrcsq}
 }
 
-get_sim_iccid() {
-    local iccid_log=/tmp/.ppp/iccid.log
-    local iccid_path=/root/ppp/iccid
-    local iccid_success=/root/ppp/iccid_success
-    local iccid_succ_num=""
-    local iccid_fail=/root/ppp/iccid_fail
-    local iccid_fail_num=""
-    local mode=$(cat /tmp/3g_model)
-    local sim_iccid=""
-
-    [[ "${mode}" = "C5300V" ]] && sim_iccid=$(at_ctrl at+iccid | awk '/SCID:/{print $2}')
-    [[ "${mode}" = "DM111" ]] && sim_iccid=$(at_ctrl at+iccid | awk '/ICCID:/{print $2}')
-    [[ "${mode}" = "MC271X" ]] && sim_iccid=$(at_ctrl at+zgeticcid | awk '/ZGETICCID/{print $2}')
-
-    if [[ ${sim_iccid} ]]; then
-        echo ${sim_iccid} > ${iccid_path}
-	iccid_succ_num=$(cat ${iccid_success} 2> /dev/null)
-	((iccid_succ_num++))
-	echo ${iccid_succ_num} > ${iccid_success}
-	echo "$(get_gps_time) success: get iccid=${sim_iccid}" >> ${iccid_log}
-    else
-        sim_iccid=$(cat ${iccid_path})
-	iccid_fail_num=$(cat ${iccid_fail} 2> /dev/null)
-	((iccid_fail_num++))
-	echo ${iccid_fail_num} > ${iccid_fail}
-	echo "$(get_gps_time) warning: get iccid=${sim_iccid}" >> ${iccid_log}
-    fi
-    echo ${sim_iccid}
-}
-
 #
 # $1: key
 # $2: value; shift 2
@@ -130,7 +100,7 @@ str_systemlog_ap() {
     jsonstr=$(add_json_string "wifi58" "$(get_wifi wlan1)" "${jsonstr}")
     jsonstr=$(add_json_string "3G_net" "$(get_3g_net)" "${jsonstr}")
     jsonstr=$(add_json_string "3g_strong" "$(get_3g_hdrcsq)" "${jsonstr}")
-    jsonstr=$(add_json_string "sim-iccid" "$(get_sim_iccid)" "${jsonstr}")
+    jsonstr=$(add_json_string "sim-iccid" "$(report_sim_iccid)" "${jsonstr}")
 
     [[ ${jsonstr} ]] && echo ${jsonstr}
 }

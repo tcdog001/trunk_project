@@ -136,6 +136,61 @@ tftp_RtoM() {
 	fi
 }
 
+get_3g_model() {
+	local model=$(cat /tmp/3g_model 2> /dev/null)
+	echo ${model}
+}
+
+get_sim_iccid() {
+	local model=$(get_3g_model)
+	local sim_iccid=""
+
+	case ${model} in
+		"C5300V")
+			sim_iccid=$(at_ctrl at+iccid | awk '/SCID:/{print $2}')			
+			;;
+		"DM111")
+			sim_iccid=$(at_ctrl at+iccid | awk '/ICCID:/{print $2}')
+			;;
+		"SIM6320C")
+			sim_iccid=$(at_ctrl at+ciccid | awk '/ICCID:/{print $2}')
+			;;
+		"MC271X")
+			sim_iccid=$(at_ctrl at+zgeticcid | awk '/ZGETICCID/{print $2}')
+			;;
+		*)
+			logger -t $0 "Model=${model} Not Support" 
+			;;
+	esac
+	echo ${sim_iccid}
+}
+
+report_sim_iccid() {
+	local iccid_path=/root/ppp/iccid
+	local iccid_success=/root/ppp/iccid_success
+	local iccid_succ_num=""
+	local iccid_fail=/root/ppp/iccid_fail
+	local iccid_fail_num=""
+	local sim_iccid=$(get_sim_iccid)
+	
+	if [[ ${sim_iccid} ]]; then
+		echo ${sim_iccid} > ${iccid_path}
+		iccid_succ_num=$(cat ${iccid_success} 2> /dev/null)
+		((iccid_succ_num++))
+		echo ${iccid_succ_num} > ${iccid_success}
+		logger -t $0 "get iccid=${sim_iccid}"
+	else
+		sim_iccid=$(cat ${iccid_path})
+		iccid_fail_num=$(cat ${iccid_fail} 2> /dev/null)
+		((iccid_fail_num++))
+		echo ${iccid_fail_num} > ${iccid_fail}
+		logger -t $0 "fake iccid=${sim_iccid}"
+	fi
+
+	[[ -z ${sim_iccid} ]] && sim_iccid="INVALID DATA"
+	echo ${sim_iccid}
+}
+
 get_3g_net() {
     local code=$(cat /root/ppp/iccid 2> /dev/null | awk -F '' '{print $5$6}')
     local net=""

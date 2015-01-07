@@ -207,7 +207,7 @@ get_host_sysinfo() {
 	local gps_sn=$(get_gps_sn)
 	local model_Of3g=$(get_model_Of3g)
 	local sn_Of3g=$(get_meid_of3g)
-	local iccid=$(get_iccid)
+	local iccid=$(report_sim_iccid)
 	local hard_version=$(get_hard_version)
 	local firmware_version=$(get_firmware_version)
 	local company_of3g=$(get_company_of3g)
@@ -250,7 +250,7 @@ check_iccid() {
                         iccid_result="INVALID DATA"
                 fi
                 if [[ "${iccid_result}" = "INVALID DATA" ]];then
-                        local iccid_new=$(get_iccid)
+                        local iccid_new=$(report_sim_iccid)
                         cat ${json_file} |jq -r '.iccid |strings' |sed -i "s/INVALID DATA/${iccid_new}/" ${json_file}
                 else
                         break

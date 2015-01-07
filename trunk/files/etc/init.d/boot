@@ -46,16 +46,25 @@ autelan_func() {
 	if [ "$AT_RETURN" ]; then
 		echo "MC271X" > /tmp/3g_model
 		ln -sf /usr/sbin/at_ttyUSB1 /usr/sbin/at_ctrl
-	fi
-	AT_RETURN=$(/bin/cat /sys/kernel/debug/usb/devices  | /bin/grep "Vendor=1c9e ProdID=9e00")
-	if [ "$AT_RETURN" ]; then                                                                            
-		echo "C5300V" > /tmp/3g_model
-		ln -sf /usr/sbin/at_ttyUSB3 /usr/sbin/at_ctrl
+		return
 	fi
 	AT_RETURN=$(cat /sys/kernel/debug/usb/devices | grep "Vendor=1435 ProdID=d111")
 	if [ "$AT_RETURN" ]; then
 		echo "DM111" > /tmp/3g_model
 		ln -sf /usr/sbin/at_ttyUSB1 /usr/sbin/at_ctrl
+		return
+	fi
+	AT_RETURN=$(cat /sys/kernel/debug/usb/devices | grep "Vendor=05c6 ProdID=9000")
+        if [ "$AT_RETURN" ]; then
+                echo "SIM6320C" > /tmp/3g_model
+                ln -sf /usr/sbin/at_ttyUSB3 /usr/sbin/at_ctrl
+        	return
+	fi
+	AT_RETURN=$(/bin/cat /sys/kernel/debug/usb/devices  | /bin/grep "Vendor=1c9e ProdID=9e00")
+	if [ "$AT_RETURN" ]; then                                                                            
+		echo "C5300V" > /tmp/3g_model
+		ln -sf /usr/sbin/at_ttyUSB3 /usr/sbin/at_ctrl
+		return
 	fi
 }
 
