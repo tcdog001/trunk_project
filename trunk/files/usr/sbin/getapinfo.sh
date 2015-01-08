@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /sbin/autelan_functions.sh
+
 get_device_company() {
 	device_company=$(partool -part mtd7 -show product.vendor 2>/dev/null)
 	if [[ -z "${device_company}" ]];then
@@ -94,34 +96,6 @@ get_Operators() {
 	echo "CTCC"
 }
 
-get_company_of3g() {
-	host_company_of3g=$(at_ctrl AT+CGMI |awk -F '"' '/ZT/{print $0}' |sed -n '1p' 2>/dev/null)
-	if [[ -z "${host_company_of3g}" ]];then
-		host_company_of3g=$(at_ctrl AT+CGMI |awk -F '"' '/ZT/{print $0}' |sed -n '1p' 2>/dev/null)
-		if [[ -z "${host_company_of3g}" ]];then
-			host_company_of3g=$(at_ctrl AT+CGMI |awk -F '"' '/ZT/{print $0}' |sed -n '1p' 2>/dev/null)
-			if [[ -z "${host_company_of3g}" ]];then
-				host_company_of3g="INVALID DATA"
-			fi
-		fi
-	fi
-	echo "${host_company_of3g}"
-}
-
-get_meid_of3g() {
-	host_meid_of3g=$(at_ctrl at^meid | awk -F '0x' '/0x/{print $2}'| sed -n '1p' 2>/dev/null)
-	if [[ -z "${host_meid_of3g}" ]];then
-		host_meid_of3g=$(at_ctrl at^meid | awk -F '0x' '/0x/{print $2}'| sed -n '1p' 2>/dev/null)
-		if [[ -z "${host_meid_of3g}" ]];then
-			host_meid_of3g=$(at_ctrl at^meid | awk -F '0x' '/0x/{print $2}'| sed -n '1p' 2>/dev/null)
-			if [[ -z "${host_meid_of3g}" ]];then
-				host_meid_of3g="INVALID DATA"
-			fi
-		fi
-	fi
-	echo "${host_meid_of3g}"
-}
-
 get_imsi_of3g() {
 	host_imsi_of3g=$(at_ctrl AT+CIMI |sed -n '4p' 2>/dev/null)
 	if [[ -z "${host_imsi_of3g}" ]];then
@@ -139,7 +113,7 @@ get_imsi_of3g() {
 get_model_Of3g() {
 	host_model_Of3g=$(cat /tmp/3g_model 2>/dev/null)
 	if [[ -z "${host_model_Of3g}" ]];then
-		host_model_Of3g=$(at_ctrl AT+CGMM | awk  -F '''/MC/{print $0}' 2>/dev/null)
+		host_model_Of3g=$(at_ctrl AT+CGMM | awk  -F '' '/MC/{print $0}' 2>/dev/null)
 		if [[ -z "${host_model_Of3g}" ]];then
 			host_model_Of3g="INVALID DATA"
 		fi
@@ -206,12 +180,12 @@ get_host_sysinfo() {
 	local gps_model=$(get_gps_model)
 	local gps_sn=$(get_gps_sn)
 	local model_Of3g=$(get_model_Of3g)
-	local sn_Of3g=$(get_meid_of3g)
 	local iccid=$(report_sim_iccid)
 	local hard_version=$(get_hard_version)
 	local firmware_version=$(get_firmware_version)
 	local company_of3g=$(get_company_of3g)
-	local meid_of3g=$(get_meid_of3g)	
+	local meid_of3g=$(report_meid_of3g)	
+	local sn_Of3g=${meid_of3g}
 	local Operators=$(get_Operators)	
 
 	printf '{"hostCompany":"%s","hostModel":"%s","hostsn":"%s","mac":"%s","cpuModel":"%s","cpuSN":"%s","memoryModel":"%s","memorySN":"%s","boardSN":"%s","networkCardMac":"%s","lowFreModel":"%s","lowFreSN":"%s","hignFreModel":"%s","hignFreSN":"%s","gpsModel":"%s","gpsSN":"%s","MEID_3g":"%s","Company_3g":"%s","modelOf3g":"%s","snOf3g":"%s","iccid":"%s","Operators":"%s","hardVersion":"%s","firmwareVersion":"%s"}\n' \
@@ -269,7 +243,7 @@ check_meid() {
                         iccid_result="INVALID DATA"
                 fi
                 if [[ "${meid_result}" == "INVALID DATA" ]];then
-                        local meid_new=$(get_meid_of3g)
+                        local meid_new=$(report_meid_of3g)
                         cat ${json_file} |jq -r '.MEID_3g |strings' |sed -i "s/INVALID DATA/${meid_new}/" ${json_file}
                         cat ${json_file} |jq -r '.snOf3g |strings' |sed -i "s/INVALID DATA/${meid_new}/" ${json_file}
                 else

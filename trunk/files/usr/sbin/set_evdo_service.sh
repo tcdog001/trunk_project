@@ -1,63 +1,35 @@
 #!/bin/bash
 
 . /sbin/autelan_functions.sh
-localstring=network.evdo.service
 
-get_service() {
-	local string=${localstring}
-	local result=$(uci get ${string} 2> /dev/null)
-
-	echo ${result}
-}
-set_service() {
-	local string=${localstring}
-	local service=$1
-
-	echo "$0: set network.interface.service=${service}"
-	uci set ${string}=${service}
-}
-commit_service() {
-	local string=${localstring}
-	local service=$1
-
-	uci commit ${string}=${service}
-}
-set_interface_service() {
-	local service=$1
-
-	echo "$0: down up interface evdo"
-	ubus call network.interface.evdo down
-	set_service ${service}
-	ubus call network.interface.evdo up
-}
 main() {
 	local net=""
 	local service=""
+	local device=""
+	local model_3g=""
+	local operation=0
+	local operation1=0
+	local string_service=network.evdo.service
+	local string_device=network.evdo.device
 
 	net=$(get_3g_net)
-	if [[ -z "${net}" ]]; then
-		echo "$0: cannot get iccid"
-		exit
-        fi
-	service=$(get_service)
-	if [[ -z "${service}" ]]; then
-		echo "$0: no such entry: ${localstring}"
-		exit
-	else
-		echo "$0: get network.interface.service=${service}"
-	fi
+	[[ -z "${net}" ]] && $(exit_log $0 "cannot get iccid")
+	model_3g=$(get_3g_model)
+	[[ -z "${model_3g}" ]] && $(exit_log $0 "cannot get 3g model")
 
 	if [[ ${net} == "WCDMA" || ${net} == "GSM/TD-SCDMA" || ${net} == "TD-SCDMA" ]]; then
-		if [[ ${service} != "umts" ]]; then
-			set_interface_service umts
-			commit_service ${service}
-		fi
+		set_option_value ${string_service} umts; operation=$?
+	elif [[ ${net} == "CDMA2000" ]]; then
+		set_option_value ${string_service} evdo; operation=$?
 	fi
-	if [[ ${net} == "CDMA2000" ]]; then
-		if [[ ${service} != "evdo" ]]; then
-                        set_interface_service evdo
-			commit_service ${service}
-		fi
+	if [[ ${model_3g} == SIM6320C ]]; then
+		set_option_value ${string_device} "/dev/ttyUSB2"; operation1=$?
+	else
+		set_option_value ${string_device} "/dev/ttyUSB0"; operation1=$?
+	fi
+	if [[ ${operation} -eq 1 || ${operation1} -eq 1 ]]; then
+		commit_option_value ${string_service}
+		/etc/init.d/network reload
 	fi
 }
 
