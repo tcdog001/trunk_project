@@ -95,7 +95,7 @@ str_systemlog_ap() {
     jsonstr=$(add_json_string "wifi58" "$(get_wifi wlan1)" "${jsonstr}")
     jsonstr=$(add_json_string "3G_net" "$(get_3g_net)" "${jsonstr}")
     jsonstr=$(add_json_string "3g_strong" "$(get_hdrcsq)" "${jsonstr}")
-    jsonstr=$(add_json_string "sim-iccid" "$(report_sim_iccid)" "${jsonstr}")
+    jsonstr=$(add_json_string "sim-iccid" "$(get_iccid)" "${jsonstr}")
 
     [[ ${jsonstr} ]] && echo ${jsonstr}
 }

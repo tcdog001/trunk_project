@@ -7,6 +7,9 @@
 /bin/mkdir -p /root/usr
 dmesg_syslogd.sh &
 
+# get iccid
+do_get_iccid.sh &
+
 # delay off gpio
 /bin/echo 17 > /sys/class/gpio/export
 

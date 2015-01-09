@@ -19,6 +19,7 @@ readonly DMESGPATH=/root/log/init
 readonly SYSLOGDPATH=/root/log/ulog
 readonly LASTSYNTIME=/root/log/ulog/timesyn
 readonly SYNTIME=/tmp/timesyn
+readonly ICCID_PATH=/root/ppp/iccid
 
 ppp_json_string() {
 	local time=$(get_time)
@@ -164,6 +165,9 @@ get_sim_iccid() {
 	esac
 	echo ${sim_iccid}
 }
+get_iccid() {
+	cat ${ICCID_PATH}
+}
 get_hdrcsq() {
 	local model=$(get_3g_model)
 	local hdrcsq=""
@@ -208,7 +212,6 @@ report_meid_of3g() {
 	echo ${meid}
 }
 report_sim_iccid() {
-	local iccid_path=/root/ppp/iccid
 	local iccid_success=/root/ppp/iccid_success
 	local iccid_succ_num=""
 	local iccid_fail=/root/ppp/iccid_fail
@@ -216,13 +219,13 @@ report_sim_iccid() {
 	local sim_iccid=$(get_sim_iccid)
 	
 	if [[ ${sim_iccid} ]]; then
-		echo ${sim_iccid} > ${iccid_path}
+		echo ${sim_iccid} > ${ICCID_PATH}
 		iccid_succ_num=$(cat ${iccid_success} 2> /dev/null)
 		((iccid_succ_num++))
 		echo ${iccid_succ_num} > ${iccid_success}
 		logger -t $0 "get iccid=${sim_iccid}"
 	else
-		sim_iccid=$(cat ${iccid_path} 2> /dev/null)
+		sim_iccid=$(cat ${ICCID_PATH} 2> /dev/null)
 		iccid_fail_num=$(cat ${iccid_fail} 2> /dev/null)
 		((iccid_fail_num++))
 		echo ${iccid_fail_num} > ${iccid_fail}

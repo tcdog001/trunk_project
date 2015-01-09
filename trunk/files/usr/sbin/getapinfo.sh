@@ -135,20 +135,6 @@ get_sn_Of3g() {
 	echo "${host_sn_Of3g}"
 }
 
-get_iccid() {
-	host_iccid=$(at_ctrl at+zgeticcid | awk -F ' ' '/ZGETICCID/{print $2}' |sed -n '1p' 2>/dev/null)
-	if [[ -z "${host_iccid}" ]];then
-		host_iccid=$(at_ctrl at+zgeticcid | awk -F ' ' '/ZGETICCID/{print $2}' |sed -n '1p' 2>/dev/null)
-		if [[ -z "${host_iccid}" ]];then
-			host_iccid=$(at_ctrl at+zgeticcid | awk -F ' ' '/ZGETICCID/{print $2}' |sed -n '1p' 2>/dev/null)
-			if [[ -z "${host_iccid}" ]];then
-				host_iccid="INVALID DATA"
-			fi
-		fi
-	fi
-	echo "${host_iccid}"
-}
-
 get_hard_version() {
 	hardVersion_major=$(echo ${host_sn} | awk -F '' '{print $10}')
 	hardVersion_minor=$(echo ${host_sn} | awk -F '' '{print $11$12}')
@@ -180,7 +166,7 @@ get_host_sysinfo() {
 	local gps_model=$(get_gps_model)
 	local gps_sn=$(get_gps_sn)
 	local model_Of3g=$(get_model_Of3g)
-	local iccid=$(report_sim_iccid)
+	local iccid=$(get_iccid)
 	local hard_version=$(get_hard_version)
 	local firmware_version=$(get_firmware_version)
 	local company_of3g=$(get_company_of3g)
@@ -224,7 +210,7 @@ check_iccid() {
                         iccid_result="INVALID DATA"
                 fi
                 if [[ "${iccid_result}" = "INVALID DATA" ]];then
-                        local iccid_new=$(report_sim_iccid)
+                        local iccid_new=$(get_iccid)
                         cat ${json_file} |jq -r '.iccid |strings' |sed -i "s/INVALID DATA/${iccid_new}/" ${json_file}
                 else
                         break
