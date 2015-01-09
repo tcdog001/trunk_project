@@ -34,7 +34,7 @@ json_string() {
 	local ACCESS=$(/bin/cat $PPPTMPPATH/access)
 	local STTIME=$(/bin/cat $PPPTMPPATH/starttime)
 	local EDTIME=$(/bin/cat $PPPTMPPATH/endtime)
-	local DBM=$(/usr/sbin/at_ctrl at^hdrcsq | /usr/bin/awk -F ':' '/HDRCSQ/{print $2}')
+	local DBM=$(get_hdrcsq)
 	local CSQ=$(/usr/sbin/at_ctrl at+csq | /usr/bin/awk -F ':' '/CSQ/{print $2}' | /usr/bin/awk -F ',' '{print $1}')
 
 	JSstring={\"type\":\"CDMA\",\"recordtime\":\"$NOWTIME\",\"starttime\":\"$STTIME\",\"endtime\":\"$EDTIME\",\"dialcount\":\"$DCOUNT\",\"resetcount\":\"$RCOUNT\",\"access\":\"$ACCESS\",\"dbm\":\"$DBM\",\"csq\":\"$CSQ\"}

@@ -19,6 +19,7 @@ readonly DMESGPATH=/root/log/init
 readonly SYSLOGDPATH=/root/log/ulog
 readonly LASTSYNTIME=/root/log/ulog/timesyn
 readonly SYNTIME=/tmp/timesyn
+readonly ICCID_PATH=/root/ppp/iccid
 
 ppp_json_string() {
 	local time=$(get_time)
@@ -136,15 +137,200 @@ tftp_RtoM() {
 	fi
 }
 
-get_3g_net() {
-    local code=$(cat /root/ppp/iccid 2> /dev/null | awk -F '' '{print $5$6}')
-    local net=""
-    
-    [[ "${code}" = "01" ]] && net=WCDMA
-    [[ "${code}" = "03" ]] && net=CDMA2000
-    [[ "${code}" = "00" ]] && net=GSM/TD-SCDMA
-    [[ "${code}" = "02" ]] && net=GSM/TD-SCDMA
-    [[ "${code}" = "07" ]] && net=TD-SCDMA
-    echo ${net}
+get_3g_model() {
+	local model=$(cat /tmp/3g_model 2> /dev/null)
+	echo ${model}
 }
 
+get_sim_iccid() {
+	local model=$(get_3g_model)
+	local sim_iccid=""
+
+	case ${model} in
+		"C5300V")
+			sim_iccid=$(at_ctrl at+iccid | awk '/SCID:/{print $2}' 2> /dev/null)			
+			;;
+		"DM111")
+			sim_iccid=$(at_ctrl at+iccid | awk '/ICCID:/{print $2}' 2> /dev/null)
+			;;
+		"SIM6320C")
+			sim_iccid=$(at_ctrl at+ciccid | awk '/ICCID:/{print $2}' 2> /dev/null)
+			;;
+		"MC271X")
+			sim_iccid=$(at_ctrl at+zgeticcid | awk '/ZGETICCID/{print $2}' 2> /dev/null)
+			;;
+		*)
+			logger -t $0 "Model=${model} Not Support" 
+			;;
+	esac
+	echo ${sim_iccid}
+}
+get_iccid() {
+	cat ${ICCID_PATH}
+}
+get_hdrcsq() {
+	local model=$(get_3g_model)
+	local hdrcsq=""
+
+	case ${model} in
+		"SIM6320C")
+			hdrcsq=$(at_ctrl at^hdrcsq |awk -F ': ' '/hdrcsq/{print $2}' 2>/dev/null)
+			;;
+		*)
+			hdrcsq=$(at_ctrl at^hdrcsq |awk -F ':' '/HDRCSQ/{print $2}' 2>/dev/null)
+			;;
+	esac
+	echo ${hdrcsq}
+}
+get_meid_of3g() {
+	local model=$(get_3g_model)
+	local meid=""
+	
+	case ${model} in
+		"SIM6320C")
+			meid=$(at_ctrl ati | awk -F ': 0x' '/MEID/{print $2}' 2>/dev/null)
+			;;
+		*)
+			meid=$(at_ctrl at^meid | awk -F '0x' '/0x/{print $2}'| sed -n '1p' 2>/dev/null)
+			;;
+	esac
+	echo ${meid}
+}
+report_meid_of3g() {
+	local meid_path=/root/ppp/meid
+	local meid=$(get_meid_of3g)
+	
+	if [[ ${meid} ]]; then
+		echo ${meid} > ${meid_path}
+		logger -t $0 "get meid=${meid}"
+	else
+		meid=$(cat ${meid_path} 2> /dev/null)
+		logger -t $0 "fake meid=${meid}"
+	fi
+
+	[[ -z ${meid} ]] && meid="INVALID DATA"
+	echo ${meid}
+}
+report_sim_iccid() {
+	local iccid_success=/root/ppp/iccid_success
+	local iccid_succ_num=""
+	local iccid_fail=/root/ppp/iccid_fail
+	local iccid_fail_num=""
+	local sim_iccid=$(get_sim_iccid)
+	
+	if [[ ${sim_iccid} ]]; then
+		echo ${sim_iccid} > ${ICCID_PATH}
+		iccid_succ_num=$(cat ${iccid_success} 2> /dev/null)
+		((iccid_succ_num++))
+		echo ${iccid_succ_num} > ${iccid_success}
+		logger -t $0 "get iccid=${sim_iccid}"
+	else
+		sim_iccid=$(cat ${ICCID_PATH} 2> /dev/null)
+		iccid_fail_num=$(cat ${iccid_fail} 2> /dev/null)
+		((iccid_fail_num++))
+		echo ${iccid_fail_num} > ${iccid_fail}
+		logger -t $0 "fake iccid=${sim_iccid}"
+	fi
+
+	[[ -z ${sim_iccid} ]] && sim_iccid="INVALID DATA"
+	echo ${sim_iccid}
+}
+get_company_of3g() {
+	local model=$(get_3g_model)
+	local company_of3g=""
+
+	case ${model} in
+		"DM111")
+			company_of3g="Wistron NeWeb Corp."
+			;;
+		"SIM6320C")
+			company_of3g="SIMCOM INCORPORATED"
+			;;
+		"MC271X")
+			company_of3g="ZTEMT INCORPORATED"
+			;;
+		*)
+			#company_of3g=$(at_ctrl AT+CGMI 2> /dev/null)
+			logger -t $0 "Model=${model} Not Support" 
+			;;
+	esac
+	echo ${company_of3g}
+}
+get_3g_net() {
+	local sim_iccid=$(report_sim_iccid)
+	local code=$(echo ${sim_iccid} | awk -F '' '{print $5$6}')
+	local net=""
+	
+	[[ "${code}" = "01" ]] && net=WCDMA
+	[[ "${code}" = "03" ]] && net=CDMA2000
+	[[ "${code}" = "00" ]] && net=GSM/TD-SCDMA
+	[[ "${code}" = "02" ]] && net=GSM/TD-SCDMA
+	[[ "${code}" = "07" ]] && net=TD-SCDMA
+	echo ${net}
+}
+#
+# $1: option
+#
+get_option_value() {
+	local option=$1
+	local result=$(uci get ${option} 2> /dev/null)
+	
+	echo ${result}
+}
+#
+# $1: option
+# $2: value to be checked
+#
+check_option_value() {
+	local option=$1
+	local value=$2
+	local value_get=$(get_option_value ${option})
+	
+	[[ -z ${option} || -z ${value} || -z ${value_get} ]] && return 0
+	if [[ ${value} == ${value_get} ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+#
+# $1: option
+# $2: value
+#
+set_option_value() {
+	local option=$1
+	local value=$2
+	local check=0
+	local cmd="uci set ${option}=${value}"
+	
+	[[ -z ${option} || -z ${value} ]] && return 0
+	check_option_value ${option} ${value}; check=$?
+	if [[ ${check} -eq 1 ]]; then
+		logger -t $0 ${cmd}
+		${cmd}
+		return 1
+	else
+		return 0
+	fi
+}
+#
+# $1: [<config>]
+#
+commit_option_value() {
+	local config=$1
+	local cmd="uci commit ${config}"
+	
+	logger -t $0 ${cmd}
+	${cmd}
+}
+#
+# $1: log tag name
+# $2: log content
+#
+exit_log() {
+	local script=$1; shift 1
+	local string="$@"
+	
+	logger -t ${script} ${string}
+	exit
+}

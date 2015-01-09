@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /sbin/autelan_functions.sh
+
 get_cpu_Frequency() {
 	cpuFrequency=$(cat /proc/cpuinfo |awk -F ':' '/BogoMIPS/{print $2}')
 	if [[ -z "${cpuFrequency}" ]];then
@@ -164,7 +166,7 @@ get_3G_Connection() {
 }
 
 get_3G_Signal() {
-	Signal3G=$(at_ctrl at^hdrcsq |awk -F ':' '/HDRCSQ/{print $2}')
+	Signal3G=$(get_hdrcsq)
 	if [[ -z "${Signal3G}" ]];then
 		Signal3G="0"
 	fi
