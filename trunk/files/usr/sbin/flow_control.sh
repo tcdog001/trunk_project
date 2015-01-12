@@ -33,7 +33,7 @@ usr_flow_control() {
 	
 	if [ -z ${flow_limit} ] || [ -z ${flow_stop} ] || [ -z ${flow} ]; then
 		echo "please enter 3 flow"
-		exit
+		return
 	fi
 	
 	if [ ${flow} -gt ${flow_limit} ]; then
@@ -72,7 +72,7 @@ main() {
 			cat ${STOP_LIST} | grep "${usr_ip},"; local stop_state=$?
 			#if [ ${limit_state} -ne 0 ] && [ ${stop_state} -ne 0 ]; then
 			if [ ${stop_state} -ne 0 ]; then
-				usr_flow_control "${usr_ip}" "${flow_limit}" "${flow_stop}" "${limit_download}" "${limit_mdownload}" ""
+				usr_flow_control "${usr_ip}" "${flow_limit}" "${flow_stop}" "${limit_download}" "${limit_mdownload}"
 			fi
 		done
 		sleep 300
