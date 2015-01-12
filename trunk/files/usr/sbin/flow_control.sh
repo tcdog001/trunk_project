@@ -19,7 +19,7 @@ change_usr_speed() {
 stop_usr() {
 	local usr_ip=$1
 	local ip=$(echo ${usr_ip} | awk -F '.' '{print $4}')
-	tc class change dev eth0 parent 10: classid 10:5${ip} htb rate 1bps ceil 1bps
+	tc class change dev eth0 parent 10: classid 10:5${ip} htb rate 1kbps ceil 1kbps
 	echo "stop ${usr_ip}"
 }
 
