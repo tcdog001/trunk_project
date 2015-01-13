@@ -56,8 +56,8 @@ do_get_iccid.sh &
 # monitor ap in every 5 mins
 /sbin/systemlog_ap.sh &
 
-# set evdo service
-/usr/sbin/set_evdo_service.sh &
+# set evdo\wireless\lms and others about oem
+/usr/sbin/set_oem_service.sh &
 
 # usr connlimit
 /usr/sbin/set_connlimit.sh
