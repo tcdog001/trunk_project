@@ -7,6 +7,14 @@
 DEBUG_LOG_LOCAL=/dev/null
 
 #
+# default custom parameters
+#
+readonly DEF_SSID1=9797168.com
+readonly DEF_SSID0=config.${DEF_SSID1}
+readonly DEF_LMS=atbus.autelan.com
+readonly DEF_PORTAL=9797168.com
+
+#
 # ppp log path
 #
 readonly PPPPATH=/root/ppp
@@ -20,6 +28,14 @@ readonly SYSLOGDPATH=/root/log/ulog
 readonly LASTSYNTIME=/root/log/ulog/timesyn
 readonly SYNTIME=/tmp/timesyn
 readonly ICCID_PATH=/root/ppp/iccid
+
+readonly INTERFACE_3G_FIREWALL_FLAG=/tmp/.evdo
+delete_3g_firewall_flag() {
+	rm ${INTERFACE_3G_FIREWALL_FLAG}
+}
+create_3g_firewall_flag() {
+	touch ${INTERFACE_3G_FIREWALL_FLAG}
+}
 
 ppp_json_string() {
 	local time=$(get_time)
@@ -333,4 +349,24 @@ exit_log() {
 	
 	logger -t ${script} ${string}
 	exit
+}
+#
+# $1: key
+# $2: value; shift 2
+# $@: json string
+#
+add_json_string() {
+	local key="$1"
+	local value="$2"; shift 2
+	local str_old="$@"
+	local str_new="\"${key}\":\"${value}\""
+	local str_entirety
+	
+	if [[ ${str_old} ]]; then
+		str_entirety="${str_old},${str_new}"
+	else
+		str_entirety=${str_new}
+	fi                                      
+
+	echo ${str_entirety}
 }

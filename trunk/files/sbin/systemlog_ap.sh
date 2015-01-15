@@ -62,27 +62,6 @@ get_wifi() {
 }
 
 #
-# $1: key
-# $2: value; shift 2
-# $@: json string
-#
-add_json_string() {
-    local key="$1"
-    local value="$2"; shift 2
-    local str_old="$@"
-    local str_new="\"${key}\":\"${value}\""
-    local str_entirety
-
-    if [[ ${str_old} ]]; then
-        str_entirety="${str_old},${str_new}"
-    else
-        str_entirety=${str_new}
-    fi
-
-    echo ${str_entirety}
-}
-
-#
 # $@: json string
 #
 str_systemlog_ap() {

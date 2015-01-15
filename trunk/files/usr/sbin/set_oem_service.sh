@@ -1,12 +1,10 @@
 #!/bin/bash
 
 . /sbin/autelan_functions.sh
-def_ssid1=9797168.com
-def_ssid0=config.${def_ssid1}
 
-get_oem_ssid() {
+get_part_mtd7() {
 	local ssid=""
-	local ssid_str=oem.ssid
+	local ssid_str=$1
 
 	ssid=$(partool -part mtd7 -show ${ssid_str})
 	[[ "${ssid}" == "${ssid_str} not exist" ]] && ssid=""
@@ -24,26 +22,26 @@ check_wireless_ssid() {
 	local value=""
 	local i=0
 
-	oem_ssid=$(get_oem_ssid)
+	oem_ssid=$(get_part_mtd7 oem.ssid)
 	if [[ "${oem_ssid}" ]]; then
 		ssid0=config.${oem_ssid}
 		ssid1=${oem_ssid}	
 	else
-		ssid0=${def_ssid0}
-		ssid1=${def_ssid1}
+		ssid0=${DEF_SSID0}
+		ssid1=${DEF_SSID1}
 	fi
-	echo "ssid0=${ssid0}, ssid1=${ssid1}"
+	echo "$0: ssid0=${ssid0}, ssid1=${ssid1}" >> ${DEBUG_LOG_LOCAL}
 
 	i=0
 	uci show wireless | sed -n 's/=/ /g;/ssid/p' > ${tmp}
 	while read option value; do
 		if [[ ${i} = 0 ]]; then
-			echo "${i}, opt=${option}, old=${value}, new=${ssid0}"
+			echo "$0: ${i}, opt=${option}, old=${value}, new=${ssid0}" >> ${DEBUG_LOG_LOCAL}
 			if [[ ${ssid0} != ${value} ]]; then
 				set_option_value ${option} ${ssid0}; operation=$?
 			fi
 		else
-			echo "${i}, opt=${option}, old=${value}, new=${ssid1}"
+			echo "$0: ${i}, opt=${option}, old=${value}, new=${ssid1}" >> ${DEBUG_LOG_LOCAL}
 			if [[ ${ssid1} != ${value} ]]; then
 				set_option_value ${option} ${ssid1}; operation=$?
 			fi
@@ -92,17 +90,40 @@ check_evdo_service() {
 	return 0
 }
 
+check_md_service() {
+	local jsonstr=""
+	local oem_lms=""
+	local oem_portal=""
+
+	oem_lms=$(get_part_mtd7 oem.lms)
+	oem_portal=$(get_part_mtd7 oem.portal)
+	echo "$0: get oem.lms=${oem_lms}, oem.portal=${oem_portal}" >> ${DEBUG_LOG_LOCAL}
+
+	if [[ ${oem_lms} || ${oem_portal} ]]; then
+		jsonstr=$(add_json_string "lms" "${oem_lms}" "${jsonstr}")
+		jsonstr=$(add_json_string "portal" "${oem_portal}" "${jsonstr}")
+		/etc/jsock/jmsg.sh asyn oem_service { ${jsonstr} }
+		echo "/etc/jsock/jmsg.sh asyn oem_service { ${jsonstr} }"
+		return 1
+	fi
+	return 0
+}
+
 main() {
 	local operation1=0
 	local operation2=0
+	local operation3=0
 
-	check_evdo_service; operation1=$?
+	check_md_service; operation3=$?
 	check_wireless_ssid; operation2=$?
+	check_evdo_service; operation1=$?
 	
 	if [[ ${operation1} -eq 1 || ${operation2} -eq 1 ]]; then
+		delete_3g_firewall_flag	
 		/etc/init.d/network reload
+		return 0
 	fi
-
+	return 1
 }
 
 main "$@"
