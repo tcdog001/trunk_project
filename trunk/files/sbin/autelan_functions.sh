@@ -295,11 +295,11 @@ get_option_value() {
 }
 #
 # $1: option
-# $2: value to be checked
+# $2-$#: value to be checked
 #
 check_option_value() {
-	local option=$1
-	local value=$2
+	local option=$1; shift 1
+	local value="$@"
 	local value_get=$(get_option_value ${option})
 	
 	[[ -z ${option} || -z ${value} || -z ${value_get} ]] && return 0
@@ -311,19 +311,19 @@ check_option_value() {
 }
 #
 # $1: option
-# $2: value
+# $2-$#: value to be set
 #
 set_option_value() {
-	local option=$1
-	local value=$2
+	local option=$1; shift 1
+	local value="$@"
 	local check=0
-	local cmd="uci set ${option}=${value}"
+	local cmd="uci set ${option}=\"${value}\""
 	
 	[[ -z ${option} || -z ${value} ]] && return 0
 	check_option_value ${option} ${value}; check=$?
 	if [[ ${check} -eq 1 ]]; then
 		logger -t $0 ${cmd}
-		${cmd}
+		eval ${cmd}
 		return 1
 	else
 		return 0
