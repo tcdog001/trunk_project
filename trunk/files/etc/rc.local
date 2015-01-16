@@ -42,10 +42,6 @@ do_get_iccid.sh &
 # this is upload OFF&VCC log
 /sbin/upload_tftp.sh &
 
-# traffic control
-#/usr/sbin/set_tc_3g.sh
-#/usr/sbin/set_tc_local.sh
-
 # From power began to wait 12 hours
 /sbin/auto_reboot_ap.sh &
 
@@ -59,13 +55,17 @@ do_get_iccid.sh &
 # monitor ap in every 5 mins
 /sbin/systemlog_ap.sh &
 
+# traffic control
+/usr/sbin/set_tc_3g.sh
+/usr/sbin/set_tc_local.sh
+
 # usr connlimit
-#/usr/sbin/set_connlimit.sh
+/usr/sbin/set_connlimit.sh
 
 # usr flow report
 /usr/sbin/get_usr_flow.sh &
 
 # usr flow limit limit stop
-#/usr/sbin/flow_control.sh 52428800 104857600 &
+/usr/sbin/flow_control.sh 52428800 104857600 &
 
 exit 0
