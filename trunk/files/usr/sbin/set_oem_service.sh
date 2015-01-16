@@ -98,12 +98,12 @@ check_md_service() {
 	oem_lms=$(get_part_mtd7 oem.lms)
 	oem_portal=$(get_part_mtd7 oem.portal)
 	echo "$0: get oem.lms=${oem_lms}, oem.portal=${oem_portal}" >> ${DEBUG_LOG_LOCAL}
+	echo "oem.lms=${oem_lms}, oem.portal=${oem_portal}" > ${OEM_MD_FLAG}
 
 	if [[ ${oem_lms} || ${oem_portal} ]]; then
 		jsonstr=$(add_json_string "lms" "${oem_lms}" "${jsonstr}")
 		jsonstr=$(add_json_string "portal" "${oem_portal}" "${jsonstr}")
 		/etc/jsock/jmsg.sh asyn oem_service { ${jsonstr} }
-		echo "{ ${jsonstr} }" > ${OEM_MD_FLAG}
 		return 1
 	fi
 	return 0
