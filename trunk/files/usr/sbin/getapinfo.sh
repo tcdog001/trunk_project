@@ -241,7 +241,13 @@ check_meid() {
 }
 
 main() {
-        sleep 30
+	local err=1
+	while :
+	do
+		ls ${OEM_MD_FLAG}; err=$?
+		[[ $err = 0 ]] && break
+		sleep 3
+	done
         local json_file=/tmp/apinfo.json
         get_host_sysinfo >${json_file}
 

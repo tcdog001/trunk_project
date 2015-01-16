@@ -103,7 +103,7 @@ check_md_service() {
 		jsonstr=$(add_json_string "lms" "${oem_lms}" "${jsonstr}")
 		jsonstr=$(add_json_string "portal" "${oem_portal}" "${jsonstr}")
 		/etc/jsock/jmsg.sh asyn oem_service { ${jsonstr} }
-		echo "/etc/jsock/jmsg.sh asyn oem_service { ${jsonstr} }"
+		echo "{ ${jsonstr} }" > ${OEM_MD_FLAG}
 		return 1
 	fi
 	return 0

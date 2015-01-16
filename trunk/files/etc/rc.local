@@ -27,6 +27,9 @@ do_get_iccid.sh &
 # this is for xinetd and json
 /etc/jsock/jsock_init.sh
 
+# set evdo\wireless\lms and others about oem
+/usr/sbin/set_oem_service.sh &
+
 # this is for gps report
 /sbin/upload_gps.sh &
 
@@ -55,9 +58,6 @@ do_get_iccid.sh &
 
 # monitor ap in every 5 mins
 /sbin/systemlog_ap.sh &
-
-# set evdo\wireless\lms and others about oem
-/usr/sbin/set_oem_service.sh &
 
 # usr connlimit
 /usr/sbin/set_connlimit.sh
