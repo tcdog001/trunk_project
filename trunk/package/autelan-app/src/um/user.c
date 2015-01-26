@@ -595,8 +595,6 @@ __um_user_dump(struct apuser *user, char *action)
 {
     os_println("=====%s user begin======", action);
 
-	printf( " __um_user_dump vap addr : %02x:%02x:%02x:%02x:%02x:%02x\n",user->vap[0],user->vap[1] ,user->vap[2] ,user->vap[3] ,user->vap[4] ,user->vap[5]);
-
 #define __dump(_fmt, args...)   os_println(__tab _fmt, ##args)
     __dump("ap          = %s",  os_macstring(user->ap));
     __dump("vap         = %s",  os_macstring(user->vap));
