@@ -39,24 +39,30 @@ pushuser(struct apuser *user, bool init, char *name, char *reason)
 	um_user_add_u32(UM_USER_WIFI_SIGNAL, user->wifi.signal);
 	um_user_add_u32(UM_USER_WIFI_ONLINELIMIT, user->wifi.onlinelimit);
 	um_user_add_u64(UM_USER_WIFI_UPFLOWTOTAL, user->wifi.up.flowtotal);
+	um_user_add_u64(UM_USER_WIFI_UPFLOWCACHE, user->wifi.up.flowcache);
 	um_user_add_u64(UM_USER_WIFI_UPFLOWLIMIT, user->wifi.up.flowlimit);
 	um_user_add_u32(UM_USER_WIFI_UPRATELIMIT, user->wifi.up.ratelimit);
 	um_user_add_u64(UM_USER_WIFI_DOWNFLOWTOTAL, user->wifi.down.flowtotal);
+	um_user_add_u64(UM_USER_WIFI_DOWNFLOWCACHE, user->wifi.down.flowcache);
 	um_user_add_u64(UM_USER_WIFI_DOWNFLOWLIMIT, user->wifi.down.flowlimit);
 	um_user_add_u32(UM_USER_WIFI_DOWNRATELIMIT, user->wifi.down.ratelimit);
 	um_user_add_u64(UM_USER_WIFI_ALLFLOWTOTAL, user->wifi.all.flowtotal);
+	um_user_add_u64(UM_USER_WIFI_ALLFLOWCACHE, user->wifi.all.flowcache);
 	um_user_add_u64(UM_USER_WIFI_ALLFLOWLIMIT, user->wifi.all.flowlimit);
 	um_user_add_u32(UM_USER_WIFI_ALLRATELIMIT, user->wifi.all.ratelimit);
 	
 	um_user_add_u32(UM_USER_AUTH_UPTIME, user->auth.uptime);
 	um_user_add_u32(UM_USER_AUTH_ONLINELIMIT, user->auth.onlinelimit);
 	um_user_add_u64(UM_USER_AUTH_UPFLOWTOTAL, user->auth.up.flowtotal);
+	um_user_add_u64(UM_USER_AUTH_UPFLOWCACHE, user->auth.up.flowcache);
 	um_user_add_u64(UM_USER_AUTH_UPFLOWLIMIT, user->auth.up.flowlimit);
 	um_user_add_u32(UM_USER_AUTH_UPRATELIMIT, user->auth.up.ratelimit);
 	um_user_add_u64(UM_USER_AUTH_DOWNFLOWTOTAL, user->auth.down.flowtotal);
+	um_user_add_u64(UM_USER_AUTH_DOWNFLOWCACHE, user->auth.down.flowcache);
 	um_user_add_u64(UM_USER_AUTH_DOWNFLOWLIMIT, user->auth.down.flowlimit);
 	um_user_add_u32(UM_USER_AUTH_DOWNRATELIMIT, user->auth.down.ratelimit);
 	um_user_add_u64(UM_USER_AUTH_ALLFLOWTOTAL, user->auth.all.flowtotal);
+	um_user_add_u64(UM_USER_AUTH_ALLFLOWCACHE, user->auth.all.flowcache);
 	um_user_add_u64(UM_USER_AUTH_ALLFLOWLIMIT, user->auth.all.flowlimit);
 	um_user_add_u32(UM_USER_AUTH_ALLRATELIMIT, user->auth.all.ratelimit);
 
