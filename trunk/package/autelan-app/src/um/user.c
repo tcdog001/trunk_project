@@ -364,6 +364,34 @@ __auth(struct apuser *user, void (*cb)(struct apuser *user))
     }
 }
 
+#define um_ubus_notify(_user, _event) do{       \
+    if (um_is_ev_enable(_event)) {              \
+        um_ubus_common_notify(_user, "um." #_event); \
+    }                                           \
+}while(0)
+
+#define um_script_notify(_user, _event) do{     \
+    if (um_is_sh_enable(_event)) {              \
+        os_v_system(UM_SCRIPT " %s %s %s %s &", \
+            #_event,                            \
+            (_user)->ifname,                    \
+            os_macstring((_user)->mac),         \
+            os_ipstring((_user)->ip));          \
+    }                                           \
+}while(0)
+
+static inline void
+um_script_deauth_notify(struct apuser *user, int reason)
+{
+    if (um_is_sh_enable(deauth)) {
+        os_v_system(UM_SCRIPT " deauth %s %s %s %s &",
+            user->ifname,
+            os_macstring(user->mac),
+            os_ipstring(user->ip),
+            um_user_deauth_reason_string(reason));
+    }
+}
+
 static inline struct apuser *
 __find_and_create(byte mac[], struct um_intf *intf)
 {
