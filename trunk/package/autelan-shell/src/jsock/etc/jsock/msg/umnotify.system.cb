@@ -8,11 +8,11 @@
 #$1:body...
 #
 main() {
-	local body="$*"
-
 	jsock_ap_recive_check || {
 		return ${e_bad_board}
 	}
+
+	local body="$*"
 
 	local event=$(echo ${body} | jq -j ".event|strings")
 	if [[ -z "${event}" ]]; then
