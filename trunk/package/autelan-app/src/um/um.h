@@ -13,7 +13,7 @@
 #define UM_HASHMASK             (UM_HASHSIZE-1)
 
 #ifndef UM_SCRIPT
-#define UM_SCRIPT               "/etc/jsock/msg/umevent"
+#define UM_SCRIPT               "/etc/jsock/msg/umevent.sh"
 #endif
 
 #ifndef UM_TIMERMS_WIFI
@@ -38,6 +38,10 @@
 
 #ifndef UM_AGING_TIMES
 #define UM_AGING_TIMES          2
+#endif
+
+#if (UM_AGING_TIMES * UM_TIMERMS_AGING) <= UM_TIMERMS_FLOW
+#error "(UM_AGING_TIMES * UM_TIMERMS_AGING) <= UM_TIMERMS_FLOW"
 #endif
 
 #ifndef UM_EV_CONNECT_DEFT
