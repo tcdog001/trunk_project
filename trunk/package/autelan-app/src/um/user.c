@@ -156,6 +156,30 @@ __insert(struct apuser *user)
 }
 
 static struct apuser *
+__reinsert_byip(struct apuser *user, uint32_t ip)
+{
+    if (NULL==user) {
+        return NULL;
+    }
+    /*
+    * NOT in list
+    */
+    else if (false==in_list(&user->node.list)) {
+        __insert(user);
+    }
+    
+    if (user->ip) {
+        hlist_del_init(&user->node.ip);
+    }
+    user->ip = ip;
+    if (user->ip) {
+        hlist_add_head(&user->node.ip,  &umc.head.ip[haship(user->ip)]);
+    }
+
+    return user;
+}
+
+static struct apuser *
 __create(byte mac[], struct um_intf *intf)
 {
     if (NULL==intf) {
@@ -225,9 +249,7 @@ __unbind(struct apuser *user, void (*cb)(struct apuser *user))
     */
     user->state = UM_USER_STATE_CONNECT;
 
-    __remove(user);
-    user->ip = 0;
-    __insert(user);
+    __reinsert_byip(user, 0);
 }
 
 static void
@@ -303,9 +325,7 @@ __bind(struct apuser *user, uint32_t ip, struct um_intf *intf, void (*cb)(struct
         __unbind(user, unbind_cb);
     }
     
-    __remove(user);
-    user->ip = ip;
-    __insert(user);
+    __reinsert_byip(user, ip);
     
     user->aging = UM_AGING_TIMES;
     user->state = UM_USER_STATE_BIND;
