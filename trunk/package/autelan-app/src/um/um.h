@@ -511,6 +511,9 @@ struct um_control {
     } debug;
 };
 
+#define um_is_ev_enable(_var)       appkey_get(umc.ev._var.akid, umc.ev._var.deft)
+#define um_is_sh_enable(_var)       appkey_get(umc.sh._var.akid, umc.sh._var.deft)
+
 struct user_filter {
     /*
     * true: just match local user
@@ -757,8 +760,6 @@ um_blob_buf_init(void)
     blob_buf_init(&b, 0);
 }
 
-#define um_is_ev_enable(_var)       appkey_get(umc.ev._var.akid, umc.ev._var.deft)
-#define um_is_sh_enable(_var)       appkey_get(umc.sh._var.akid, umc.sh._var.deft)
 #define um_user_policy_name(id)     umc.policy.user[id].name
 
 #define um_open_table(name)         blobmsg_open_table(&b, name)
