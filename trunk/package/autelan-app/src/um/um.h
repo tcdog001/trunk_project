@@ -511,9 +511,6 @@ struct um_control {
     } debug;
 };
 
-#define um_is_ev_enable(_var)       appkey_get(umc.ev._var.akid, umc.ev._var.deft)
-#define um_is_sh_enable(_var)       appkey_get(umc.sh._var.akid, umc.sh._var.deft)
-
 struct user_filter {
     /*
     * true: just match local user
@@ -637,34 +634,6 @@ um_ubus_common_notify(struct apuser *user, char *event);
 extern void 
 um_ubus_deauth_notify(struct apuser *user, int reason);
 
-#define um_ubus_notify(_user, _event) do{       \
-    if (um_is_ev_enable(_event)) {              \
-        um_ubus_common_notify(_user, "um." #_event); \
-    }                                           \
-}while(0)
-
-#define um_script_notify(_user, _event) do{     \
-    if (um_is_sh_enable(_event)) {              \
-        os_v_system(UM_SCRIPT " %s %s %s %s &", \
-            #_event,                            \
-            (_user)->ifname,                    \
-            os_macstring((_user)->mac),         \
-            os_ipstring((_user)->ip));          \
-    }                                           \
-}while(0)
-
-static inline void
-um_script_deauth_notify(struct apuser *user, int reason)
-{
-    if (um_is_sh_enable(deauth)) {
-        os_v_system(UM_SCRIPT " deauth %s %s %s %s &",
-            user->ifname,
-            os_macstring(user->mac),
-            os_ipstring(user->ip),
-            um_user_deauth_reason_string(reason));
-    }
-}
-
 extern void
 um_ubus_update_notify(struct apuser *old, struct apuser *new);
 
@@ -760,7 +729,37 @@ um_blob_buf_init(void)
     blob_buf_init(&b, 0);
 }
 
+#define um_is_ev_enable(_var)       appkey_get(umc.ev._var.akid, umc.ev._var.deft)
+#define um_is_sh_enable(_var)       appkey_get(umc.sh._var.akid, umc.sh._var.deft)
 #define um_user_policy_name(id)     umc.policy.user[id].name
+
+#define um_ubus_notify(_user, _event) do{       \
+    if (um_is_ev_enable(_event)) {              \
+        um_ubus_common_notify(_user, "um." #_event); \
+    }                                           \
+}while(0)
+
+#define um_script_notify(_user, _event) do{     \
+    if (um_is_sh_enable(_event)) {              \
+        os_v_system(UM_SCRIPT " %s %s %s %s &", \
+            #_event,                            \
+            (_user)->ifname,                    \
+            os_macstring((_user)->mac),         \
+            os_ipstring((_user)->ip));          \
+    }                                           \
+}while(0)
+
+static inline void
+um_script_deauth_notify(struct apuser *user, int reason)
+{
+    if (um_is_sh_enable(deauth)) {
+        os_v_system(UM_SCRIPT " deauth %s %s %s %s &",
+            user->ifname,
+            os_macstring(user->mac),
+            os_ipstring(user->ip),
+            um_user_deauth_reason_string(reason));
+    }
+}
 
 #define um_open_table(name)         blobmsg_open_table(&b, name)
 #define um_open_array(name)         blobmsg_open_array(&b, name)
