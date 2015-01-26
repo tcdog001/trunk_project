@@ -4,7 +4,7 @@
 static void
 deluser_byif(struct um_intf *intf)
 {
-    struct user_filter f = USER_FILTER_INITER(true);
+    struct user_filter f = USER_FILTER_INITER;
 
     switch(intf->type) {
         case UM_INTF_RADIO:

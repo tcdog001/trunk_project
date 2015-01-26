@@ -17,14 +17,11 @@ pushuser(struct apuser *user, bool init, char *name, char *reason)
     if (NULL==user) {
         return;
     }
-
-    if (init) {
+    else if (init) {
         um_blob_buf_init();
     }
     
     handle = um_open_table(name);
-
-	um_user_add_bool(UM_USER_LOCAL, user->local);
 
 	um_user_add_macstring(UM_USER_MAC, user->mac);
 	um_user_add_macstring(UM_USER_AP, user->ap);
@@ -101,7 +98,7 @@ pushuserby(struct user_filter *filter)
 void 
 um_ubus_common_notify(struct apuser *user, char *event)
 {
-    if (user->local && is_good_um_user_state(user->state)) {        
+    if (is_good_um_user_state(user->state)) {        
         pushuser(user, true, "user", NULL);
     	notify(event);
 
@@ -113,12 +110,6 @@ void
 um_ubus_deauth_notify(struct apuser *user, int reason)
 {
     if (false==um_is_ev_enable(deauth)) {
-        return;
-    }
-    else if (false==user->local) {
-        return;
-    }
-    else if (false==is_good_um_user_state(user->state)) {
         return;
     }
     
@@ -137,13 +128,8 @@ um_ubus_deauth_notify(struct apuser *user, int reason)
 void
 um_ubus_update_notify(struct apuser *old, struct apuser *new)
 {
-    if (false==um_is_ev_enable(update)) {
-        return;
-    }
-    else if (UM_USER_STATE_DISCONNECT==new->state) {
-        return;
-    }
-    else if (false==old->local && false==new->local) {
+    if (false==um_is_ev_enable(update) || 
+        UM_USER_STATE_DISCONNECT==new->state) {
         return;
     }
 
@@ -201,7 +187,7 @@ um_ubus_handle_reload(
 static int
 report(void)
 {
-    struct user_filter f = USER_FILTER_INITER(true);
+    struct user_filter f = USER_FILTER_INITER;
     int err;
     
     err = pushuserby(&f);
@@ -298,19 +284,6 @@ setfilter_state(struct user_filter *filter, struct blob_attr *attr[])
 }
 
 static void
-setfilter_local(struct user_filter *filter, struct blob_attr *attr[])
-{
-    struct blob_attr *p = attr[UM_GETUSER_LOCAL];
-    
-    /* local filter */
-	if (p) {
-        filter->local = blobmsg_get_bool(p);
-	} else {
-        filter->local = false;
-	}
-}
-
-static void
 setfilter_ap(struct user_filter *filter, struct blob_attr *attr[])
 {
     struct blob_attr *p     = attr[UM_GETUSER_AP];
@@ -358,7 +331,7 @@ um_ubus_handle_getuser(
     struct blob_attr *msg
 )
 {
-    struct user_filter f = USER_FILTER_INITER(false);
+    struct user_filter f = USER_FILTER_INITER;
 	struct blob_attr *attr[UM_GETUSER_END] = {NULL};
 	struct blob_attr *zero[UM_GETUSER_END] = {NULL};
 	int err;
@@ -368,10 +341,6 @@ um_ubus_handle_getuser(
         goto filter_ok; /* default get all user */
     }
 
-    /*
-    * set local filter first
-    */
-    setfilter_local(&f, attr);
     setfilter_state(&f, attr);
 
     if (setfilter_ip(&f, attr) || setfilter_mac(&f, attr)) {

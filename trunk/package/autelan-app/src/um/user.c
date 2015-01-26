@@ -7,7 +7,7 @@ disconnect_cb(struct apuser *user);
 static void 
 connect_cb(struct apuser *user);
 
-static inline int
+static int
 hashbuf(byte *buf, int len, int mask)
 {
     int i;
@@ -20,28 +20,22 @@ hashbuf(byte *buf, int len, int mask)
     return sum & mask;
 }
 
-static inline int
+static int
 hashmac(byte mac[])
 {
     return hashbuf(mac, OS_MACSIZE, UM_HASHMASK);
 }
 
-static inline int
+static int
 haship(uint32_t ip)
 {
     return hashbuf((byte *)&ip, sizeof(ip), UM_HASHMASK);
 }
 
-static inline bool
+static bool
 in_list(struct list_head *node)
 {
     return  (node->next && node->prev) && false==list_empty(node);
-}
-
-static inline void
-__state(struct apuser *user, int state)
-{
-    user->state = state;
 }
 
 static int
@@ -84,7 +78,7 @@ __bindif(struct apuser *user, struct um_intf *intf)
     user->wifi.uptime = __uptime(user);
 }
 
-static inline struct apuser *
+static struct apuser *
 __get(byte mac[])
 {
     struct apuser *user;
@@ -99,7 +93,7 @@ __get(byte mac[])
     return NULL;
 }
 
-static inline int
+static int
 __remove(struct apuser *user, void (*cb)(struct apuser *user))
 {
     if (NULL==user) {
@@ -130,7 +124,7 @@ __remove(struct apuser *user, void (*cb)(struct apuser *user))
     return 0;
 }
 
-static inline int
+static int
 __insert(struct apuser *user, void (*cb)(struct apuser *user))
 {
     char *action;
@@ -180,7 +174,7 @@ __create(byte mac[], struct um_intf *intf)
         return NULL;
     }
 
-    um_user_init(user, true);
+    um_user_init(user);
     __bindif(user, intf);
     
     os_maccpy(user->mac, mac);
@@ -188,7 +182,7 @@ __create(byte mac[], struct um_intf *intf)
     return user;
 }
 
-static inline struct apuser *
+static struct apuser *
 __update(struct apuser *old, struct apuser *new, void (*cb)(struct apuser *old, struct apuser *new))
 {
     if (NULL==old || NULL==new) {
@@ -205,74 +199,58 @@ __update(struct apuser *old, struct apuser *new, void (*cb)(struct apuser *old, 
     return old;
 }
 
-static inline void
+static void
 __deauth(struct apuser *user, int reason, void (*cb)(struct apuser *user, int reason))
 {
-    if (NULL==user) {
+    if (NULL==user || UM_USER_STATE_AUTH != user->state) {
         return;
     }
-    else if (UM_USER_STATE_AUTH != user->state) {
-        return;
-    }
-    
-    if (cb) {
+    else if (cb) {
         (*cb)(user, reason);
     }
     
     /*
     * auth==>bind
     */
-    __state(user, UM_USER_STATE_BIND);
-    
+    user->state = UM_USER_STATE_BIND;
     user->auth.uptime = 0;
 }
 
-static inline void
+static void
 __unbind(struct apuser *user, void (*cb)(struct apuser *user))
 {
-    if (NULL==user) {
-        return;
-    }
-    
     __deauth(user, UM_USER_DEAUTH_INITIATIVE, NULL);
     
-    if (UM_USER_STATE_BIND != user->state) {
+    if (NULL==user || UM_USER_STATE_BIND != user->state) {
         return;
     }
-    
-    if (cb) {
+    else if (cb) {
         (*cb)(user);
     }
     
     /*
     * bind==>connect
     */
-    __state(user, UM_USER_STATE_CONNECT);
-    
+    user->state = UM_USER_STATE_CONNECT;
     user->ip = 0;
 }
 
-static inline void
+static void
 __disconnect(struct apuser *user, void (*cb)(struct apuser *user))
 {
-    if (NULL==user) {
-        return;
-    }
-    
     __unbind(user, NULL);
     
-    if (UM_USER_STATE_CONNECT != user->state) {
+    if (NULL==user || UM_USER_STATE_CONNECT != user->state) {
         return;
     }
-    
-    if (cb) {
+    else if (cb) {
         (*cb)(user);
     }
     
     /*
     * connect==>disconnect
     */
-    __state(user, UM_USER_STATE_DISCONNECT);
+    user->state = UM_USER_STATE_DISCONNECT;
     
     user->radioid       = 0;
     user->wlanid        = 0;
@@ -287,66 +265,64 @@ __disconnect(struct apuser *user, void (*cb)(struct apuser *user))
 static inline void
 __connect(struct apuser *user, struct um_intf *intf, void (*cb)(struct apuser *user))
 {
-    if (NULL==user) {
-        return;
-    }
-    else if (NULL==intf) {
-        return;
-    }
-    else if (UM_USER_STATE_DISCONNECT != user->state) {
-        return;
-    }
-    else if (intf==user->intf) {
+    if (NULL==user || 
+        NULL==intf || 
+        intf==user->intf ||
+        UM_USER_STATE_DISCONNECT != user->state) {
         return;
     }
     
     __bindif(user, intf);
     user->aging = UM_AGING_TIMES;
-    
-    __state(user, UM_USER_STATE_CONNECT);
+    user->state = UM_USER_STATE_CONNECT;
     
     if (cb) {
         (*cb)(user);
     }
 }
 
-static inline void
+static void
 __bind(struct apuser *user, uint32_t ip, struct um_intf *intf, void (*cb)(struct apuser *user))
 {
-    if (NULL==user) {
+    if (NULL==user ||
+        NULL==intf ||
+        false==is_good_um_user_state(user->state)) {
         return;
     }
-    else if (NULL==intf) {
-        return;
-    }
-    
     /*
-    * user ip changed
-    *   1. del user
-    *   2. re-bind
+    * user is disconnected
     */
-    if (is_good_um_user_state(user->state) && ip!=user->ip) {
+    else if (UM_USER_STATE_DISCONNECT==user->state) {
+        __connect(user, intf, connect_cb);
+    }
+    /*
+    * user is online and intf changed
+    */
+    else if (intf!=user->intf) {
         __disconnect(user, disconnect_cb);
         __connect(user, intf, connect_cb);
+    }
+    /*
+    * user is online and same intf and user ip changed
+    */
+    else if (ip!=user->ip) {
+        __unbind(user, unbind_cb);
     }
     
     user->ip    = ip;
     user->aging = UM_AGING_TIMES;
-    
-    __state(user, UM_USER_STATE_BIND);
+    user->state = UM_USER_STATE_BIND;
     
     if (cb) {
         (*cb)(user);
     }
 }
 
-static inline void
+static void
 __auth(struct apuser *user, void (*cb)(struct apuser *user))
 {
-    if (NULL==user) {
-        return;
-    }
-    else if (UM_USER_STATE_BIND != user->state) {
+    if (NULL==user ||
+        UM_USER_STATE_BIND != user->state) {
         return;
     }
     
@@ -357,7 +333,7 @@ __auth(struct apuser *user, void (*cb)(struct apuser *user))
     /*
     * bind==>auth
     */
-    __state(user, UM_USER_STATE_AUTH);
+    user->state = UM_USER_STATE_AUTH;
     
     if (cb) {
         (*cb)(user);
@@ -392,7 +368,7 @@ um_script_deauth_notify(struct apuser *user, int reason)
     }
 }
 
-static inline struct apuser *
+static struct apuser *
 __find_and_create(byte mac[], struct um_intf *intf)
 {
     struct apuser *user = __get(mac);
@@ -601,7 +577,7 @@ um_user_del(struct apuser *user)
 int
 um_user_delbymac(byte mac[])
 {
-    return um_user_del(um_user_getbymac(mac));
+    return um_user_del(__get(mac));
 }
 
 int
@@ -732,12 +708,7 @@ ipmatch(unsigned int uip, unsigned int fip, unsigned int mask)
 
 static bool
 match(struct apuser *user, struct user_filter *filter)
-{    
-    /* local not matched */
-    if (filter->local && false==user->local) {
-        return false;
-    }
-    
+{
     if (is_good_um_user_state(filter->state) && filter->state != user->state) {
         return false;
     }

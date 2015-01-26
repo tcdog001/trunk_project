@@ -196,7 +196,6 @@ um_user_deauth_reason_string(int reason)
 }
 
 struct apuser {
-    bool local;
     int state;
     int aging;
     uint32_t ip;
@@ -232,11 +231,9 @@ struct apuser {
 #define UM_USER_ENTRY_SIZE  offsetof(struct apuser, node)
 
 static inline void
-um_user_init(struct apuser *user, bool local)
+um_user_init(struct apuser *user)
 {
     os_objzero(user);
-
-    user->local = local;
     
     INIT_HLIST_NODE(&user->node.mac);
     INIT_HLIST_NODE(&user->node.ip);
@@ -260,7 +257,6 @@ enum {
 	UM_USER_MAC,
 	UM_USER_IP,
 	UM_USER_STATE,
-	UM_USER_LOCAL,
 	
 	UM_USER_WIFI_UPTIME,
 	UM_USER_WIFI_SIGNAL,
@@ -307,7 +303,6 @@ enum {
     UM_POLICY_INITER(UM_USER_MAC,           "mac",          STRING), /* "XX:XX:XX:XX:XX:XX" */ \
     UM_POLICY_INITER(UM_USER_IP,            "ip",           STRING), /* "xxx.xxx.xxx.xxx" */ \
     UM_POLICY_INITER(UM_USER_STATE,         "state",        STRING), \
-    UM_POLICY_INITER(UM_USER_LOCAL,         "local",        BOOL), \
     \
     UM_POLICY_INITER(UM_USER_WIFI_UPTIME,       "wifi_uptime",  INT32), \
     UM_POLICY_INITER(UM_USER_WIFI_SIGNAL,       "wifi_signal",  INT32), \
@@ -345,7 +340,6 @@ enum {
 }
 
 enum {
-    UM_GETUSER_LOCAL,
     UM_GETUSER_STATE,
     
     UM_GETUSER_AP,
@@ -364,7 +358,6 @@ enum {
 };
 
 #define UM_GETUSER_POLICY_INITER    { \
-	UM_POLICY_INITER(UM_GETUSER_LOCAL,  "local",    BOOL),      \
 	UM_POLICY_INITER(UM_GETUSER_STATE,  "state",    STRING),    \
 	UM_POLICY_INITER(UM_GETUSER_AP,     "ap",       STRING),    \
 	UM_POLICY_INITER(UM_GETUSER_APMASK, "apmask",   STRING),    \
@@ -512,11 +505,6 @@ struct um_control {
 };
 
 struct user_filter {
-    /*
-    * true: just match local user
-    * false: match all user
-    */
-    bool local;
     int state;
     
     byte ap[OS_MACSIZE];
@@ -532,8 +520,7 @@ struct user_filter {
     int wlanid;     /* <0, not use wlanid as filter */
 };
 
-#define USER_FILTER_INITER(_local)  { \
-    .local  = _local,   \
+#define USER_FILTER_INITER  { \
     .radioid= -1,       \
     .wlanid = -1,       \
 }
