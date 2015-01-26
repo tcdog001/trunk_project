@@ -611,24 +611,30 @@ __um_user_dump(struct apuser *user, char *action)
     __dump("wifi.onlinelimie = %u",user->wifi.onlinelimit);
     __dump("wifi.signal = %u",  user->wifi.signal);
     __dump("wifi.up.flowtotal = %llu",  user->wifi.up.flowtotal);
+    __dump("wifi.up.flowcache = %llu",  user->wifi.up.flowcache);
     __dump("wifi.up.flowlimit = %llu",  user->wifi.up.flowlimit);
     __dump("wifi.up.ratelimit = %u",  user->wifi.up.ratelimit);
     __dump("wifi.down.flowtotal = %llu",  user->wifi.down.flowtotal);
+    __dump("wifi.down.flowcache = %llu",  user->wifi.down.flowcache);
     __dump("wifi.down.flowlimit = %llu",  user->wifi.down.flowlimit);
     __dump("wifi.down.ratelimit = %u",  user->wifi.down.ratelimit);
     __dump("wifi.all.flowtotal = %llu",  user->wifi.all.flowtotal);
+    __dump("wifi.all.flowcache = %llu",  user->wifi.all.flowcache);
     __dump("wifi.all.flowlimit = %llu",  user->wifi.all.flowlimit);
     __dump("wifi.all.ratelimit = %u",  user->wifi.all.ratelimit);
     
     __dump("auth.uptime = %u",  user->auth.uptime);
     __dump("auth.onlinelimie = %u",user->auth.onlinelimit);
     __dump("auth.up.flowtotal = %llu",  user->auth.up.flowtotal);
+    __dump("auth.up.flowcache = %llu",  user->auth.up.flowcache);
     __dump("auth.up.flowlimit = %llu",  user->auth.up.flowlimit);
     __dump("auth.up.ratelimit = %u",  user->auth.up.ratelimit);
     __dump("auth.down.flowtotal = %llu",  user->auth.down.flowtotal);
+    __dump("auth.down.flowcache = %llu",  user->auth.down.flowcache);
     __dump("auth.down.flowlimit = %llu",  user->auth.down.flowlimit);
     __dump("auth.down.ratelimit = %u",  user->auth.down.ratelimit);
     __dump("auth.all.flowtotal = %llu",  user->auth.all.flowtotal);
+    __dump("auth.all.flowcache = %llu",  user->auth.all.flowcache);
     __dump("auth.all.flowlimit = %llu",  user->auth.all.flowlimit);
     __dump("auth.all.ratelimit = %u",  user->auth.all.ratelimit);
 #undef __dump
