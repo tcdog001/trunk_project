@@ -203,7 +203,7 @@ struct apuser {
     byte mac[OS_MACSIZE];
     byte ap[OS_MACSIZE];
     byte vap[OS_MACSIZE];
-
+    
     char ifname[1+OS_IFNAMELEN]; /* wlan ifname */
     struct um_intf *intf;
     int radioid;
@@ -234,6 +234,8 @@ static inline void
 um_user_init(struct apuser *user)
 {
     os_objzero(user);
+
+    user->state = UM_USER_STATE_DISCONNECT;
     
     INIT_HLIST_NODE(&user->node.mac);
     INIT_HLIST_NODE(&user->node.ip);

@@ -20,19 +20,19 @@ hashbuf(byte *buf, int len, int mask)
     return sum & mask;
 }
 
-static int
+static inline int
 hashmac(byte mac[])
 {
     return hashbuf(mac, OS_MACSIZE, UM_HASHMASK);
 }
 
-static int
+static inline int
 haship(uint32_t ip)
 {
     return hashbuf((byte *)&ip, sizeof(ip), UM_HASHMASK);
 }
 
-static bool
+static inline bool
 in_list(struct list_head *node)
 {
     return  (node->next && node->prev) && false==list_empty(node);
@@ -68,14 +68,16 @@ __uptime(struct apuser *user)
 static void
 __bindif(struct apuser *user, struct um_intf *intf)
 {
-    os_maccpy(user->ap, umc.basemac);
-    os_maccpy(user->vap, intf->mac);
-    os_strdcpy(user->ifname, intf->ifname);
+    if (intf!=user->intf) {
+        os_maccpy(user->ap, umc.basemac);
+        os_maccpy(user->vap, intf->mac);
+        os_strdcpy(user->ifname, intf->ifname);
 
-    user->intf      = intf;
-    user->radioid   = intf->radioid;
-    user->wlanid    = intf->wlanid;
-    user->wifi.uptime = __uptime(user);
+        user->intf      = intf;
+        user->radioid   = intf->radioid;
+        user->wlanid    = intf->wlanid;
+        user->wifi.uptime = __uptime(user);
+    }
 }
 
 static struct apuser *
@@ -93,11 +95,11 @@ __get(byte mac[])
     return NULL;
 }
 
-static int
-__remove(struct apuser *user, void (*cb)(struct apuser *user))
+static struct apuser *
+__remove(struct apuser *user)
 {
     if (NULL==user) {
-        return -EKEYNULL;
+        return NULL;
     }
     /*
     * not in list
@@ -105,7 +107,7 @@ __remove(struct apuser *user, void (*cb)(struct apuser *user))
     else if (false==in_list(&user->node.list)) {
         debug_trace("__remove nothing(not in list)");
         
-        return 0;
+        return user;
     }
     
     list_del(&user->node.list);
@@ -117,28 +119,27 @@ __remove(struct apuser *user, void (*cb)(struct apuser *user))
     }
     umc.head.count--;
 
-    if (cb) {
-        cb(user);
-    }
+    debug_trace("remove user, count(%d)", umc.head.count);
+    um_user_dump(user, "remove");
 
-    return 0;
+    return user;
 }
 
-static int
-__insert(struct apuser *user, void (*cb)(struct apuser *user))
+static struct apuser *
+__insert(struct apuser *user)
 {
     char *action;
     
     if (NULL==user) {
-        return -EKEYNULL;
+        return NULL;
     }
     /*
     * have in list
     */
     else if (in_list(&user->node.list)) {
-        return -EINLIST;
+        return user;
     }
-        
+    
     list_add(&user->node.list, &umc.head.list);
     if (is_good_mac(user->mac)) {
         hlist_add_head(&user->node.mac, &umc.head.mac[hashmac(user->mac)]);
@@ -148,18 +149,10 @@ __insert(struct apuser *user, void (*cb)(struct apuser *user))
     }
     umc.head.count++;
 
-    if (cb) {
-        cb(user);
-
-        action = "create";
-    } else {
-        action = "update";
-    }
-
-    debug_trace("%s user, count(%d)", action, umc.head.count);
-    um_user_dump(user, action);
+    debug_trace("insert user, count(%d)", umc.head.count);
+    um_user_dump(user, "insert");
     
-    return 0;
+    return user;
 }
 
 static struct apuser *
@@ -169,17 +162,16 @@ __create(byte mac[], struct um_intf *intf)
         return NULL;
     }
     
-    struct apuser *user = (struct apuser *)os_malloc(sizeof(*user));
+    struct apuser *user = (struct apuser *)os_zalloc(sizeof(*user));
     if (NULL==user) {
         return NULL;
     }
 
     um_user_init(user);
-    __bindif(user, intf);
-    
     os_maccpy(user->mac, mac);
-
-    return user;
+    __bindif(user, intf);
+        
+    return __insert(user);
 }
 
 static struct apuser *
@@ -232,7 +224,10 @@ __unbind(struct apuser *user, void (*cb)(struct apuser *user))
     * bind==>connect
     */
     user->state = UM_USER_STATE_CONNECT;
+
+    __remove(user);
     user->ip = 0;
+    __insert(user);
 }
 
 static void
@@ -267,11 +262,10 @@ __connect(struct apuser *user, struct um_intf *intf, void (*cb)(struct apuser *u
 {
     if (NULL==user || 
         NULL==intf || 
-        intf==user->intf ||
         UM_USER_STATE_DISCONNECT != user->state) {
         return;
     }
-    
+
     __bindif(user, intf);
     user->aging = UM_AGING_TIMES;
     user->state = UM_USER_STATE_CONNECT;
@@ -309,7 +303,10 @@ __bind(struct apuser *user, uint32_t ip, struct um_intf *intf, void (*cb)(struct
         __unbind(user, unbind_cb);
     }
     
-    user->ip    = ip;
+    __remove(user);
+    user->ip = ip;
+    __insert(user);
+    
     user->aging = UM_AGING_TIMES;
     user->state = UM_USER_STATE_BIND;
     
