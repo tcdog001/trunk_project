@@ -13,7 +13,7 @@
 #define UM_HASHMASK             (UM_HASHSIZE-1)
 
 #ifndef UM_SCRIPT
-#define UM_SCRIPT               "/usr/sbin/umnotify"
+#define UM_SCRIPT               "/etc/jsock/msg/umevent"
 #endif
 
 #ifndef UM_TIMERMS_WIFI
@@ -137,6 +137,12 @@ is_good_um_user_state(int statet)
     return is_good_value(statet, UM_USER_STATE_DISCONNECT, UM_USER_STATE_END);
 }
 
+static inline bool
+is_online_um_user_state(int statet)
+{
+    return is_good_value(statet, UM_USER_STATE_CONNECT, UM_USER_STATE_END);
+}
+
 static inline char *
 um_user_state_string(int state)
 {
@@ -190,11 +196,11 @@ struct apuser {
     int state;
     int aging;
     uint32_t ip;
-
+    
     byte mac[OS_MACSIZE];
     byte ap[OS_MACSIZE];
     byte vap[OS_MACSIZE];
-    
+
     char ifname[1+OS_IFNAMELEN]; /* wlan ifname */
     struct um_intf *intf;
     int radioid;
@@ -277,6 +283,8 @@ enum {
     UM_USER_AUTH_ALLFLOWLIMIT,
     UM_USER_AUTH_ALLRATELIMIT,
     
+    UM_USER_DEAUTH_REASON,
+    
 	UM_USER_END,
 };
 
@@ -315,6 +323,8 @@ enum {
     UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWTOTAL, "auth_allflowtotal",  INT64), \
     UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWLIMIT, "auth_allflowlimit",  INT64), \
     UM_POLICY_INITER(UM_USER_AUTH_ALLRATELIMIT, "auth_allratelimit",  INT32), \
+    \
+    UM_POLICY_INITER(UM_USER_DEAUTH_REASON,     "deauth_reason",    STRING), \
 }
 
 enum {
@@ -604,6 +614,9 @@ um_ubus_report(void);
 extern void 
 um_ubus_common_notify(struct apuser *user, char *event);
 
+extern void 
+um_ubus_deauth_notify(struct apuser *user, int reason);
+
 #define um_ubus_notify(_user, _event) do{       \
     if (um_is_ev_enable(_event)) {              \
         um_ubus_common_notify(_user, "um." #_event); \
@@ -619,6 +632,18 @@ um_ubus_common_notify(struct apuser *user, char *event);
             os_ipstring((_user)->ip));          \
     }                                           \
 }while(0)
+
+static inline void
+um_script_deauth_notify(struct apuser *user, int reason)
+{
+    if (um_is_sh_enable(deauth)) {
+        os_v_system(UM_SCRIPT " deauth %s %s %s %s &",
+            user->ifname,
+            os_macstring(user->mac),
+            os_ipstring(user->ip),
+            um_user_deauth_reason_string(reason));
+    }
+}
 
 extern void
 um_ubus_update_notify(struct apuser *old, struct apuser *new);

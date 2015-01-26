@@ -359,8 +359,8 @@ finish:
 #define UM_TIMER_AKID_INIT(_var) \
         UM_AKID_INIT(umc.timer._var.akid, "timer_" #_var, umc.timer._var.deft)
 
-#define UM_EVENT_AKID_INIT(_var) \
-        UM_AKID_INIT(umc.ev._var.akid, "event_" #_var, umc.ev._var.deft)
+#define UM_UBUS_AKID(_var) \
+        UM_AKID_INIT(umc.ev._var.akid, "ubus_" #_var, umc.ev._var.deft)
 
 #define UM_SCRIPT_AKID_INIT(_var) \
         UM_AKID_INIT(umc.ev._var.akid, "script_" #_var, umc.ev._var.deft)
@@ -380,14 +380,14 @@ um_akid_initer(void)
     UM_TIMER_AKID_INIT(flow);
     UM_TIMER_AKID_INIT(report);
 
-    UM_EVENT_AKID_INIT(connect);
-    UM_EVENT_AKID_INIT(disconnect);
-    UM_EVENT_AKID_INIT(bind);
-    UM_EVENT_AKID_INIT(unbind);
-    UM_EVENT_AKID_INIT(auth);
-    UM_EVENT_AKID_INIT(deauth);
-    UM_EVENT_AKID_INIT(update);
-    UM_EVENT_AKID_INIT(report);
+    UM_UBUS_AKID(connect);
+    UM_UBUS_AKID(disconnect);
+    UM_UBUS_AKID(bind);
+    UM_UBUS_AKID(unbind);
+    UM_UBUS_AKID(auth);
+    UM_UBUS_AKID(deauth);
+    UM_UBUS_AKID(update);
+    UM_UBUS_AKID(report);
 
     UM_SCRIPT_AKID_INIT(connect);
     UM_SCRIPT_AKID_INIT(disconnect);

@@ -10,7 +10,7 @@ notify(char *event)
 }
 
 static void
-pushuser(struct apuser *user, bool init, char *name)
+pushuser(struct apuser *user, bool init, char *name, char *reason)
 {
     void *handle;
     
@@ -59,6 +59,10 @@ pushuser(struct apuser *user, bool init, char *name)
 	um_user_add_u64(UM_USER_AUTH_ALLFLOWTOTAL, user->auth.all.flowtotal);
 	um_user_add_u64(UM_USER_AUTH_ALLFLOWLIMIT, user->auth.all.flowlimit);
 	um_user_add_u32(UM_USER_AUTH_ALLRATELIMIT, user->auth.all.ratelimit);
+
+	if (reason) {
+	    um_user_add_string(UM_USER_DEAUTH_REASON, reason);
+    }
     
     um_close_table(handle);
 }
@@ -68,7 +72,7 @@ get_cb(struct apuser *user, void *data)
 {
     char *name = (char *)data;
     
-    pushuser(user, false, name);
+    pushuser(user, false, name, NULL);
 
     return mv2_OK;
 }
@@ -92,38 +96,58 @@ void
 um_ubus_common_notify(struct apuser *user, char *event)
 {
     if (user->local && is_good_um_user_state(user->state)) {        
-        pushuser(user, true, "user");
+        pushuser(user, true, "user", NULL);
     	notify(event);
 
     	debug_ubus_trace("%s user(%s)", event, os_macstring(user->mac));
     }
 }
 
-static void
-__um_ubus_update_notify(struct apuser *old, struct apuser *new)
+void 
+um_ubus_deauth_notify(struct apuser *user, int reason)
 {
-    if (UM_USER_STATE_DISCONNECT==new->state) {
+    if (false==um_is_ev_enable(deauth)) {
+        return;
+    }
+    else if (false==user->local) {
+        return;
+    }
+    else if (false==is_good_um_user_state(user->state)) {
+        return;
+    }
+    
+    char *event = "um.deauth";
+    char *reasonstring= um_user_deauth_reason_string(reason);
+    
+    pushuser(user, true, "user", reasonstring);
+	notify(event);
+
+	debug_ubus_trace("%s user(%s) reason(%s)", 
+	    event, 
+	    os_macstring(user->mac), 
+	    reasonstring);
+}
+
+void
+um_ubus_update_notify(struct apuser *old, struct apuser *new)
+{
+    if (false==um_is_ev_enable(update)) {
+        return;
+    }
+    else if (UM_USER_STATE_DISCONNECT==new->state) {
         return;
     }
     else if (false==old->local && false==new->local) {
         return;
     }
 
-    pushuser(old, true, "old");
-    pushuser(new, false, "new");
+    pushuser(old, true, "old", NULL);
+    pushuser(new, false, "new", NULL);
 	
 	// user info
     notify("um.update");
     
 	debug_ubus_trace("um.update user(%s)", os_macstring(old->mac));
-}
-
-void
-um_ubus_update_notify(struct apuser *old, struct apuser *new)
-{
-    if (um_is_ev_enable(update)) {
-        __um_ubus_update_notify(old, new);
-    }
 }
 
 static int
@@ -208,7 +232,7 @@ setfilter_ip(struct user_filter *filter, struct blob_attr *attr[])
 	    uint32_t ip = inet_addr(blobmsg_get_string(p));
 	    
 	    if (os_objeq(&onlyip, attr)) { // get user by only ip
-            pushuser(um_user_getbyip(ip), true, NULL);
+            pushuser(um_user_getbyip(ip), true, NULL, NULL);
             
             return true;
 	    } else { // get user by ip/ipmask
@@ -238,7 +262,7 @@ setfilter_mac(struct user_filter *filter, struct blob_attr *attr[])
 	    
 	    os_getmac_bystring(mac, blobmsg_get_string(p));
 	    if (os_objeq(&onlymac, attr)) { // get user by only mac
-            pushuser(um_user_getbymac(mac), true, NULL);
+            pushuser(um_user_getbymac(mac), true, NULL, NULL);
 
             return true;
 	    } else { // get user by mac/macmask
@@ -475,7 +499,7 @@ um_ubus_handle_auth(
     }
 
     um_user_auth(mac);
-    
+
     return 0;
 }
 

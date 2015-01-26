@@ -375,45 +375,46 @@ __find_and_create(byte mac[], struct um_intf *intf)
     return user;
 }
 
-#define common_cb(_user, _event) do{    \
-    um_ubus_notify(_user, _event);      \
-    um_script_notify(_user, _event);    \
-}while(0)
-
 static void 
 connect_cb(struct apuser *user)
 {
-    common_cb(user, connect);
+    um_ubus_notify(user, connect);
+    um_script_notify(user, connect);
 }
 
 static void 
 disconnect_cb(struct apuser *user)
 {
-    common_cb(user, disconnect);
+    um_ubus_notify(user, disconnect);
+    um_script_notify(user, disconnect);
 }
 
 static void 
 bind_cb(struct apuser *user)
 {
-    common_cb(user, bind);
+    um_ubus_notify(user, bind);
+    um_script_notify(user, bind);
 }
 
 static void 
 unbind_cb(struct apuser *user)
 {
-    common_cb(user, unbind);
+    um_ubus_notify(user, unbind);
+    um_script_notify(user, unbind);
 }
 
 static void 
 auth_cb(struct apuser *user)
 {
-    common_cb(user, auth);
+    um_ubus_notify(user, auth);
+    um_script_notify(user, auth);
 }
 
 static void 
 deauth_cb(struct apuser *user, int reason)
 {
-    common_cb(user, deauth);
+    um_ubus_deauth_notify(user, reason);
+    um_script_deauth_notify(user, reason);
 }
 
 static void 
@@ -605,7 +606,7 @@ __um_user_dump(struct apuser *user, char *action)
     __dump("ifname      = %s",  user->ifname);
     __dump("radioid     = %d",  user->radioid);
     __dump("wlanid      = %d",  user->wlanid);
-   
+    
     __dump("wifi.uptime = %u",  user->wifi.uptime);
     __dump("wifi.onlinelimie = %u",user->wifi.onlinelimit);
     __dump("wifi.signal = %u",  user->wifi.signal);
@@ -618,7 +619,7 @@ __um_user_dump(struct apuser *user, char *action)
     __dump("wifi.all.flowtotal = %llu",  user->wifi.all.flowtotal);
     __dump("wifi.all.flowlimit = %llu",  user->wifi.all.flowlimit);
     __dump("wifi.all.ratelimit = %u",  user->wifi.all.ratelimit);
- 
+    
     __dump("auth.uptime = %u",  user->auth.uptime);
     __dump("auth.onlinelimie = %u",user->auth.onlinelimit);
     __dump("auth.up.flowtotal = %llu",  user->auth.up.flowtotal);
@@ -631,6 +632,7 @@ __um_user_dump(struct apuser *user, char *action)
     __dump("auth.all.flowlimit = %llu",  user->auth.all.flowlimit);
     __dump("auth.all.ratelimit = %u",  user->auth.all.ratelimit);
 #undef __dump
+
     os_println("=====%s user end======", action);
     os_println(__crlf2);
 }
