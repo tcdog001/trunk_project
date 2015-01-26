@@ -80,6 +80,7 @@ __bindif(struct apuser *user, struct um_intf *intf)
     }
 }
 
+
 static struct apuser *
 __get(byte mac[])
 {
@@ -93,6 +94,30 @@ __get(byte mac[])
     }
 
     return NULL;
+}
+
+static inline void
+__add_iphash(struct apuser *user)
+{
+    hlist_add_head(&user->node.ip,  &umc.head.ip[haship(user->ip)]);
+}
+
+static inline void
+__del_iphash(struct apuser *user)
+{
+    hlist_del_init(&user->node.ip);
+}
+
+static inline void
+__add_machash(struct apuser *user)
+{
+    hlist_add_head(&user->node.mac, &umc.head.mac[hashmac(user->mac)]);
+}
+
+static inline void
+__del_machash(struct apuser *user)
+{
+    hlist_del_init(&user->node.mac);
 }
 
 static struct apuser *
@@ -112,10 +137,11 @@ __remove(struct apuser *user)
     
     list_del(&user->node.list);
     if (is_good_mac(user->mac)) {
-        hlist_del_init(&user->node.mac);
+        __del_machash(user);
+        
     }
     if (user->ip) {
-        hlist_del_init(&user->node.ip);
+        __del_iphash(user);
     }
     umc.head.count--;
 
@@ -142,10 +168,10 @@ __insert(struct apuser *user)
     
     list_add(&user->node.list, &umc.head.list);
     if (is_good_mac(user->mac)) {
-        hlist_add_head(&user->node.mac, &umc.head.mac[hashmac(user->mac)]);
+        __add_machash(user);
     }
     if (user->ip) {
-        hlist_add_head(&user->node.ip,  &umc.head.ip[haship(user->ip)]);
+        __add_iphash(user);
     }
     umc.head.count++;
 
@@ -169,11 +195,11 @@ __reinsert_byip(struct apuser *user, uint32_t ip)
     }
     
     if (user->ip) {
-        hlist_del_init(&user->node.ip);
+        __del_iphash(user);
     }
     user->ip = ip;
     if (user->ip) {
-        hlist_add_head(&user->node.ip,  &umc.head.ip[haship(user->ip)]);
+        __add_iphash(user);
     }
 
     return user;
