@@ -9,6 +9,7 @@
 #
 main() {
 	local body="$*"
+	local file_systemlog_ap=/tmp/.systemlog_ap
 	
 	jsock_md_recive_check || {
 		return ${e_bad_board}

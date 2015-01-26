@@ -59,10 +59,10 @@ main() {
 			#
 			# if first keepalive on route, also send register info
 			#
-			if ((send_register_info<10)); then
+                        #if ((send_register_info<10)); then
 				${__ROOTFS__}/etc/jsock/msg/getsysinfo.sh
-				((send_register_info++))
-			fi
+                        #       ((send_register_info++))
+                        #fi
 
 			${__ROOTFS__}/etc/jsock/jsig.sh asyn keepalive
 		fi
