@@ -1,5 +1,5 @@
 
-OBJS=um.o user.o l2user.o l3user.o uci.o ubus.o
+OBJS=um.o user.o uci.o ubus.o scan.o
 __TARGET=um
 TARGET=$(__TARGET)
 LIBS_DEPEND=-lubacktrace -lautelan-appkey -luci -lubus -lubox -lblobmsg_json
