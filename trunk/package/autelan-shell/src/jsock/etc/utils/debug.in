@@ -7,7 +7,7 @@ else
 fi
 
 dir_debug=${dir_debug:-/tmp/.debug}
-makedir "${dir_debug}"
+MKDIR "${dir_debug}"
 
 DEBUG=${DEBUG:-$(getfilevalue ${dir_debug}/.debug)}
 DEBUG_LEVEL=${DEBUG_LEVEL:-$(getfilevalue ${dir_debug}/.debug_level __ok__,__error__,__trace__)}

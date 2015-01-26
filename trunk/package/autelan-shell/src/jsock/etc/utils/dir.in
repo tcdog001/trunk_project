@@ -26,16 +26,6 @@ readonly dev_rootfs2=/dev/mmcblk0p9
 readonly dev_rootfs_data=/dev/mmcblk0p10
 
 #
-#$1:idx
-#
-rootfs_dev() {
-	local idx="$1"
-	local dev=dev_rootfs${idx}
-
-	echo "${!dev}"
-}
-
-#
 # base dir
 #
 readonly dir_flash=/mnt/flash
@@ -46,9 +36,11 @@ readonly dir_tftp=/tmp/tftp
 readonly dir_status=/tmp/status
 readonly dir_plt=/tmp/plt
 readonly dir_plt_syslog=${dir_plt}/syslog
-readonly dir_website=${dir_hd}/website
+readonly file_plt_cache=${dir_plt}/.plt.cache
+
 readonly dir_website_upgrade=${dir_hd}/website_upgrade
 readonly dir_website_config=${dir_hd}/website_config
+readonly file_website_config=${dir_website_config}/website.conf
 
 #
 #don't remove it
@@ -65,14 +57,10 @@ readonly dir_website_config=${dir_hd}/website_config
 #
 # for third-part(custom dir)
 #
-readonly dir_custom=${dir_hd}/custom/${__CP__}
-readonly dir_custom_script=${dir_custom}/script
-readonly file_custom_init=${dir_custom_script}/init.sh
-
-readonly dir_tmp_custom=${__CP_TEMP__}
-
-readonly file_plt_cache=${dir_plt}/.plt.cache
-readonly file_website_config=${dir_website_config}/website.conf
+readonly dir_cp=${dir_hd}/${__CP__}
+readonly dir_cp_website=${dir_cp}/www
+readonly dir_cp_script=${dir_cp}/script
+readonly dir_tmp_cp=${__CP_TEMP__}
 
 readonly file_status_3g=${dir_status}/3g
 readonly file_status_5g=${dir_status}/5g
@@ -96,19 +84,8 @@ readonly dir_rootfs1=${dir_flash}/rootfs1
 readonly dir_rootfs2=${dir_flash}/rootfs2
 readonly dir_rootfs_data=${dir_flash}/rootfs_data
 
-#
-#$1:idx
-#
-rootfs_dir() {
-	local idx="$1"
-	local dir=dir_rootfs${idx}
-
-	echo "${!dir}"
-}
-
 readonly file_dev_current=/tmp/.dev_current
 readonly file_rootfs_current=/tmp/.rootfs_current
-readonly file_systemlog_ap=/tmp/.systemlog_ap
 
 #
 # for self big app
@@ -143,7 +120,9 @@ readonly dir_config_php=${dir_config}/php
 # backup dir
 #
 readonly dir_backup=${dir_rootfs_data}/backup
-readonly dir_backup_log=${dir_backup}/log
+readonly dir_backup_log=${dir_backup}/log       #same
+readonly dir_backup_log_gps=${dir_backup}/log   #same
+readonly dir_backup_log_sys=${dir_backup}/log   #same
 
 #
 # version(whole/patch) dir
@@ -166,11 +145,6 @@ readonly dir_opt=${dir_rootfs_data}/opt
 
 readonly dir_opt_log=${dir_opt}/log
 readonly dir_opt_log_gps=${dir_opt_log}/gps
-
-readonly dir_opt_log_dev=${dir_opt_log}/dev
-readonly dir_opt_log_dev_info=${dir_opt_log_dev}/info
-readonly dir_opt_log_dev_monitor=${dir_opt_log_dev}/monitor
-
 readonly dir_opt_log_vcc=${dir_opt_log}/vcc
 readonly dir_opt_log_onoff=${dir_opt_log}/onoff
 
@@ -219,8 +193,6 @@ readonly dir_opt_data=${dir_opt}/data
 readonly dir_opt_data_gps=${dir_opt_data}/gps
 readonly dir_opt_data_3g=${dir_opt_data}/3g
 
-readonly file_md_ulog=${dir_opt_log_sys_md_ulog}/messages
-
 #
 # tftp dir
 #
@@ -243,3 +215,5 @@ readonly dir_tftp_data_gps=${dir_tftp_data}/gps
 readonly dir_tftp_data_3g=${dir_tftp_data}/3g
 
 readonly dir_tftp_version=${dir_tftp}/version
+
+readonly file_md_ulog=${dir_opt_log_sys_md_ulog}/messages

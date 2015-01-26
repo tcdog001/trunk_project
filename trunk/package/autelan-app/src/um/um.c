@@ -74,7 +74,7 @@ wifitimer(struct uloop_timeout *timeout)
 static multi_value_t 
 aging_cb(struct apuser *user, void *data)
 {
-    if (FALSE==user->local || UM_USER_STATE_DISCONNECT==user->statte) {
+    if (FALSE==user->local || UM_USER_STATE_DISCONNECT==user->state) {
         return mv2_OK;
     }
     

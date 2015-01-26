@@ -112,7 +112,9 @@ jsock_cb() {
 		for cb in ${cblist}; do
 			if [[ -x "${cb}" ]]; then
 				local err=0
-				local tmp=$( (${cb} ${body}) 2>&1 ); err=$?
+				local tmp
+
+				tmp=$( (${cb} ${body}) 2>&1 ); err=$?
 				if ((0==err)); then
 					stdout=$(strcat "${stdout}" "${tmp}")
 					j${type}_debug_ok "${cb} ${body} stdout:${tmp}"

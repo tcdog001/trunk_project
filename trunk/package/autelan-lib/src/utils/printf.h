@@ -139,6 +139,7 @@
                                 \
     ret;                        \
 })
+
 #define __os_v_system(is_traced, fmt, args...) ({  \
     char cmd[1+OS_LINE_LEN] = {0}; \
     int len, ret = 0;           \
@@ -161,8 +162,7 @@
 #define os_v_system(fmt, args...)   \
         __os_v_system(__is_debug_init_trace, fmt, ##args)
 
-
-#define os_v_pgets(line, space, fmt, args...)   do{ \
+#define os_v_pgets(line, space, fmt, args...)    ({ \
     int err = 0;                                    \
     FILE *fd = os_v_popen(fmt, ##args);             \
     if (NULL==fd) {                                 \
@@ -176,9 +176,11 @@
                                                     \
         pclose(fd);                                 \
     }                                               \
-}while(0)
+                                                    \
+    err;                                            \
+})
 
-#define os_v_pread(buf, size, fmt, args...)   do{ \
+#define os_v_pread(buf, size, fmt, args...)      ({ \
     int err = 0;                                    \
     FILE *fd = os_v_popen(fmt, ##args);             \
     if (NULL==fd) {                                 \
@@ -193,7 +195,9 @@
                                                     \
         pclose(fd);                                 \
     }                                               \
-}while(0)
+                                                    \
+    err;                                            \
+})
         
 
 #endif

@@ -192,7 +192,7 @@ static inline struct apuser *
 __update(struct apuser *old, struct apuser *new, void (*cb)(struct apuser *old, struct apuser *new))
 {
     if (NULL==old || NULL==new) {
-        return;
+        return NULL;
     }
 
     if (cb) {
@@ -234,7 +234,7 @@ __unbind(struct apuser *user, void (*cb)(struct apuser *user))
         return;
     }
     
-    __deauth(user, NULL);
+    __deauth(user, UM_USER_DEAUTH_INITIATIVE, NULL);
     
     if (UM_USER_STATE_BIND != user->state) {
         return;
@@ -455,7 +455,7 @@ user_unbind(struct apuser *user)
     __unbind(user, unbind_cb);
 }
 
-static struct apuser *
+struct apuser *
 user_auth(struct apuser *user)
 {
     __auth(user, auth_cb);
@@ -492,7 +492,7 @@ um_user_bind(byte mac[], uint32_t ip, char *ifname)
     * 
     * so, maybe first bind
     */
-    return user_bind(user_connect(mac, intf, connect_cb), ip, intf);
+    return user_bind(user_connect(mac, intf), ip, intf);
 }
 
 void
@@ -600,23 +600,37 @@ __um_user_dump(struct apuser *user, char *action)
     __dump("ap          = %s",  os_macstring(user->ap));
     __dump("vap         = %s",  os_macstring(user->vap));
     __dump("mac         = %s",  os_macstring(user->mac));
-    __dump("state       = %s",  um_user_state_string(user->state));
     __dump("ip          = %s",  os_ipstring(user->ip));
+    __dump("state       = %s",  um_user_state_string(user->state));
     __dump("ifname      = %s",  user->ifname);
     __dump("radioid     = %d",  user->radioid);
     __dump("wlanid      = %d",  user->wlanid);
+   
     __dump("wifi.uptime = %u",  user->wifi.uptime);
     __dump("wifi.onlinelimie = %u",user->wifi.onlinelimit);
     __dump("wifi.signal = %u",  user->wifi.signal);
+    __dump("wifi.up.flowtotal = %llu",  user->wifi.up.flowtotal);
+    __dump("wifi.up.flowlimit = %llu",  user->wifi.up.flowlimit);
+    __dump("wifi.up.ratelimit = %u",  user->wifi.up.ratelimit);
+    __dump("wifi.down.flowtotal = %llu",  user->wifi.down.flowtotal);
+    __dump("wifi.down.flowlimit = %llu",  user->wifi.down.flowlimit);
+    __dump("wifi.down.ratelimit = %u",  user->wifi.down.ratelimit);
+    __dump("wifi.all.flowtotal = %llu",  user->wifi.all.flowtotal);
+    __dump("wifi.all.flowlimit = %llu",  user->wifi.all.flowlimit);
+    __dump("wifi.all.ratelimit = %u",  user->wifi.all.ratelimit);
+ 
     __dump("auth.uptime = %u",  user->auth.uptime);
     __dump("auth.onlinelimie = %u",user->auth.onlinelimit);
-	__dump("rx.packets  = %u",  user->wifi.rx.packets);
-	__dump("rx.rate     = %u",  user->wifi.rx.rate);
-    __dump("tx.bytes    = %llu",user->wifi.tx.bytes);
-	__dump("tx.packets  = %u",  user->wifi.tx.packets);	
-	__dump("tx.rate     = %u",  user->wifi.tx.rate);
+    __dump("auth.up.flowtotal = %llu",  user->auth.up.flowtotal);
+    __dump("auth.up.flowlimit = %llu",  user->auth.up.flowlimit);
+    __dump("auth.up.ratelimit = %u",  user->auth.up.ratelimit);
+    __dump("auth.down.flowtotal = %llu",  user->auth.down.flowtotal);
+    __dump("auth.down.flowlimit = %llu",  user->auth.down.flowlimit);
+    __dump("auth.down.ratelimit = %u",  user->auth.down.ratelimit);
+    __dump("auth.all.flowtotal = %llu",  user->auth.all.flowtotal);
+    __dump("auth.all.flowlimit = %llu",  user->auth.all.flowlimit);
+    __dump("auth.all.ratelimit = %u",  user->auth.all.ratelimit);
 #undef __dump
-
     os_println("=====%s user end======", action);
     os_println(__crlf2);
 }

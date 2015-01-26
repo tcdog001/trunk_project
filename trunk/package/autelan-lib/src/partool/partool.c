@@ -627,7 +627,7 @@ part_line_read(struct part_block *block)
 {
     char line[1+PART_MAX_LINE];
     char *begin, *end, *value;
-    int size, err;
+    int err;
     
     begin = part_block_begin(block);
     end   = part_block_end(block);

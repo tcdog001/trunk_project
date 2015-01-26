@@ -37,7 +37,7 @@ mkfile() {
 	if [[ ! -f "${file}" ]]; then
 		local dir=$(dirname file)
 		if [[ ! -d "${dir}" ]]; then
-			mkdir -p ${dir} &>/dev/null || return $?
+			MKDIR ${dir} &>/dev/null || return $?
 		fi
 
 		touch "${file}" &>/dev/null
@@ -178,16 +178,18 @@ log_with_limit() {
 	local info="$*"
 
 	local count=$(sed -n '$=' ${file} 2>/dev/null)
-	if ((count>1000)); then
-		sed -i "1,100d" ${file} &> /dev/null
-	fi
+	number_check ${count} && {
+		if ((count>1000)); then
+			sed -i "1,100d" ${file} &> /dev/null
+		fi
+	}
 
 	echo "${info}" >> ${file}; fsync ${file}
 }
 
 #
-#$1:src
-#$2:dst
+#$1:src(the file)
+#$2:dst(the link)
 #
 LN_FILE() {
 	local src="$1"
@@ -197,8 +199,8 @@ LN_FILE() {
 }
 
 #
-#$1:src
-#$2:dst
+#$1:src(the dir)
+#$2:dst(the link)
 #
 LN_DIR() {
 	local src="$1"
@@ -220,13 +222,11 @@ do_dd() {
 	local dst="$2"
 	local err=0
 
-	dd if=${src} of=${dst}; err=$?
+	dd if=${src} of=${dst}; err=$?; sync
 	if ((0!=err)); then
 		echo_logger "dd" \
 			"ERROR[${err}]: dd if=${src} of=${dst}"
 	fi
-
-	sync
 
 	return ${err}
 }
@@ -240,5 +240,9 @@ delete_file_line_byvalue() {
 	local value="$*"
 	local replace=__.__.__.__
 
+	#
+	# 1. replace value by __.__.__.__
+	# 2. delete by __.__.__.__
+	#
 	sed -i "s#${value}#${replace}#g;/${replace}/d" ${file}
 }

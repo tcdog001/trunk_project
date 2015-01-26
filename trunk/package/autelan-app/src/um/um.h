@@ -189,7 +189,8 @@ struct apuser {
     bool local;
     int state;
     int aging;
-    
+    uint32_t ip;
+
     byte mac[OS_MACSIZE];
     byte ap[OS_MACSIZE];
     byte vap[OS_MACSIZE];
@@ -510,6 +511,9 @@ struct user_filter {
     .wlanid = -1,       \
 }
 /******************************************************************************/
+extern struct um_intf *
+um_intf_get(char *ifname);
+
 extern int
 um_uci_load(void);
 /******************************************************************************/
@@ -533,6 +537,24 @@ um_ubus_handle_reload(
 
 extern int
 um_ubus_handle_getuser(
+    struct ubus_context *ctx, 
+    struct ubus_object *obj,
+    struct ubus_request_data *req, 
+    const char *method,
+    struct blob_attr *msg
+);
+
+extern int
+um_ubus_handle_connect(
+    struct ubus_context *ctx, 
+    struct ubus_object *obj,
+    struct ubus_request_data *req, 
+    const char *method,
+    struct blob_attr *msg
+);
+
+extern int
+um_ubus_handle_disconnect(
     struct ubus_context *ctx, 
     struct ubus_object *obj,
     struct ubus_request_data *req, 

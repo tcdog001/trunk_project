@@ -91,7 +91,7 @@ pushuserby(struct user_filter *filter)
 void 
 um_ubus_common_notify(struct apuser *user, char *event)
 {
-    if (user->local && is_good_um_user_state(user->statet)) {        
+    if (user->local && is_good_um_user_state(user->state)) {        
         pushuser(user, true, "user");
     	notify(event);
 
@@ -102,7 +102,7 @@ um_ubus_common_notify(struct apuser *user, char *event)
 static void
 __um_ubus_update_notify(struct apuser *old, struct apuser *new)
 {
-    if (UM_USER_STATE_INVALID==new->state) {
+    if (UM_USER_STATE_DISCONNECT==new->state) {
         return;
     }
     else if (false==old->local && false==new->local) {
@@ -474,9 +474,9 @@ um_ubus_handle_auth(
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
 
-    user = um_user_auth(mac);
+    um_user_auth(mac);
     
-    return user?0:-ENOMEM;
+    return 0;
 }
 
 int

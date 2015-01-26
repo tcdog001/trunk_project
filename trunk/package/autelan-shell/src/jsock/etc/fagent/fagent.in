@@ -90,10 +90,12 @@ fagent_cb() {
 	local dir="$3"
 	local file="$4"
 
-	local line=$(sed '/#/d;/^$/d' ${config} | grep ${dir})
-		  line=$(list_tail ${line})
-	local buildin=$(list_first ${line})
-	local args=$(list_tail ${line})
+	local _ mask buildin args
+	#
+	# must bash
+	#
+	read _ mask buildin args \
+		<<< $(sed '/#/d;/^$/d' ${config} | grep ${dir})
 
 	fagent_buildin ${buildin} ${dir} ${file} ${args}
 }

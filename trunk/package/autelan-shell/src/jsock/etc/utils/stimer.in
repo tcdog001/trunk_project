@@ -235,7 +235,7 @@ stimer_start() {
 	local type=${__STIMER_TYPE__:-$1}
 	local event=${__STIMER_EVENT__:-$2}
 
-	mkdir -p ${dir_tmp_stimer}/${type}
+	MKDIR ${dir_tmp_stimer}/${type}
 	stimer_log_init ${type} ${event}
 
 	stimer_load ${type} ${event} ${dir_stimer}/${type}/$(get_board_type).${event}
@@ -262,7 +262,7 @@ stimer_custom() {
 	local event="$2"; shift 2
 	local alias="$1"
 
-	mkdir -p ${dir_tmp_stimer}/${type}
+	MKDIR ${dir_tmp_stimer}/${type}
 
 	local file=${dir_tmp_stimer}/${type}/${event}
 	if [[ -f "${file}" ]]; then

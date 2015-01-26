@@ -22,6 +22,24 @@ path_to_list() {
 }
 
 #
+#$1:dir
+#
+MKDIR() {
+	local dir="$1"
+
+	#
+	# maybe exist ${dir} as FILE
+	#
+	if [[ -f "${dir}" ]]; then
+		rm -f ${dir}
+	fi
+
+	if [[ ! -d "${dir}" ]]; then
+		mkdir -p ${dir}
+	fi
+}
+
+#
 #$1:dir name prefix
 #$1:base prefix
 #
@@ -37,18 +55,7 @@ setup_dir_with_prefix() {
 		# setup dir with base
 		#
 		if [[ "${dir#${base}}" != ${dir} ]]; then
-			mkdir -p ${dir}
+			MKDIR ${dir}
 		fi
 	done
-}
-
-#
-#$1:dir
-#
-makedir() {
-	local dir="$1"
-
-	if [[ ! -d "${dir}" ]]; then
-		mkdir -p ${dir}
-	fi
 }

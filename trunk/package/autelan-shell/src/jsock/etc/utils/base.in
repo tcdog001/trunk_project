@@ -72,6 +72,22 @@ do_with_cb() {
 	return ${err}
 }
 
+#
+#$1:wait
+#$2:action...
+#
+do_while_ok() {
+	local wait="$1"; shift
+	local action="$*"
+
+	local err=0
+	for ((;;)); do
+		eval "${action}" && return
+
+		sleep ${wait}
+	done
+}
+
 get_board_type() {
 	cat ${__ROOTFS__}/etc/boardtype
 }
@@ -147,13 +163,42 @@ monitortask() {
 #$1:lockfile
 #$2:action...
 #
-do_with_flock() {
+exec_with_flock() {
 	local lockfile="$1"; shift
 	local action="$*"
 	local err=0
 
 	{
 		flock -n 3 || {
+			do_logger "flock" \
+				"FAILED: cannot lock ${lockfile}"
+
+			return ${e_flock_failed}
+		}
+
+		#
+		# can NOT eval, the action maybe include json
+		#
+		${action}; err=$?
+	} 3<>${lockfile}
+
+	return ${err}
+}
+
+
+#
+#$1:lockfile
+#$2:wait
+#$3:action...
+#
+exec_with_flock_wait() {
+	local lockfile="$1"
+	local wait="$2"; shift 2
+	local action="$*"
+	local err=0
+
+	{
+		flock -w ${wait} 3 || {
 			do_logger "flock" \
 				"FAILED: cannot lock ${lockfile}"
 
@@ -190,7 +235,7 @@ get_error_tag() {
 display_waiting() {
 	local times=$1
 	local interval=$2
-	local output=$3
+	local output="$3"
 	local i
 
 	for ((i=0; i<times; i++)); do
