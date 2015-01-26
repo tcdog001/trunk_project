@@ -141,7 +141,7 @@ os_ch_read(channel_t *ch, void *msg)
         return os_assert_value(-EINVAL1);
     }
     else if (__channel_empty(ch)) {
-        return -EKEYBAD;
+        return -ENOEXIST;
     }
     
     switch(ch->type) {
@@ -194,7 +194,7 @@ os_ch_write(channel_t *ch, void *msg)
         return os_assert_value(-EINVAL1);
     }
     else if (__channel_full(ch)) {
-        return -EKEYBAD;
+        return -ENOSPACE;
     }
     
     switch(ch->type) {

@@ -241,9 +241,7 @@ part_block_crc_read(struct part_block *block)
     * uboot not support sscanf, so can not as below
     *   os_sscanf(crcstring, "%x", &crc);
     */
-    /*crc = os_digitstring2number(crcstring, CRC32_STRINGLEN, 16, typeof(crc));*/
-    crc = os_digitstring2number(crcstring, strlen(crcstring), 16, typeof(crc));
-
+    crc = os_digitstring2number(crcstring, os_strlen(crcstring), 16, typeof(crc));
 
     debug_trace("read crc(string:%s, number:%llx)", crcstring, crc);
     

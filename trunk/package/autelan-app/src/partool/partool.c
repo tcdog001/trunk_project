@@ -566,8 +566,8 @@ partool_show_byname_api(int argc, char *argv[],void *buf)
     if (err<0) {
         return part_error(err, name);
     }
-    len=strlen(c.v.len);
-    strncpy(buf, c.v.var,len);
+
+    strcpy(buf, c.v.var);
 
     show_cursor(&c, true);
     

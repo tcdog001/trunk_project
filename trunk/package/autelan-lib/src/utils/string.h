@@ -138,6 +138,20 @@ os_strlcpy(char *dst, const char *src, size_t size)
         for ((_sub)=os_strtok(_s, _delim);(_sub);(_sub)=os_strtok(NULL, _delim))
 #endif
 
+#ifndef os_getarraystringidx
+#define os_getarraystringidx(_array, _string, _begin, _end) ({ \
+    int i, idx = (_end);                            \
+                                                    \
+    for (i=(_begin); i<(_end); i++) {               \
+        if (0==os_strcmp((_array)[i], _string)) {   \
+            break;                                   \
+        }                                            \
+    }                                                \
+                                                     \
+    idx;                                             \
+})
+#endif
+
 typedef bool char_is_something_f(int ch);
 
 static inline bool 

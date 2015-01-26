@@ -56,7 +56,7 @@ is_good_part_mode(int mode)
 static inline char *
 part_mode_string(int mode)
 {
-    char *string[PART_MODE_END] = {
+    static char *string[PART_MODE_END] = {
         "normal",
         "empty",
         "crc",
@@ -65,11 +65,7 @@ part_mode_string(int mode)
 #endif
     };
 
-    if (is_good_part_mode(mode)) {
-        return string[mode];
-    } else {
-        return __unknow;
-    }
+    return os_enum_string(is_good_part_mode, string, mode);
 }
 
 /*

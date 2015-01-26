@@ -117,7 +117,7 @@
     tvar;                           \
 })
 
-#define os_v_popen(mod, fmt, args...)   os_v_xopen(FILE*, popen, mod, fmt, ##args)
+#define os_v_popen(fmt, args...)        os_v_xopen(FILE*, popen, "r", fmt, ##args)
 #define os_v_fopen(mod, fmt, args...)   os_v_xopen(FILE*, fopen, mod, fmt, ##args)
 #define os_v_open(flag, fmt, args...)   os_v_xopen(int, open, flag, fmt, ##args)
 
@@ -160,6 +160,42 @@
 
 #define os_v_system(fmt, args...)   \
         __os_v_system(__is_debug_init_trace, fmt, ##args)
+
+
+#define os_v_pgets(line, space, fmt, args...)   do{ \
+    int err = 0;                                    \
+    FILE *fd = os_v_popen(fmt, ##args);             \
+    if (NULL==fd) {                                 \
+        err = -EPIPE;                               \
+    } else {                                        \
+        if (NULL==fgets(line, space, fd)) {         \
+            err = errno;                            \
+        } else {                                    \
+            err = 0;                                \
+        }                                           \
+                                                    \
+        pclose(fd);                                 \
+    }                                               \
+}while(0)
+
+#define os_v_pread(buf, size, fmt, args...)   do{ \
+    int err = 0;                                    \
+    FILE *fd = os_v_popen(fmt, ##args);             \
+    if (NULL==fd) {                                 \
+        err = -EPIPE;                               \
+    } else {                                        \
+        int count = fread(buf, 1, size, fd);        \
+        if (count <= 0) {                           \
+            err = errno;                            \
+        } else {                                    \
+            err = 0;                                \
+        }                                           \
+                                                    \
+        pclose(fd);                                 \
+    }                                               \
+}while(0)
+        
+
 #endif
 
 /******************************************************************************/

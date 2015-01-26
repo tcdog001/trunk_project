@@ -24,6 +24,8 @@ pushuser(struct apuser *user, bool init, char *name)
     
     handle = um_open_table(name);
 
+	um_user_add_bool(UM_USER_LOCAL, user->local);
+
 	um_user_add_macstring(UM_USER_MAC, user->mac);
 	um_user_add_macstring(UM_USER_AP, user->ap);
 	um_user_add_macstring(UM_USER_VAP, user->vap);
@@ -31,21 +33,33 @@ pushuser(struct apuser *user, bool init, char *name)
 	um_user_add_u32(UM_USER_WLANID, user->wlanid);
 	um_user_add_u32(UM_USER_RADIOID, user->radioid);
 	um_user_add_string(UM_USER_IP, os_ipstring(user->ip));
-	//um_user_add_u32(UM_USER_IP, user->ip);
-	um_user_add_u32(UM_USER_UPTIME, user->wifi.uptime);
-	um_user_add_u32(UM_USER_LIVETIME, user->wifi.livetime);
-	um_user_add_u32(UM_USER_SIGNAL, user->wifi.signal);
-	um_user_add_u32(UM_USER_RX_RATE, user->wifi.rx.rate);
-	um_user_add_u32(UM_USER_RX_WIFIRATE, user->wifi.rx.wifirate);
-	um_user_add_u64(UM_USER_RX_BYTES, user->wifi.rx.bytes);
-	um_user_add_u32(UM_USER_TX_RATE, user->wifi.tx.rate);
-	um_user_add_u32(UM_USER_TX_WIFIRATE, user->wifi.tx.wifirate);
-	um_user_add_u64(UM_USER_TX_BYTES, user->wifi.tx.bytes);
-	
-	um_user_add_bool(UM_USER_PORTAL_ENABLE, !!user->portal.uptime);
-	um_user_add_string(UM_USER_PORTAL_TYPE, um_user_portal_type(user));
-	um_user_add_string(UM_USER_PORTAL_STATE, um_user_portal_state(user));
+	um_user_add_string(UM_USER_STATE, um_user_state_string(user->state));
 
+	um_user_add_u32(UM_USER_WIFI_UPTIME, user->wifi.uptime);
+	um_user_add_u32(UM_USER_WIFI_SIGNAL, user->wifi.signal);
+	um_user_add_u32(UM_USER_WIFI_ONLINELIMIT, user->wifi.onlinelimit);
+	um_user_add_u64(UM_USER_WIFI_UPFLOWTOTAL, user->wifi.up.flowtotal);
+	um_user_add_u64(UM_USER_WIFI_UPFLOWLIMIT, user->wifi.up.flowlimit);
+	um_user_add_u32(UM_USER_WIFI_UPRATELIMIT, user->wifi.up.ratelimit);
+	um_user_add_u64(UM_USER_WIFI_DOWNFLOWTOTAL, user->wifi.down.flowtotal);
+	um_user_add_u64(UM_USER_WIFI_DOWNFLOWLIMIT, user->wifi.down.flowlimit);
+	um_user_add_u32(UM_USER_WIFI_DOWNRATELIMIT, user->wifi.down.ratelimit);
+	um_user_add_u64(UM_USER_WIFI_ALLFLOWTOTAL, user->wifi.all.flowtotal);
+	um_user_add_u64(UM_USER_WIFI_ALLFLOWLIMIT, user->wifi.all.flowlimit);
+	um_user_add_u32(UM_USER_WIFI_ALLRATELIMIT, user->wifi.all.ratelimit);
+	
+	um_user_add_u32(UM_USER_AUTH_UPTIME, user->auth.uptime);
+	um_user_add_u32(UM_USER_AUTH_ONLINELIMIT, user->auth.onlinelimit);
+	um_user_add_u64(UM_USER_AUTH_UPFLOWTOTAL, user->auth.up.flowtotal);
+	um_user_add_u64(UM_USER_AUTH_UPFLOWLIMIT, user->auth.up.flowlimit);
+	um_user_add_u32(UM_USER_AUTH_UPRATELIMIT, user->auth.up.ratelimit);
+	um_user_add_u64(UM_USER_AUTH_DOWNFLOWTOTAL, user->auth.down.flowtotal);
+	um_user_add_u64(UM_USER_AUTH_DOWNFLOWLIMIT, user->auth.down.flowlimit);
+	um_user_add_u32(UM_USER_AUTH_DOWNRATELIMIT, user->auth.down.ratelimit);
+	um_user_add_u64(UM_USER_AUTH_ALLFLOWTOTAL, user->auth.all.flowtotal);
+	um_user_add_u64(UM_USER_AUTH_ALLFLOWLIMIT, user->auth.all.flowlimit);
+	um_user_add_u32(UM_USER_AUTH_ALLRATELIMIT, user->auth.all.ratelimit);
+    
     um_close_table(handle);
 }
 
@@ -74,37 +88,24 @@ pushuserby(struct user_filter *filter)
     return err;
 }
 
-static void 
-insert_or_remove_cb(struct apuser *user, char *event)
+void 
+um_ubus_common_notify(struct apuser *user, char *event)
 {
-    if (user->local) {        
+    if (user->local && is_good_um_user_state(user->statet)) {        
         pushuser(user, true, "user");
     	notify(event);
 
-    	debug_ubus_trace("%s user(%s)", event, um_macstring(user->mac));
-    }
-}
-
-void
-um_ubus_insert_cb(struct apuser *user)
-{
-    if (um_is_ev_enable(new)) {
-        insert_or_remove_cb(user, "um.new");
-    }
-}
-
-void
-um_ubus_remove_cb(struct apuser *user)
-{
-    if (um_is_ev_enable(delete)) {
-        insert_or_remove_cb(user, "um.delete");
+    	debug_ubus_trace("%s user(%s)", event, os_macstring(user->mac));
     }
 }
 
 static void
-update_cb(struct apuser *old, struct apuser *new)
+__um_ubus_update_notify(struct apuser *old, struct apuser *new)
 {
-    if (false==old->local && false==new->local) {
+    if (UM_USER_STATE_INVALID==new->state) {
+        return;
+    }
+    else if (false==old->local && false==new->local) {
         return;
     }
 
@@ -114,21 +115,21 @@ update_cb(struct apuser *old, struct apuser *new)
 	// user info
     notify("um.update");
     
-	debug_ubus_trace("um.update user(%s)", um_macstring(old->mac));
+	debug_ubus_trace("um.update user(%s)", os_macstring(old->mac));
 }
 
 void
-um_ubus_update_cb(struct apuser *old, struct apuser *new)
+um_ubus_update_notify(struct apuser *old, struct apuser *new)
 {
     if (um_is_ev_enable(update)) {
-        update_cb(old, new);
+        __um_ubus_update_notify(old, new);
     }
 }
 
 static int
 restart(void)
 {
-    os_println("do nothing, now!");
+    os_println("not support, now!");
     
     return 0;
 }
@@ -252,6 +253,21 @@ setfilter_mac(struct user_filter *filter, struct blob_attr *attr[])
 }
 
 static void
+setfilter_state(struct user_filter *filter, struct blob_attr *attr[])
+{
+    struct blob_attr *p = attr[UM_GETUSER_STATE];
+    
+    filter->state = 0;
+	if (p) {
+	    int state = um_user_state_idx(blobmsg_get_string(p));
+	    
+	    if (is_good_um_user_state(state)) {
+            filter->state = state;
+	    }
+	}
+}
+
+static void
 setfilter_local(struct user_filter *filter, struct blob_attr *attr[])
 {
     struct blob_attr *p = attr[UM_GETUSER_LOCAL];
@@ -313,7 +329,8 @@ um_ubus_handle_getuser(
 )
 {
     struct user_filter f = USER_FILTER_INITER(false);
-	struct blob_attr *attr[UM_GETUSER_END], *zero[UM_GETUSER_END] = {NULL};
+	struct blob_attr *attr[UM_GETUSER_END] = {NULL};
+	struct blob_attr *zero[UM_GETUSER_END] = {NULL};
 	int err;
 
 	blobmsg_parse(umc.policy.getuser, os_count_of(umc.policy.getuser), attr, blob_data(msg), blob_len(msg));
@@ -325,6 +342,7 @@ um_ubus_handle_getuser(
     * set local filter first
     */
     setfilter_local(&f, attr);
+    setfilter_state(&f, attr);
 
     if (setfilter_ip(&f, attr) || setfilter_mac(&f, attr)) {
         goto push_ok;
@@ -345,6 +363,139 @@ push_ok:
 	um_ubus_send_reply(ctx, req);
 	
 	return 0;
+}
+
+static byte *
+getmac(struct blob_attr *msg)
+{
+    struct blob_attr *attr[UM_USER_END] = {NULL};
+
+    blobmsg_parse(umc.policy.user, os_count_of(umc.policy.user), attr, blob_data(msg), blob_len(msg));
+
+    return attr[UM_USER_MAC]?os_getmac(blobmsg_get_string(attr[UM_USER_MAC])):NULL;
+}
+
+int
+um_ubus_handle_connect(
+    struct ubus_context *ctx, 
+    struct ubus_object *obj,
+    struct ubus_request_data *req, 
+    const char *method,
+    struct blob_attr *msg
+)
+{
+    struct blob_attr *attr[UM_USER_END] = {NULL};
+    struct apuser *user;
+    
+    blobmsg_parse(umc.policy.user, os_count_of(umc.policy.user), attr, blob_data(msg), blob_len(msg));
+    if (NULL==attr[UM_USER_MAC] || NULL==attr[UM_USER_IFNAME]) {
+        return UBUS_STATUS_INVALID_ARGUMENT;
+    }
+    
+    user = um_user_connect(os_getmac(blobmsg_get_string(attr[UM_USER_MAC])), 
+                blobmsg_get_string(attr[UM_USER_IFNAME]));
+    
+    return user?0:-ENOMEM;
+}
+
+int
+um_ubus_handle_disconnect(
+    struct ubus_context *ctx, 
+    struct ubus_object *obj,
+    struct ubus_request_data *req, 
+    const char *method,
+    struct blob_attr *msg
+)
+{
+    byte *mac = getmac(msg);
+    if (NULL==mac) {
+        return UBUS_STATUS_INVALID_ARGUMENT;
+    }
+    
+    um_user_disconnect(mac);
+
+    return 0;
+}
+
+int
+um_ubus_handle_bind(
+    struct ubus_context *ctx, 
+    struct ubus_object *obj,
+    struct ubus_request_data *req, 
+    const char *method,
+    struct blob_attr *msg
+)
+{
+    struct blob_attr *attr[UM_USER_END] = {NULL};
+    struct apuser *user;
+    
+    blobmsg_parse(umc.policy.user, os_count_of(umc.policy.user), attr, blob_data(msg), blob_len(msg));
+    if (NULL==attr[UM_USER_IP] || NULL==attr[UM_USER_MAC] || NULL==attr[UM_USER_IFNAME]) {
+        return UBUS_STATUS_INVALID_ARGUMENT;
+    }
+    
+    user = um_user_bind(os_getmac(blobmsg_get_string(attr[UM_USER_MAC])), 
+                inet_addr(blobmsg_get_string(attr[UM_USER_IP])), 
+                blobmsg_get_string(attr[UM_USER_IFNAME]));
+
+    return user?0:-ENOMEM;
+}
+
+int
+um_ubus_handle_unbind(
+    struct ubus_context *ctx, 
+    struct ubus_object *obj,
+    struct ubus_request_data *req, 
+    const char *method,
+    struct blob_attr *msg
+)
+{
+    byte *mac = getmac(msg);
+    if (NULL==mac) {
+        return UBUS_STATUS_INVALID_ARGUMENT;
+    }
+    
+    um_user_unbind(mac);
+
+    return 0;
+}
+
+int
+um_ubus_handle_auth(
+    struct ubus_context *ctx, 
+    struct ubus_object *obj,
+    struct ubus_request_data *req, 
+    const char *method,
+    struct blob_attr *msg
+)
+{
+    byte *mac = getmac(msg);
+    if (NULL==mac) {
+        return UBUS_STATUS_INVALID_ARGUMENT;
+    }
+
+    user = um_user_auth(mac);
+    
+    return user?0:-ENOMEM;
+}
+
+int
+um_ubus_handle_deauth(
+    struct ubus_context *ctx, 
+    struct ubus_object *obj,
+    struct ubus_request_data *req, 
+    const char *method,
+    struct blob_attr *msg
+)
+{
+    byte *mac = getmac(msg);
+    if (NULL==mac) {
+        return UBUS_STATUS_INVALID_ARGUMENT;
+    }
+    
+    um_user_deauth(mac, UM_USER_DEAUTH_INITIATIVE);
+    
+    return 0;
 }
 
 static void

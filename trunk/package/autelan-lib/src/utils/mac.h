@@ -27,6 +27,7 @@
 
 #define OS_ZEROMAC                  ((byte *)"\x00\x00\x00\x00\x00\x00")
 #define OS_FULLMAC                  ((byte *)"\xff\xff\xff\xff\xff\xff")
+#define OS_2BMAC                    ((byte *)"\x2b\x2b\x2b\x2b\x2b\x2b")
 
 static inline byte *
 os_maccpy(byte *mac_dst, byte *mac_src)
@@ -103,7 +104,7 @@ os_getmac_bystring(byte *mac, char *macstring)
         width = 2;
     }
     else {
-        os_assert(0);
+        return OS_2BMAC;
     }
     
     for (i=0; i<OS_MACSIZE; i++) {
@@ -111,6 +112,17 @@ os_getmac_bystring(byte *mac, char *macstring)
     }
 
     return mac;
+}
+
+/*
+*  multi-thread unsafe
+*/
+static inline byte *
+os_getmac(char *macstring)
+{
+    static byte mac[OS_MACSIZE] = {0};
+    
+    return macstring?os_getmac_bystring(mac, macstring):OS_ZEROMAC;
 }
 
 static inline int
@@ -161,6 +173,15 @@ os_getmacstring(byte mac[], int sep)
     os_macsaprintf(mac, macstring, sep);
 
     return macstring;
+}
+
+/*
+*  multi-thread unsafe
+*/
+static inline char *
+os_macstring(byte mac[])
+{
+    return os_getmacstring(mac, ':');
 }
 
 /******************************************************************************/

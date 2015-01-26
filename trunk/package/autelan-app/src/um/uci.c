@@ -25,13 +25,20 @@ static struct um_intf *
 intf_create(char *ifname)
 {
     struct um_intf *intf = NULL;
-
+    char macstring[1+MACSTRINGLEN_L] = {0};
+    
     intf = (struct um_intf *)os_zalloc(sizeof(*intf));
     if (NULL==intf) {
         return NULL;
     }
     os_strdcpy(intf->ifname, ifname);
-
+    /*
+    * get intf's MAC
+    */
+    os_v_pgets(macstring, sizeof(macstring), 
+        "ifconfig %s | grep HWaddr | awk '{print $5}'", 
+        ifname);
+    
     debug_uci_ok("load intf(%s)", ifname);
     
     return intf;
@@ -59,6 +66,20 @@ intf_remove(struct um_intf *intf, bool delete_user)
     }
     
     list_del(&intf->node);
+}
+
+static struct um_intf *
+intf_get(char *ifname, struct list_head *head)
+{
+    struct um_intf *intf;
+
+    list_for_each_entry(intf, head, node) {
+        if (0==os_strcmp(ifname, intf->ifname)) {
+            return intf;
+        }
+    }
+
+    return NULL;
 }
 
 static void 
@@ -139,15 +160,25 @@ __load_intf(char *ifname, struct blob_attr *tb[], int count, struct list_head *h
 {
     struct blob_attr *p;
     struct um_intf *intf = NULL;
-    bool disable = false;
+    bool disable = true;
+    bool um = false;
     
     p = tb[UM_INTFPOLICY_DISABLE];
     if (p) {
         disable = blobmsg_get_bool(p);
     }
-    
     if (disable) {
         debug_uci_trace("no load disabled intf(%s)", ifname);
+        
+        return NULL;
+    }
+    
+    p = tb[UM_INTFPOLICY_UM];
+    if (p) {
+        um = blobmsg_get_bool(p);
+    }
+    if (false==um) {
+        debug_uci_trace("no load none-um intf(%s)", ifname);
         
         return NULL;
     }
@@ -199,6 +230,11 @@ load_wlan(struct uci_section *s, struct blob_attr *tb[], int count, struct list_
     int radioid = 0;
     int wlanid  = 0;
 
+    intf = __load_intf(ifname, tb, count, head);
+    if (NULL==intf) {
+        return -ENOMEM;
+    }
+
     p = tb[UM_WLANPOLICY_IFNAME];
     if (p) {
         ifname = blobmsg_get_string(p);
@@ -207,11 +243,7 @@ load_wlan(struct uci_section *s, struct blob_attr *tb[], int count, struct list_
 
         return -ENOEXIST;
     }
-
-    intf = __load_intf(ifname, tb, count, head);
-    if (NULL==intf) {
-        return -ENOMEM;
-    }
+    
     os_sscanf(ifname, "wlan%d-%d", &radioid, &wlanid);
     intf->type      = UM_INTF_WLAN;
     intf->radioid   = radioid;
@@ -328,17 +360,32 @@ load_wireless(struct uci_package *wireless)
 {
 	load_intf(wireless, &umc.uci.radio, load_radio);
 	debug_uci_trace("load radio to tmp");
-	
-	load_intf(wireless, &umc.uci.wlan, load_wlan);
-    debug_uci_trace("load wlan to tmp");
-    
+
 	intf_compare(UM_INTF_RADIO);
 	debug_uci_trace("radio compare(tmp==>cfg)");
-	
+
+	load_intf(wireless, &umc.uci.wlan, load_wlan);
+    debug_uci_trace("load wlan to tmp");
+
 	intf_compare(UM_INTF_WLAN);
 	debug_uci_trace("wlan compare(tmp==>cfg)");
     
 	return 0;
+}
+
+struct um_intf *
+um_intf_get(char *ifname)
+{
+    if (NULL==ifname) {
+        return NULL;
+    }
+    
+    struct um_intf *intf = intf_get(ifname, &umc.uci.wlan.cfg);
+    if (NULL==intf) {
+        intf = intf_get(ifname, &umc.uci.radio.cfg);
+    }
+
+    return intf;
 }
 
 int

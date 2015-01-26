@@ -105,7 +105,17 @@ static inline bool is_good_common_id(int id)
 * check id with [0, end)
 */
 #define is_good_enum(_id, _end)     is_good_value(_id, 0, _end)
-
+#define os_enum_string(_is_good, _array, _enum) ({ \
+    char *string;                   \
+                                    \
+    if (_is_good(_enum)) {          \
+        string = _array[_enum];     \
+    } else {                        \
+        string = __unknow;          \
+    }                               \
+                                    \
+    string;                         \
+})
 
 #define os_safe_value(_value, _min, _max)    ({  \
     typeof(_value)  __value   = _value;             \
