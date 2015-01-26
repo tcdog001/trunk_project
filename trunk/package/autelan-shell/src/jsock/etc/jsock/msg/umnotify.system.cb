@@ -1,0 +1,57 @@
+#!/bin/bash
+
+. ${__ROOTFS__}/etc/jsock/jsock.in
+
+#
+#call by jsock.cb
+#
+#$1:body...
+#
+main() {
+	local body="$*"
+
+	jsock_ap_recive_check || {
+		return ${e_bad_board}
+	}
+
+	local event=$(echo ${body} | jq -j ".event|strings")
+	if [[ -z "${event}" ]]; then
+		return ${e_bad_json}
+	fi
+
+	local mac=$(echo ${body} | jq -j ".mac|strings")
+	if [[ -z "${mac}" ]]; then
+		return ${e_bad_json}
+	fi
+
+	local ip=$(echo ${body} | jq -j ".ip|strings")
+	if [[ -z "${ip}" ]]; then
+		return ${e_bad_json}
+	fi
+
+	local ifname message
+
+	case ${event} in
+	bind)
+		#
+		# todo: get ifname from ip
+		#
+		ifname="wlan0-1"
+
+		message=$(printf '{"mac":"%s","ip":"%s","ifname":"%s"}' ${mac} ${ip} ${ifname})
+		;;
+	unbind | auth | deauth)
+		message=$(printf '{"mac":"%s"}' ${mac})
+		;;
+	*)
+		return ${e_inval}
+		;;
+	esac
+
+	#
+	# call um method
+	#
+	ubus call user-manage ${event} "${message}"
+}
+
+main "$@"
