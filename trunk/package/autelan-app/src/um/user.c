@@ -271,7 +271,7 @@ __deauth(struct apuser *user, int reason, void (*cb)(struct apuser *user, int re
 static void
 __unbind(struct apuser *user, void (*cb)(struct apuser *user))
 {
-    __deauth(user, UM_USER_DEAUTH_INITIATIVE, NULL);
+    __deauth(user, UM_USER_DEAUTH_INITIATIVE, deauth_cb);
     
     if (NULL==user || UM_USER_STATE_BIND != user->state) {
         return;
