@@ -159,6 +159,7 @@ os_memcmp(void *a, const void *b, size_t n)
                                                     \
     for (i=(_begin); i<(_end); i++) {               \
         if (0==_cmp((_array)[i], _obj)) {           \
+            idx = i;                                \
             break;                                   \
         }                                            \
     }                                                \
