@@ -128,6 +128,7 @@ define Package/autelan-um/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/um/um $(1)/usr/bin
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/um/um.key $(1)/$(APPKEY_PATH)/
 	cp -f $(PKG_BUILD_DIR)/um/um.conf $(1)/etc/config/um
+	cp -f $(PKG_BUILD_DIR)/um/um.init $(1)/etc/init.d/um
 endef
 
 define Package/autelan-um/compile
