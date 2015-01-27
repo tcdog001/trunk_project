@@ -451,6 +451,7 @@ static void
 load_limit(
     struct uci_package *package,
     struct um_uci *uci,
+    char *name,
     int (*load)(struct blob_attr *tb[])
 )
 {
@@ -460,7 +461,8 @@ load_limit(
 	uci_foreach_element(&package->sections, e) {
 		struct uci_section *s = uci_to_section(e);
 		
-		if (0==os_strcmp(s->type, uci->uci_type)) {
+		if (0==os_strcmp(s->type, uci->uci_type) &&
+		    0==os_strcmp(s->e.name, name)) {
     		section_to_blob(s, &uci->param, tb, UM_LIMITPOLICY_END);
     		(*load)(tb);
 		}
@@ -470,10 +472,10 @@ load_limit(
 static int
 load_um(struct uci_package *package)
 {
-	load_limit(package, &umc.uci.limit.wifi, load_wifi_limit);
+	load_limit(package, &umc.uci.limit.wifi, "wifi", load_wifi_limit);
 	debug_uci_trace("load wifi limit");
 	
-	load_limit(package, &umc.uci.limit.auth, load_auth_limit);
+	load_limit(package, &umc.uci.limit.auth, "auth", load_auth_limit);
 	debug_uci_trace("load auth limit");
 
 	return 0;

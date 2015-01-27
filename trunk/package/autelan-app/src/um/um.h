@@ -444,8 +444,7 @@ enum {
 
 #define UM_UCI_INTF_RADIO   "wifi-device"
 #define UM_UCI_INTF_WLAN    "wifi-iface"
-#define UM_UCI_LIMIT_WIFI   "wifi-limit"
-#define UM_UCI_LIMIT_AUTH   "auth-limit"
+#define UM_UCI_LIMIT        "limit"
 
 struct um_intf {
     /*
