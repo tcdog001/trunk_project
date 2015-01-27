@@ -160,11 +160,8 @@ getbyid(appkey_t akid)
     }
     
     key = ak_key(ak_idx(akid));
-    if (address != (char *)key) {
-        return NULL;
-    }
 
-    return key;
+    return (address==(char *)key)?key:NULL;
 }
 
 static inline struct appkey *
@@ -213,11 +210,8 @@ __appkey_getbyname(char *app, char *key)
     }
 
     ak = getbyname(app, key);
-    if (NULL==ak) {
-        return INVALID_APPKEY;
-    }
-    
-    return ak_make(getidx(ak), getoffset(ak));
+
+    return ak?ak_make(getidx(ak), getoffset(ak)):INVALID_APPKEY;
 }
 
 int 

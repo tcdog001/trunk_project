@@ -306,39 +306,39 @@ enum {
     UM_POLICY_INITER(UM_USER_IP,            "ip",           STRING), /* "xxx.xxx.xxx.xxx" */ \
     UM_POLICY_INITER(UM_USER_STATE,         "state",        STRING), \
     \
-    UM_POLICY_INITER(UM_USER_WIFI_UPTIME,       "wifi_uptime",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_SIGNAL,       "wifi_signal",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_ONLINELIMIT,  "wifi_onlinelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWTOTAL,  "wifi_upflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWCACHE,  "wifi_upflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWLIMIT,  "wifi_upflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_UPRATELIMIT,  "wifi_upratelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWTOTAL,"wifi_downflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWCACHE,"wifi_downflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWLIMIT,"wifi_downflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_DOWNRATELIMIT,"wifi_downratelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWTOTAL, "wifi_allflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWCACHE, "wifi_allflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWLIMIT, "wifi_allflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_ALLRATELIMIT, "wifi_allratelimit",  INT32), \
+    UM_POLICY_INITER(UM_USER_WIFI_UPTIME,       "wifi.uptime",  INT32), \
+    UM_POLICY_INITER(UM_USER_WIFI_SIGNAL,       "wifi.signal",  INT32), \
+    UM_POLICY_INITER(UM_USER_WIFI_ONLINELIMIT,  "wifi.onlinelimit",  INT32), \
+    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWTOTAL,  "wifi.upflowtotal",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWCACHE,  "wifi.upflowcache",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWLIMIT,  "wifi.upflowlimit",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_UPRATELIMIT,  "wifi.upratelimit",  INT32), \
+    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWTOTAL,"wifi.downflowtotal",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWCACHE,"wifi.downflowcache",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWLIMIT,"wifi.downflowlimit",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_DOWNRATELIMIT,"wifi.downratelimit",  INT32), \
+    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWTOTAL, "wifi.allflowtotal",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWCACHE, "wifi.allflowcache",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWLIMIT, "wifi.allflowlimit",  INT64), \
+    UM_POLICY_INITER(UM_USER_WIFI_ALLRATELIMIT, "wifi.allratelimit",  INT32), \
     \
-    UM_POLICY_INITER(UM_USER_AUTH_UPTIME,       "auth_uptime",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_SIGNAL,       "auth_signal",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_ONLINELIMIT,  "auth_onlinelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWTOTAL,  "auth_upflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWCACHE,  "auth_upflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWLIMIT,  "auth_upflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_UPRATELIMIT,  "auth_upratelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWTOTAL,"auth_downflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWCACHE,"auth_downflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWLIMIT,"auth_downflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_DOWNRATELIMIT,"auth_downratelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWTOTAL, "auth_allflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWCACHE, "auth_allflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWLIMIT, "auth_allflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_ALLRATELIMIT, "auth_allratelimit",  INT32), \
+    UM_POLICY_INITER(UM_USER_AUTH_UPTIME,       "auth.uptime",  INT32), \
+    UM_POLICY_INITER(UM_USER_AUTH_SIGNAL,       "auth.signal",  INT32), \
+    UM_POLICY_INITER(UM_USER_AUTH_ONLINELIMIT,  "auth.onlinelimit",  INT32), \
+    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWTOTAL,  "auth.upflowtotal",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWCACHE,  "auth.upflowcache",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWLIMIT,  "auth.upflowlimit",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_UPRATELIMIT,  "auth.upratelimit",  INT32), \
+    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWTOTAL,"auth.downflowtotal",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWCACHE,"auth.downflowcache",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWLIMIT,"auth.downflowlimit",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_DOWNRATELIMIT,"auth.downratelimit",  INT32), \
+    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWTOTAL, "auth.allflowtotal",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWCACHE, "auth.allflowcache",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWLIMIT, "auth.allflowlimit",  INT64), \
+    UM_POLICY_INITER(UM_USER_AUTH_ALLRATELIMIT, "auth.allratelimit",  INT32), \
     \
-    UM_POLICY_INITER(UM_USER_DEAUTH_REASON,     "deauth_reason",    STRING), \
+    UM_POLICY_INITER(UM_USER_DEAUTH_REASON,     "deauth.reason",    STRING), \
 }
 
 enum {

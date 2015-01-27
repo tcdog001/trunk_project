@@ -164,6 +164,7 @@
 
 #define os_v_pgets(line, space, fmt, args...)    ({ \
     int err = 0;                                    \
+                                                    \
     FILE *fd = os_v_popen(fmt, ##args);             \
     if (NULL==fd) {                                 \
         err = -EPIPE;                               \
@@ -180,8 +181,9 @@
     err;                                            \
 })
 
-#define os_v_pread(buf, size, fmt, args...)      ({ \
+#define os_v_pread(buf, size, fmt, args...)    ({   \
     int err = 0;                                    \
+                                                    \
     FILE *fd = os_v_popen(fmt, ##args);             \
     if (NULL==fd) {                                 \
         err = -EPIPE;                               \

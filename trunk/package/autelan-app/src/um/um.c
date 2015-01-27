@@ -358,16 +358,16 @@ finish:
 }while(0)
 
 #define UM_DEBUG_AKID_INIT(_var) \
-        UM_AKID_INIT(umc.debug._var, "debug_" #_var, OS_OFF)
+        UM_AKID_INIT(umc.debug._var, "debug." #_var, OS_OFF)
 
 #define UM_TIMER_AKID_INIT(_var) \
-        UM_AKID_INIT(umc.timer._var.akid, "timer_" #_var, umc.timer._var.deft)
+        UM_AKID_INIT(umc.timer._var.akid, "timer." #_var, umc.timer._var.deft)
 
 #define UM_UBUS_AKID(_var) \
-        UM_AKID_INIT(umc.ev._var.akid, "ubus_" #_var, umc.ev._var.deft)
+        UM_AKID_INIT(umc.ev._var.akid, "ubus." #_var, umc.ev._var.deft)
 
 #define UM_SCRIPT_AKID_INIT(_var) \
-        UM_AKID_INIT(umc.ev._var.akid, "script_" #_var, umc.ev._var.deft)
+        UM_AKID_INIT(umc.ev._var.akid, "script." #_var, umc.ev._var.deft)
 
 static os_constructor void 
 um_akid_initer(void)
