@@ -757,10 +757,10 @@ um_user_delbyip(uint32_t ip);
 extern int
 um_user_delby(struct user_filter *filter);
 
-extern void 
+extern int 
 um_user_wifi_limit_update(void);
 
-extern void 
+extern int 
 um_user_auth_limit_update(void);
 /******************************************************************************/
 extern int

@@ -846,7 +846,7 @@ wifi_limit_update_cb(struct apuser *user, void *data)
     return mv2_OK;
 }
 
-void 
+int 
 um_user_wifi_limit_update(void)
 {
     return um_user_foreach(wifi_limit_update_cb, NULL);
@@ -860,7 +860,7 @@ auth_limit_update_cb(struct apuser *user, void *data)
     return mv2_OK;
 }
 
-void 
+int 
 um_user_auth_limit_update(void)
 {
     return um_user_foreach(auth_limit_update_cb, NULL);
