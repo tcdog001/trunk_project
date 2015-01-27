@@ -7,6 +7,12 @@ disconnect_cb(struct apuser *user);
 static void 
 connect_cb(struct apuser *user);
 
+static void 
+deauth_cb(struct apuser *user, int reason);
+
+static void 
+unbind_cb(struct apuser *user);
+
 static int
 hashbuf(byte *buf, int len, int mask)
 {
@@ -164,8 +170,6 @@ __remove(struct apuser *user)
 static struct apuser *
 __insert(struct apuser *user)
 {
-    char *action;
-    
     if (NULL==user) {
         return NULL;
     }
