@@ -349,8 +349,8 @@ int main(int argc, char **argv)
     um_timer_init();
     
 	uloop_run();
+	
     err = 0;
-    
 finish:
 	um_ubus_fini();
 	
