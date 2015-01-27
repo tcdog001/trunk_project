@@ -26,6 +26,7 @@ BACKTRACE_PATH=usr/app/backtrace
 
 define Package/autelan-app/install/common
 	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/config/
 	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/
 	$(INSTALL_DIR) $(1)/$(APPKEY_PATH)/
 endef
@@ -126,6 +127,7 @@ define Package/autelan-um/install
 
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/um/um $(1)/usr/bin
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/um/um.key $(1)/$(APPKEY_PATH)/
+	cp -f $(PKG_BUILD_DIR)/um/um.conf $(1)/etc/config/um
 endef
 
 define Package/autelan-um/compile
