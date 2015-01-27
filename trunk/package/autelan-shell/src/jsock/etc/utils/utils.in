@@ -21,6 +21,7 @@ fi
 . ${__ROOTFS__}/etc/utils/jdb.in
 . ${__ROOTFS__}/etc/utils/version.in
 . ${__ROOTFS__}/etc/utils/stimer.in
+. ${__ROOTFS__}/etc/utils/appkey.in
 
 #
 # md dir

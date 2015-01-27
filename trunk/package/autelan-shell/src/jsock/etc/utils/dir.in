@@ -115,6 +115,9 @@ readonly dir_data2=${dir_rootfs_data}/data2
 readonly dir_config=${dir_rootfs_data}/config
 readonly dir_config_nginx=${dir_config}/nginx
 readonly dir_config_php=${dir_config}/php
+readonly dir_config_plt=${dir_config}/plt
+readonly dir_config_fagent=${dir_config}/fagent
+readonly dir_config_stimer=${dir_config}/stimer
 
 #
 # backup dir

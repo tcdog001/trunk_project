@@ -149,6 +149,35 @@ setfilevalue() {
 
 #
 #$1:file
+#$2:key
+#$3:value
+#
+setmultifilevalue() {
+	local file="$1"
+	local key="$2"; shift 2
+	local value="$*"
+
+	mkfile ${file} \
+		&& sed -i "/${key}/d" ${file} \
+		&& echo "${value}" >> ${file} \
+		&& fsync ${file}
+}
+
+#
+#$1:file
+#$2:key
+#
+getmultifilevalue() {
+	local file="$1"
+	local key="$2"
+
+	local _ value
+	read _ value <<< $(grep "${key}" ${file})
+	echo ${value}
+}
+
+#
+#$1:file
 #[$2:added]
 #
 readnumberfile_andadd() {
