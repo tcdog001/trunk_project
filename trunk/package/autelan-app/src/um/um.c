@@ -262,15 +262,11 @@ struct um_control umc = {
         .limit = {
             .wifi = {
                 .param  = UM_PARAM_INITER(umc.policy.limit),
-                .cfg    = LIST_HEAD_INIT(umc.uci.limit.wifi.cfg),
-                .tmp    = LIST_HEAD_INIT(umc.uci.limit.wifi.tmp),
                 .uci_type = UM_UCI_LIMIT,
             },
             
             .auth = {
                 .param  = UM_PARAM_INITER(umc.policy.limit),
-                .cfg    = LIST_HEAD_INIT(umc.uci.limit.auth.cfg),
-                .tmp    = LIST_HEAD_INIT(umc.uci.limit.auth.tmp),
                 .uci_type = UM_UCI_LIMIT,
             },
         },
@@ -378,7 +374,7 @@ finish:
         UM_AKID_INIT(umc.ev._var.akid, "ubus." #_var, umc.ev._var.deft)
 
 #define UM_SCRIPT_AKID_INIT(_var) \
-        UM_AKID_INIT(umc.ev._var.akid, "script." #_var, umc.ev._var.deft)
+        UM_AKID_INIT(umc.sh._var.akid, "script." #_var, umc.sh._var.deft)
 
 static os_constructor void 
 um_akid_initer(void)
