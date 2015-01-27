@@ -416,8 +416,7 @@ __auth(struct apuser *user, void (*cb)(struct apuser *user))
 
 #define um_script_notify(_user, _event) do{     \
     if (um_is_sh_enable(_event)) {              \
-        os_v_system(UM_SCRIPT " %s %s %s %s &", \
-            #_event,                            \
+        os_v_system(UM_SCRIPT " " #_event " %s %s %s &", \
             (_user)->ifname,                    \
             os_macstring((_user)->mac),         \
             os_ipstring((_user)->ip));          \

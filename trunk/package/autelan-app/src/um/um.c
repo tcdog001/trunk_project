@@ -101,14 +101,15 @@ agingtimer(struct uloop_timeout *timeout)
 static multi_value_t 
 online_cb(struct apuser *user, void *data)
 {
-    if (user->auth.onlinelimit &&
-        UM_USER_STATE_DISCONNECT!=user->state) {
-        time_t now = time(NULL);
-        time_t used = now - user->auth.uptime;
-        
-        if (used > user->auth.onlinelimit) {
-            user_deauth(user, UM_USER_DEAUTH_ONLINETIME);
-        }
+    if (0==user->auth.onlinelimit || UM_USER_STATE_DISCONNECT==user->state) {
+        return mv2_OK;
+    }
+    
+    time_t now = time(NULL);
+    time_t used = now - user->auth.uptime;
+    
+    if (used > user->auth.onlinelimit) {
+        user_deauth(user, UM_USER_DEAUTH_ONLINETIME);
     }
     
     return mv2_OK;
@@ -149,6 +150,10 @@ flow_update(struct apuser *user)
 static multi_value_t 
 flow_cb(struct apuser *user, void *data)
 {
+    if (UM_USER_STATE_DISCONNECT==user->state) {
+        return mv2_OK;
+    }
+    
     flow_update(user);
     
     if (user->auth.up.flowlimit &&

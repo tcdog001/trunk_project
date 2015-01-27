@@ -113,14 +113,12 @@ um_ubus_deauth_notify(struct apuser *user, int reason)
         return;
     }
     
-    char *event = "um.deauth";
     char *reasonstring= um_user_deauth_reason_string(reason);
     
     pushuser(user, true, "user", reasonstring);
-	notify(event);
+	notify("um.deauth");
 
-	debug_ubus_trace("%s user(%s) reason(%s)", 
-	    event, 
+	debug_ubus_trace("um.deauth user(%s) reason(%s)", 
 	    os_macstring(user->mac), 
 	    reasonstring);
 }
