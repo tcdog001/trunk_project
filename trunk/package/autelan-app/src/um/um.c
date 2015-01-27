@@ -257,15 +257,15 @@ struct um_control umc = {
         .limit = {
             .wifi = {
                 .param  = UM_PARAM_INITER(umc.policy.limit),
-                .cfg    = LIST_HEAD_INIT(umc.uci.wifilimit.cfg),
-                .tmp    = LIST_HEAD_INIT(umc.uci.wifilimit.tmp),
+                .cfg    = LIST_HEAD_INIT(umc.uci.limit.wifi.cfg),
+                .tmp    = LIST_HEAD_INIT(umc.uci.limit.wifi.tmp),
                 .uci_type = UM_UCI_LIMIT_WIFI,
             },
             
             .auth = {
                 .param  = UM_PARAM_INITER(umc.policy.limit),
-                .cfg    = LIST_HEAD_INIT(umc.uci.authlimit.cfg),
-                .tmp    = LIST_HEAD_INIT(umc.uci.authlimit.tmp),
+                .cfg    = LIST_HEAD_INIT(umc.uci.limit.auth.cfg),
+                .tmp    = LIST_HEAD_INIT(umc.uci.limit.auth.tmp),
                 .uci_type = UM_UCI_LIMIT_AUTH,
             },
         },
