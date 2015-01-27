@@ -19,6 +19,7 @@ start_service() {
 
 reload_service() {
 	appkey_load_uci um
+	appkey -reload
 
 	ubus call um reload
 }
