@@ -27,6 +27,7 @@ BACKTRACE_PATH=usr/app/backtrace
 define Package/autelan-app/install/common
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/
 	$(INSTALL_DIR) $(1)/$(APPKEY_PATH)/
 endef
