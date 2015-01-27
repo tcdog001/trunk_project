@@ -153,6 +153,25 @@ os_memcmp(void *a, const void *b, size_t n)
 #define os_objeq(_a, _b)            (0==os_objcmp(_a, _b))
 #endif
 
+#ifndef __os_getobjarrayidx
+#define __os_getobjarrayidx(_array, _obj, _cmp, _begin, _end) ({ \
+    int i, idx = (_end);                            \
+                                                    \
+    for (i=(_begin); i<(_end); i++) {               \
+        if (0==_cmp((_array)[i], _obj)) {           \
+            break;                                   \
+        }                                            \
+    }                                                \
+                                                     \
+    idx;                                             \
+})
+#endif
+
+#ifndef os_getobjarrayidx
+#define os_getobjarrayidx(_array, _obj, _begin, _end) \
+        __os_getobjarrayidx(_array, _obj, os_objcmp, _begin, _end)
+#endif
+
 
 #ifndef __KERNEL__
 #define os_malloc(_size)            malloc(_size)

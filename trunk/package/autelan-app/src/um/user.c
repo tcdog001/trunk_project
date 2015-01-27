@@ -335,7 +335,7 @@ __connect(struct apuser *user, struct um_intf *intf, void (*cb)(struct apuser *u
 {
     if (NULL==user || 
         NULL==intf || 
-        UM_USER_STATE_DISCONNECT != user->state) {
+        is_online_um_user_state(user->state)) {
         return;
     }
 
@@ -359,7 +359,7 @@ __bind(struct apuser *user, uint32_t ip, struct um_intf *intf, void (*cb)(struct
     /*
     * user is disconnected
     */
-    else if (UM_USER_STATE_DISCONNECT==user->state) {
+    else if (false==is_online_um_user_state(user->state)) {
         __connect(user, intf, connect_cb);
     }
     /*

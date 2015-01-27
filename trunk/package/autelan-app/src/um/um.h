@@ -160,7 +160,7 @@ um_user_state_idx(char *state)
 {
     static char *array[UM_USER_STATE_END] = {UM_USER_STRINGS};
 
-    return os_getarraystringidx(array, state, 
+    return os_getstringarrayidx(array, state, 
                 UM_USER_STATE_DISCONNECT, 
                 UM_USER_STATE_END);
 }

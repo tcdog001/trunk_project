@@ -126,8 +126,8 @@ um_ubus_deauth_notify(struct apuser *user, int reason)
 void
 um_ubus_update_notify(struct apuser *old, struct apuser *new)
 {
-    if (false==um_is_ev_enable(update) || 
-        UM_USER_STATE_DISCONNECT==new->state) {
+    if (false==um_is_ev_enable(update) ||
+        false==is_online_um_user_state(new->state)) {
         return;
     }
 

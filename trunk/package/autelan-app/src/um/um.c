@@ -74,7 +74,7 @@ wifitimer(struct uloop_timeout *timeout)
 static multi_value_t 
 aging_cb(struct apuser *user, void *data)
 {
-    if (UM_USER_STATE_DISCONNECT==user->state) {
+    if (false==is_online_um_user_state(user->state)) {
         return mv2_OK;
     }
     
@@ -101,7 +101,7 @@ agingtimer(struct uloop_timeout *timeout)
 static multi_value_t 
 online_cb(struct apuser *user, void *data)
 {
-    if (0==user->auth.onlinelimit || UM_USER_STATE_DISCONNECT==user->state) {
+    if (0==user->auth.onlinelimit || false==is_online_um_user_state(user->state)) {
         return mv2_OK;
     }
     
@@ -150,7 +150,7 @@ flow_update(struct apuser *user)
 static multi_value_t 
 flow_cb(struct apuser *user, void *data)
 {
-    if (UM_USER_STATE_DISCONNECT==user->state) {
+    if (false==is_online_um_user_state(user->state)) {
         return mv2_OK;
     }
     
