@@ -15,7 +15,11 @@ get_onoff_log() {
 		sed -e "1,${del_line}"d ${ontime_file} -i 2>/dev/null
 	fi
 
-	echo "{\"ontime\":\"${ontime}\",\"offtime:\"${offtime}\",\"offreason\":\"ACC-OFF\"}" >${file_path}/ap-on-off-${offtime}
+	local json=$(json_create_bykvs \
+					"ontime" "${ontime}" \
+					"offtime" "${offtime}" \
+					"offreason" "ACC-OFF")
+	echo "${json}" > ${file_path}/ap-on-off-${offtime}
 }
 
 main() {
