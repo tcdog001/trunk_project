@@ -151,8 +151,8 @@ static inline char *
 um_user_state_string(int state)
 {
     static char *array[UM_USER_STATE_END] = {UM_USER_STRINGS};
-    
-    return os_enum_string(is_good_um_user_state, array, state);
+
+    return is_good_um_user_state(state)?array[state]:__unknow;
 }
 
 static inline int
@@ -192,7 +192,7 @@ um_user_deauth_reason_string(int reason)
 {
     static char *array[UM_USER_DEAUTH_END] = {UM_USER_DEAUTH_REASONS};
 
-    return os_enum_string(is_good_um_user_deauth_reason, array, reason);
+    return is_good_um_user_deauth_reason(reason)?array[reason]:__unknow;
 }
 
 struct apuser {

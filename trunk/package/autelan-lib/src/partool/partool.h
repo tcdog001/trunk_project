@@ -65,7 +65,7 @@ part_mode_string(int mode)
 #endif
     };
 
-    return os_enum_string(is_good_part_mode, string, mode);
+    return is_good_part_mode(mode)?string[mode]:__unknow;
 }
 
 /*
