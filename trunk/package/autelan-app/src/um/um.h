@@ -400,6 +400,28 @@ enum {
 	UM_POLICY_INITER(UM_WLANPOLICY_IFNAME,  "ifname",   STRING), \
 }
 
+enum {
+    UM_LIMITPOLICY_ONLINE,
+    UM_LIMITPOLICY_UPFLOW,
+    UM_LIMITPOLICY_UPRATE,
+    UM_LIMITPOLICY_DOWNFLOW,
+    UM_LIMITPOLICY_DOWNRATE,
+    UM_LIMITPOLICY_ALLFLOW,
+    UM_LIMITPOLICY_ALLRATE,
+
+    UM_LIMITPOLICY_END
+};
+
+#define UM_LIMITPOLICY_INITER    { \
+	UM_POLICY_INITER(UM_LIMITPOLICY_ONLINE,    "onlinelimit",   INT32), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_UPFLOW,    "upflowlimit",   INT64), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_UPRATE,    "upratelimit",   INT32), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_DOWNFLOW,  "downflowlimit", INT64), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_DOWNRATE,  "downratelimit", INT32), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_ALLFLOW,   "allflowlimit",  INT64), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_ALLRATE,   "allratelimit",  INT32), \
+}
+
 struct um_timer {
     struct uloop_timeout tm;
     appkey_t akid;
@@ -422,6 +444,8 @@ enum {
 
 #define UM_UCI_INTF_RADIO   "wifi-device"
 #define UM_UCI_INTF_WLAN    "wifi-iface"
+#define UM_UCI_LIMIT_WIFI   "wifi-limit"
+#define UM_UCI_LIMIT_AUTH   "auth-limit"
 
 struct um_intf {
     /*
@@ -481,13 +505,30 @@ struct um_control {
         struct blobmsg_policy user[UM_USER_END];
         struct blobmsg_policy radio[UM_RADIOPOLICY_END];
         struct blobmsg_policy wlan[UM_WLANPOLICY_END];
+        struct blobmsg_policy limit[UM_LIMITPOLICY_END];
     } policy;
-
+    
+    struct {
+        struct {
+            uint32_t onlinelimit;   /* just for auth */
+            
+            struct {
+                uint64_t flowlimit; /* just for auth */
+                uint32_t ratelimit;
+            } up, down, all;
+        } wifi, auth;
+    } limit;
+    
     struct {
         struct uci_context *ctx;
-
-        struct um_uci radio;
-        struct um_uci wlan;
+        
+        struct {
+            struct um_uci radio, wlan;
+        } intf;
+        
+        struct {
+            struct um_uci wifi, auth;
+        } limit;
     } uci;
     
     struct {
@@ -505,6 +546,16 @@ struct um_control {
         appkey_t flowscan;
     } debug;
 };
+
+#define um_user_limit_update(_user, _var) do{ \
+    (_user)->_var.onlinelimit   = umc.limit._var.onlinelimit;   \
+    (_user)->_var.up.flowlimit  = umc.limit._var.up.flowlimit;  \
+    (_user)->_var.up.ratelimit  = umc.limit._var.up.ratelimit;  \
+    (_user)->_var.down.flowlimit= umc.limit._var.down.flowlimit;\
+    (_user)->_var.down.ratelimit= umc.limit._var.down.ratelimit;\
+    (_user)->_var.all.flowlimit = umc.limit._var.all.flowlimit; \
+    (_user)->_var.all.ratelimit = umc.limit._var.all.ratelimit; \
+}while(0)
 
 struct user_filter {
     int state;
@@ -705,6 +756,12 @@ um_user_delbyip(uint32_t ip);
 
 extern int
 um_user_delby(struct user_filter *filter);
+
+extern void 
+um_user_wifi_limit_update(void);
+
+extern void 
+um_user_auth_limit_update(void);
 /******************************************************************************/
 extern int
 um_user_scan(void);

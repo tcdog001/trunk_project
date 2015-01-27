@@ -58,7 +58,7 @@ wifiscan(void)
 {
     struct um_intf *intf;
    
-    list_for_each_entry(intf, &umc.uci.wlan.cfg, node) {
+    list_for_each_entry(intf, &umc.uci.intf.wlan.cfg, node) {
         wifiscan_byif(intf);
     }
 
@@ -101,19 +101,13 @@ agingtimer(struct uloop_timeout *timeout)
 static multi_value_t 
 online_cb(struct apuser *user, void *data)
 {
-    if (UM_USER_STATE_DISCONNECT==user->state) {
-        return mv2_OK;
-    }
-
-    time_t now = time(NULL);
-    time_t used;
-    
-    if (user->auth.onlinelimit) {
-        used = now - user->auth.uptime;
+    if (user->auth.onlinelimit &&
+        UM_USER_STATE_DISCONNECT!=user->state) {
+        time_t now = time(NULL);
+        time_t used = now - user->auth.uptime;
+        
         if (used > user->auth.onlinelimit) {
             user_deauth(user, UM_USER_DEAUTH_ONLINETIME);
-
-            return mv2_OK;
         }
     }
     
@@ -159,24 +153,15 @@ flow_cb(struct apuser *user, void *data)
     
     if (user->auth.up.flowlimit &&
         user->auth.up.flowlimit < user->auth.up.flowtotal) {
-
         user_deauth(user, UM_USER_DEAUTH_FLOWLIMIT);
-
-        return mv2_OK;
     }
-    
-    if (user->auth.down.flowlimit &&
+    else if (user->auth.down.flowlimit &&
         user->auth.down.flowlimit < user->auth.down.flowtotal) {
         user_deauth(user, UM_USER_DEAUTH_FLOWLIMIT);
-
-        return mv2_OK;
     }
-    
-    if (user->auth.all.flowlimit &&
+    else if (user->auth.all.flowlimit &&
         user->auth.all.flowlimit < user->auth.all.flowtotal) {
         user_deauth(user, UM_USER_DEAUTH_FLOWLIMIT);
-
-        return mv2_OK;
     }
     
     return mv2_OK;
@@ -250,20 +235,39 @@ struct um_control umc = {
         .getuser= UM_GETUSER_POLICY_INITER,
         .radio  = UM_RADIOPOLICY_INITER,
         .wlan   = UM_WLANPOLICY_INITER,
+        .limit  = UM_LIMITPOLICY_INITER,
     },
 
     .uci = {
-        .radio = {
-            .param  = UM_PARAM_INITER(umc.policy.radio),
-            .cfg    = LIST_HEAD_INIT(umc.uci.radio.cfg),
-            .tmp    = LIST_HEAD_INIT(umc.uci.radio.tmp),
-            .uci_type = UM_UCI_INTF_RADIO,
+        .intf = {
+            .radio = {
+                .param  = UM_PARAM_INITER(umc.policy.radio),
+                .cfg    = LIST_HEAD_INIT(umc.uci.intf.radio.cfg),
+                .tmp    = LIST_HEAD_INIT(umc.uci.intf.radio.tmp),
+                .uci_type = UM_UCI_INTF_RADIO,
+            },
+            .wlan = {
+                .param  = UM_PARAM_INITER(umc.policy.wlan),
+                .cfg    = LIST_HEAD_INIT(umc.uci.intf.wlan.cfg),
+                .tmp    = LIST_HEAD_INIT(umc.uci.intf.wlan.tmp),
+                .uci_type = UM_UCI_INTF_WLAN,
+            },
         },
-        .wlan = {
-            .param  = UM_PARAM_INITER(umc.policy.wlan),
-            .cfg    = LIST_HEAD_INIT(umc.uci.wlan.cfg),
-            .tmp    = LIST_HEAD_INIT(umc.uci.wlan.tmp),
-            .uci_type = UM_UCI_INTF_WLAN,
+        
+        .limit = {
+            .wifi = {
+                .param  = UM_PARAM_INITER(umc.policy.limit),
+                .cfg    = LIST_HEAD_INIT(umc.uci.wifilimit.cfg),
+                .tmp    = LIST_HEAD_INIT(umc.uci.wifilimit.tmp),
+                .uci_type = UM_UCI_LIMIT_WIFI,
+            },
+            
+            .auth = {
+                .param  = UM_PARAM_INITER(umc.policy.limit),
+                .cfg    = LIST_HEAD_INIT(umc.uci.authlimit.cfg),
+                .tmp    = LIST_HEAD_INIT(umc.uci.authlimit.tmp),
+                .uci_type = UM_UCI_LIMIT_AUTH,
+            },
         },
     },
     

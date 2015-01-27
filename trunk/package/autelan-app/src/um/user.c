@@ -837,4 +837,33 @@ um_user_getby(struct user_filter *filter, um_get_f *get, void *data)
     
     return um_user_foreach(getby_cb, param);
 }
+
+static multi_value_t
+wifi_limit_update_cb(struct apuser *user, void *data)
+{
+    um_user_limit_update(user, wifi);
+    
+    return mv2_OK;
+}
+
+void 
+um_user_wifi_limit_update(void)
+{
+    return um_user_foreach(wifi_limit_update_cb, NULL);
+}
+
+static multi_value_t
+auth_limit_update_cb(struct apuser *user, void *data)
+{
+    um_user_limit_update(user, auth);
+    
+    return mv2_OK;
+}
+
+void 
+um_user_auth_limit_update(void)
+{
+    return um_user_foreach(auth_limit_update_cb, NULL);
+}
+
 /******************************************************************************/
