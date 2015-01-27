@@ -234,7 +234,10 @@ __create(byte mac[], struct um_intf *intf)
     um_user_init(user);
     os_maccpy(user->mac, mac);
     __bindif(user, intf);
-        
+
+    um_user_limit_update(user, wifi);
+    um_user_limit_update(user, auth);
+    
     return __insert(user);
 }
 
