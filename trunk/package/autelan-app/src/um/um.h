@@ -480,11 +480,15 @@ struct um_control {
     char *path;
     
     struct {
+        struct um_timer begin;
+        
         struct um_timer wifi;
         struct um_timer aging;
         struct um_timer online;
         struct um_timer flow;
         struct um_timer report;
+        
+        struct um_timer end;
     } timer;
 
     struct {

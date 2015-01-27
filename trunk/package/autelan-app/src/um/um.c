@@ -319,6 +319,16 @@ addtimer(struct um_timer *utm)
     uloop_timeout_set(&utm->tm, appkey_get(utm->akid, utm->deft));
 }
 
+static void
+um_timer_init(void)
+{
+    struct um_timer *utm;
+    
+    for (utm = &umc.timer.begin + 1; utm < &umc.timer.end; utm++) {
+        addtimer(utm);
+    }
+}
+
 int main(int argc, char **argv)
 {
     char *path = NULL;
@@ -336,11 +346,7 @@ int main(int argc, char **argv)
 		goto finish;
 	}
     
-    addtimer(&umc.timer.wifi);
-    addtimer(&umc.timer.aging);
-    addtimer(&umc.timer.online);
-    addtimer(&umc.timer.flow);
-    addtimer(&umc.timer.report);
+    um_timer_init();
     
 	uloop_run();
     err = 0;
