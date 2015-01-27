@@ -9,12 +9,12 @@
 #
 
 main() {
-	local body="$*"
-	local json
-
 	jsock_md_recive_check || {
 		return ${e_bad_board}
 	}
+
+	local body="$*"
+	local json
 
 	#
 	# log ap register json

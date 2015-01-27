@@ -3,6 +3,8 @@
 . ${__ROOTFS__}/etc/jsock/jsock.in
 
 #
+# call by busybox udhcpd
+#
 #$1:event
 #$2:mac
 #$3:ip

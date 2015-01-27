@@ -21,6 +21,8 @@ set_user() {
 }
 
 #
+# call by um
+#
 #$1:event
 #$2:ifname
 #$3:mac
@@ -46,7 +48,17 @@ main() {
 		# do nothing, now
 		#
 		;;
-	bind | unbind | auth)
+	bind)
+		#
+		# todo: setup tc rule
+		#
+		;;
+	unbind)
+		#
+		# todo: delete tc rule
+		#
+		;;
+	auth)
 		#
 		# first on md, so do nothing
 		#

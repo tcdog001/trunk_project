@@ -8,11 +8,11 @@
 #$1:body...
 #
 main() {
-    local body="$*"
-
 	jsock_md_recive_check || {
 		return ${e_bad_board}
 	}
+
+    local body="$*"
 
     echo ${LINK_UP} > ${file_status_3g}
 

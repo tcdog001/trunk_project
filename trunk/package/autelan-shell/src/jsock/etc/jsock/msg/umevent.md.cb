@@ -29,7 +29,7 @@ main() {
 		return ${e_bad_json}
 	fi
 
-	umstate.sh ${mac} ${ip} ${state}
+	umstate.sh "${mac}" "${ip}" "${state}"
 }
 
 main "$@"

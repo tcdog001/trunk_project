@@ -1,0 +1,22 @@
+#!/bin/bash
+
+. ${__ROOTFS__}/etc/jsock/jsock.in
+
+#
+#call by jsock.cb
+#
+#$1:body...
+#
+
+main() {
+	jsock_md_recive_check || {
+		return ${e_bad_board}
+	}
+	
+    local body="$*"
+
+    touch /mnt/flash/rootfs_data/acc_off.txt
+    . /etc/acc_off.sh
+}
+
+main "$@"
