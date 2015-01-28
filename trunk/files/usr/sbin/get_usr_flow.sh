@@ -86,7 +86,7 @@ get_usr_flow() {
 	((usr_flow_wifidown=${usr_flow_wifidown_2}+${usr_flow_wifidown_5}))
 	local usr_flow_3Gup=$(get_interface_flow "${usr_ip}" "${FLOW_3GUP}")
 	local usr_flow_3Gdown=$(get_interface_flow "${usr_ip}" "${FLOW_3GDOWN}")
-	echo "${usr_flow_wifiup},\"wifidown\",\"${usr_flow_wifidown}bytes\"${usr_flow_3Gup}${usr_flow_3Gdown}" > /tmp/usr_flow.log
+	echo "${usr_flow_wifiup},\"wifidown\":\"${usr_flow_wifidown}bytes\"${usr_flow_3Gup}${usr_flow_3Gdown}" > /tmp/usr_flow.log
 }
 
 write_uv_time_flow() {
@@ -109,10 +109,13 @@ get_usr_starttime() {
 	local usr_ip_line=$(cat ${ARP_LIST} | grep ${mac_current})
 	
 	if [ "${usr_ip_line}" = "" ]; then
-	sed -i "/${mac_current}/d" ${CURRENT_MAC_LIST} 
+		sed -i "/${mac_current}/d" ${CURRENT_MAC_LIST} 
 	else
-	local usr_ip=$(echo ${usr_ip_line} | awk -F '(' '{print $2}' | awk -F ')' '{print $1}')
-	echo "${usr_ip}|\"mac\":\"${mac_current}\",\"IP\":\"${usr_ip}\",\"starttime\":\"${usr_online_time}\"" >> ${ONLINE_UER_LIST} 
+		cat ${ONLINE_UER_LIST} | grep "${mac_current}" ; local usr_state=$?
+		if [ ${usr_state} -ne 0 ]; then 
+			local usr_ip=$(echo ${usr_ip_line} | awk -F '(' '{print $2}' | awk -F ')' '{print $1}')
+			echo "${usr_ip}|\"mac\":\"${mac_current}\",\"IP\":\"${usr_ip}\",\"starttime\":\"${usr_online_time}\"" >> ${ONLINE_UER_LIST} 
+		fi
 	fi
 }
 
