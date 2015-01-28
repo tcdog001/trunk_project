@@ -383,7 +383,7 @@ write_ap_onoff_reason() {
 	local filepath="$3"; shift 3
 	local reason="$@"
 
-	printf '{"ontime":"%s","offtime":"%s","offreason":"%s"}' \
+	printf '{"ontime":"%s","offtime":"%s","offreason":"%s"}\n' \
 		"${ontime}"  \
 		"${offtime}" \
 		"${reason}" > ${filepath}
