@@ -14,7 +14,8 @@ do_reboot() {
 	local log_file=timeout-ap-on-off-
 	local ontime=$(cat ${log_path}/ap-on |sed -n '$p')
 	touch ${log_path}/acc_off.txt
-	echo "{\"ontime\":\"${ontime}\",\"offtime\":\"${time}\",\"offreason\":\"timeout\"}" >${log_path}/${log_file}${time}
+	
+	write_ap_onoff_reason "${ontime}" "${time}" "${log_path}/${log_file}${time}" "timeout"
 
 	# count 3g-flow
 	off_delay

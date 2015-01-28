@@ -15,7 +15,7 @@ get_onoff_log() {
 		sed -e "1,${del_line}"d ${ontime_file} -i 2>/dev/null
 	fi
 
-	echo "{\"ontime\":\"${ontime}\",\"offtime:\"${offtime}\",\"offreason\":\"ACC-OFF\"}" >${file_path}/ap-on-off-${offtime}
+	write_ap_onoff_reason ${ontime} ${offtime} ${file_path}/ap-on-off-${offtime} ACC-OFF	
 }
 
 main() {

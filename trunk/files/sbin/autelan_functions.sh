@@ -371,3 +371,20 @@ add_json_string() {
 
 	echo ${str_entirety}
 }
+#
+# $1: ontime
+# $2: offtime
+# $3: filepath
+# $@: reason
+#
+write_ap_onoff_reason() {
+	local ontime="$1"
+	local offtime="$2"
+	local filepath="$3"; shift 3
+	local reason="$@"
+
+	printf '{"ontime":"%s","offtime":"%s","offreason":"%s"}' \
+		"${ontime}"  \
+		"${offtime}" \
+		"${reason}" > ${filepath}
+}

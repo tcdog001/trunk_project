@@ -121,6 +121,7 @@ main() {
 	if [[ ${operation1} -eq 1 || ${operation2} -eq 1 ]]; then
 		delete_3g_firewall_flag	
 		/etc/init.d/network reload
+		sleep 10
 		return 0
 	fi
 	return 1

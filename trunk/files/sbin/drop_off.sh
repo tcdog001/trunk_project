@@ -17,8 +17,8 @@ get_onoff_log() {
 		if [[ ${line} -gt 2 ]];then                                     
 			sed -e "1,${del_line}"d ${file_path}/${file_on} -i 2>/dev/null
 		fi
-	
-		echo "{\"ontime\":\"${ontime}\",\"offtime\":\"${offtime}\",\"offreason\":\"DROP-OFF\"}" >${file_path}/ap-on-off-${offtime}
+		
+		write_ap_onoff_reason ${ontime} ${offtime} ${file_path}/ap-on-off-${offtime} DROP-OFF	
 	fi
 }
 
