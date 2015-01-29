@@ -160,7 +160,9 @@ main() {
 	while :
 	do
 	cat /dev/null > ${UV_TIME_FLOW}
-	/usr/bin/tftp -g -l ${ARP_LIST} -r /tmp/tftp/usr_arp.log 1.0.0.2 2>/dev/null
+	/usr/bin/tftp -g -l /tmp/usr_arp.log -r /tmp/tftp/usr_arp.log 1.0.0.2 2>/dev/null
+	sleep 1
+	cat /tmp/usr_arp.log | grep "192.168.0." > ${ARP_LIST}
 	
 	iw dev wlan0-1 station dump | grep Station | awk '{print $2}' > ${CURRENT_USR_LIST}
 	iw dev wlan1 station dump | grep Station | awk '{print $2}' >> ${CURRENT_USR_LIST}
