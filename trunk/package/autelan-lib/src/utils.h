@@ -68,12 +68,12 @@
 
 #include "utils/type.h"
 #include "utils/base.h"
-#include "utils/list.h"
 #include "utils/bits.h"
 #include "utils/assert.h"
 #include "utils/errno.h"
 #include "utils/memory.h"
 #include "utils/string.h"
+#include "utils/list.h"
 #include "utils/kvlist.h"
 #include "utils/printf.h"
 #include "utils/appkey.h"
