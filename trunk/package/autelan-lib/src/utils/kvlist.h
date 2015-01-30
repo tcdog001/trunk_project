@@ -171,7 +171,7 @@ kv_foreach(struct kvcontainer *container, multi_value_t (*cb)(struct kventry *en
     struct kventry *entry;
     struct mlist_node *node, *tmp;
     
-    list_for_each_entry_safe(node, tmp, &container->head, list) {
+    list_for_each_entry_safe(node, tmp, &container->head.list, list) {
         multi_value_u mv;
         
         entry = container_of(node, struct kventry, node);
@@ -196,13 +196,12 @@ kv_container_release(struct kvcontainer *container)
         return mv2_OK;
     }
     
-    return kv_foreach(container, release);
+    kv_foreach(container, release);
 }
 
 static inline int
 __kv_from_line(struct kvcontainer *container, char *line)
 {
-    char *kvs = line;
     char *ifs;
 
     for (ifs = os_strrchr(line, KVIFS); ifs; ifs = os_strrchr(line, KVIFS)) {
