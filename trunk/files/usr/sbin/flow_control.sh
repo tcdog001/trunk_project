@@ -1,8 +1,8 @@
 #!/bin/bash
-FLOW_3GDOWN="/root/usr/traffic_control_3Gdown.log"
-ONLINE_UER_LIST="/root/usr/usr_online.log"
-LIMIT_LIST="/tmp/limit_list.log"
-STOP_LIST="/tmp/stop_list.log"
+FLOW_3GDOWN="/tmp/usr/traffic_control_3Gdown.log"
+ONLINE_UER_LIST="/tmp/usr/usr_online.log"
+LIMIT_LIST="/tmp/usr/limit_list.log"
+STOP_LIST="/tmp/usr/stop_list.log"
 INET="192.168.0."
 
 

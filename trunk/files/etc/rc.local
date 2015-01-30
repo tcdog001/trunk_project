@@ -4,7 +4,7 @@
 # ap syslogd
 /bin/mkdir -p /root/log/init
 /bin/mkdir -p /root/log/ulog
-/bin/mkdir -p /root/usr
+/bin/mkdir -p /tmp/usr
 dmesg_syslogd.sh &
 
 # get iccid

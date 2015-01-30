@@ -1,15 +1,16 @@
 #!/bin/bash
-ONLINE_UER_LIST="/root/usr/usr_online.log"
-CURRENT_USR_LIST="/tmp/current_usr.log"
-CURRENT_MAC_LIST="/tmp/current_mac.log"
-OLD_USR_LIST="/tmp/old_usr.log"
-ARP_LIST="/root/usr/usr_arp.log"
-FLOW_WIFIUP="/root/usr/traffic_control_wifiup.log"
-FLOW_WIFIDOWN_2="/root/usr/traffic_control_wifidown_2.log"
-FLOW_WIFIDOWN_5="/root/usr/traffic_control_wifidown_5.log"
-FLOW_3GUP="/root/usr/traffic_control_3Gup.log"
-FLOW_3GDOWN="/root/usr/traffic_control_3Gdown.log"
-UV_TIME_FLOW="/root/usr/uv_time_flow.log"
+USR_TC_LOG_PATH="/tmp/usr"
+ONLINE_UER_LIST="${USR_TC_LOG_PATH}/usr_online.log"
+CURRENT_USR_LIST="${USR_TC_LOG_PATH}/current_usr.log"
+CURRENT_MAC_LIST="${USR_TC_LOG_PATH}/current_mac.log"
+OLD_USR_LIST="${USR_TC_LOG_PATH}/old_usr.log"
+ARP_LIST="${USR_TC_LOG_PATH}/usr_arp.log"
+FLOW_WIFIUP="${USR_TC_LOG_PATH}/traffic_control_wifiup.log"
+FLOW_WIFIDOWN_2="${USR_TC_LOG_PATH}/traffic_control_wifidown_2.log"
+FLOW_WIFIDOWN_5="${USR_TC_LOG_PATH}/traffic_control_wifidown_5.log"
+FLOW_3GUP="${USR_TC_LOG_PATH}/traffic_control_3Gup.log"
+FLOW_3GDOWN="${USR_TC_LOG_PATH}/traffic_control_3Gdown.log"
+UV_TIME_FLOW="${USR_TC_LOG_PATH}/uv_time_flow.log"
 
 merge_files() {
 	local target_file=$1
@@ -28,17 +29,17 @@ merge_files() {
 
 
 get_flow() {
-	tc -s -d class show dev eth0 > /tmp/tc.log
-	tc -s -d class show dev wlan0-1 >> /tmp/tc.log
-	tc -s -d class show dev wlan1 >> /tmp/tc.log
+	tc -s -d class show dev eth0 > ${USR_TC_LOG_PATH}/tc.log
+	tc -s -d class show dev wlan0-1 >> ${USR_TC_LOG_PATH}/tc.log
+	tc -s -d class show dev wlan1 >> ${USR_TC_LOG_PATH}/tc.log
 	echo "wifi upload traffic control" > ${FLOW_WIFIUP}
 	echo "wifi 2.4g downlod traffic control" > ${FLOW_WIFIDOWN_2}
 	echo "wifi 5.8g downlod traffic control" > ${FLOW_WIFIDOWN_5}
 	echo "3G upload traffic control" > ${FLOW_3GUP}
 	echo "3G downlod traffic control" > ${FLOW_3GDOWN}
 	local usr_init=192.168.0.
-	local -a intf=($(cat /tmp/tc.log | grep class | awk '{print $3}'))
-	local -a flow=($(cat /tmp/tc.log | grep Sent | awk '{print $2}'))
+	local -a intf=($(cat ${USR_TC_LOG_PATH}/tc.log | grep class | awk '{print $3}'))
+	local -a flow=($(cat ${USR_TC_LOG_PATH}/tc.log | grep Sent | awk '{print $2}'))
 	local i
 	local count=${#intf[*]}
 
@@ -86,7 +87,7 @@ get_usr_flow() {
 	((usr_flow_wifidown=${usr_flow_wifidown_2}+${usr_flow_wifidown_5}))
 	local usr_flow_3Gup=$(get_interface_flow "${usr_ip}" "${FLOW_3GUP}")
 	local usr_flow_3Gdown=$(get_interface_flow "${usr_ip}" "${FLOW_3GDOWN}")
-	echo "${usr_flow_wifiup},\"wifidown\":\"${usr_flow_wifidown}bytes\"${usr_flow_3Gup}${usr_flow_3Gdown}" > /tmp/usr_flow.log
+	echo "${usr_flow_wifiup},\"wifidown\":\"${usr_flow_wifidown}bytes\"${usr_flow_3Gup}${usr_flow_3Gdown}" > ${USR_TC_LOG_PATH}/usr_flow.log
 }
 
 write_uv_time_flow() {
@@ -97,7 +98,7 @@ write_uv_time_flow() {
 	local usr_time=$(cat ${target_file} | grep ${key} | awk -F '|' '{print $2}')
 	local usr_ip=$(cat ${target_file} | grep ${key} | awk -F '|' '{print $1}')
 	get_usr_flow ${usr_ip}
-	local ip_flow=$(cat /tmp/usr_flow.log)
+	local ip_flow=$(cat ${USR_TC_LOG_PATH}/usr_flow.log)
 	echo "{${usr_time},\"endtime\":\"${time_current}\"${ip_flow}}" >> ${UV_TIME_FLOW} 
 }
 
@@ -152,10 +153,14 @@ get_uv_time_flow() {
 
 
 main() {
-
+	if [ ! -d "${USR_TC_LOG_PATH}" ]
+	then
+	mkdir -p ${USR_TC_LOG_PATH}
+	fi
+	
 	touch ${OLD_USR_LIST}
 	touch ${ARP_LIST}
-	cat /dev/null > ${ONLINE_UER_LIST}
+	touch ${ONLINE_UER_LIST}
 
 	while :
 	do
