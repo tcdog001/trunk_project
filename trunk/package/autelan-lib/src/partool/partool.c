@@ -509,12 +509,6 @@ part_item_getbycursor(struct part_cursor *c)
     return container_of(c, struct part_item, c);
 }
 
-static bool 
-is_separator(int ch)
-{
-    return NULL!=strchr(part_seperators, ch);
-}
-
 /* 
 * partition ==> cache 
 */
@@ -617,6 +611,12 @@ part_low_wirte(struct part_block *block)
     }
 
     return err;
+}
+
+static bool 
+is_separator(int ch)
+{
+    return NULL!=strchr(part_seperators, ch);
 }
 
 /* 
