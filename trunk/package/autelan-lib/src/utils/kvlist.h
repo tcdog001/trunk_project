@@ -73,14 +73,11 @@ kv_remove(struct kvcontainer *container, struct kventry *entry)
     }
 }
 
-static inline int
+static inline struct kventry *
 kv_get(struct kvcontainer *container, char *name)
 {
-    if (NULL==container) {
-        return -EINVAL9;
-    }
-    else if (NULL==name) {
-        return -EINVAL8;
+    if (NULL==container || NULL==name) {
+        return NULL;
     }
     
     int hash(void)
@@ -95,7 +92,9 @@ kv_get(struct kvcontainer *container, char *name)
         return 0==os_strcmp(entry->k->string, name);
     }
     
-    return mlist_get(&container->head, name, hash, eq);
+    struct mlist_node *node = mlist_get(&container->head, name, hash, eq);
+
+    return node?container_of(node, struct kventry, node):NULL;
 }
 
 static inline void

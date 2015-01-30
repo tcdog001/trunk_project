@@ -850,7 +850,7 @@ mlist_insert(
     list_add(&node->list, &head->list);
     hlist_add_head(&node->hash, &head->hash[idx]);
 
-    return;
+    return 0;
 }
 
 static inline int
