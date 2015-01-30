@@ -415,7 +415,7 @@ __string_next(char *string, char_is_something_f *IS)
 static inline char *
 __string_next_byifs(char *string, int ifs)
 {
-    char *is_ifs(int ch)
+    bool is_ifs(int ch)
     {
         return __char_is_ifs(ch, ifs);
     }
