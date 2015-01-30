@@ -218,6 +218,8 @@ __kv_from_line(struct kvcontainer *container, char *line)
             kv_insert(container, kv_create(space + 1, ifs + 1));
         }
     }
+
+    return 0;
 }
 
 static inline int
