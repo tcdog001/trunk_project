@@ -72,7 +72,7 @@ wifitimer(struct uloop_timeout *timeout)
 }
 
 static multi_value_t 
-aging_cb(struct apuser *user, void *data)
+aging_cb(struct apuser *user)
 {
     if (false==is_online_um_user_state(user->state)) {
         return mv2_OK;
@@ -89,7 +89,7 @@ aging_cb(struct apuser *user, void *data)
 static int
 aging(void)
 {
-    return um_user_foreach(aging_cb, NULL);
+    return um_user_foreach(aging_cb);
 }
 
 static void
@@ -99,7 +99,7 @@ agingtimer(struct uloop_timeout *timeout)
 }
 
 static multi_value_t 
-online_cb(struct apuser *user, void *data)
+online_cb(struct apuser *user)
 {
     if (0==user->auth.onlinelimit || false==is_online_um_user_state(user->state)) {
         return mv2_OK;
@@ -118,7 +118,7 @@ online_cb(struct apuser *user, void *data)
 static int
 online(void)
 {
-    return um_user_foreach(online_cb, NULL);
+    return um_user_foreach(online_cb);
 }
 
 static void
@@ -148,7 +148,7 @@ flow_update(struct apuser *user)
 }
 
 static multi_value_t 
-flow_cb(struct apuser *user, void *data)
+flow_cb(struct apuser *user)
 {
     if (false==is_online_um_user_state(user->state)) {
         return mv2_OK;
@@ -175,7 +175,7 @@ flow_cb(struct apuser *user, void *data)
 static int
 flow(void)
 {
-    return um_user_foreach(flow_cb, NULL);
+    return um_user_foreach(flow_cb);
 }
 
 static void
@@ -359,55 +359,55 @@ finish:
 }
 
 
-#define UM_AKID_INIT(_akid, _name, _deft) do{ \
+#define um_akid_init(_akid, _name, _deft) do{ \
     _akid = appkey_getbyname(_name); \
     debug_trace("%s=%d", _name, appkey_get(_akid, _deft)); \
 }while(0)
 
-#define UM_DEBUG_AKID_INIT(_var) \
-        UM_AKID_INIT(umc.debug._var, "debug." #_var, OS_OFF)
+#define um_debug_akid_init(_var) \
+        um_akid_init(umc.debug._var, "debug." #_var, OS_OFF)
 
-#define UM_TIMER_AKID_INIT(_var) \
-        UM_AKID_INIT(umc.timer._var.akid, "timer." #_var, umc.timer._var.deft)
+#define um_timer_akid_init(_var) \
+        um_akid_init(umc.timer._var.akid, "timer." #_var, umc.timer._var.deft)
 
-#define UM_UBUS_AKID(_var) \
-        UM_AKID_INIT(umc.ev._var.akid, "ubus." #_var, umc.ev._var.deft)
+#define um_ubus_akid_init(_var) \
+        um_akid_init(umc.ev._var.akid, "ubus." #_var, umc.ev._var.deft)
 
-#define UM_SCRIPT_AKID_INIT(_var) \
-        UM_AKID_INIT(umc.sh._var.akid, "script." #_var, umc.sh._var.deft)
+#define um_script_akid_init(_var) \
+        um_akid_init(umc.sh._var.akid, "script." #_var, umc.sh._var.deft)
 
 static os_constructor void 
 um_akid_initer(void)
 {
-    UM_DEBUG_AKID_INIT(uci);
-    UM_DEBUG_AKID_INIT(ubus);
-    UM_DEBUG_AKID_INIT(user);
-    UM_DEBUG_AKID_INIT(userscan);
-    UM_DEBUG_AKID_INIT(flowscan);
+    um_debug_akid_init(uci);
+    um_debug_akid_init(ubus);
+    um_debug_akid_init(user);
+    um_debug_akid_init(userscan);
+    um_debug_akid_init(flowscan);
     
-    UM_TIMER_AKID_INIT(wifi);
-    UM_TIMER_AKID_INIT(aging);
-    UM_TIMER_AKID_INIT(online);
-    UM_TIMER_AKID_INIT(flow);
-    UM_TIMER_AKID_INIT(report);
+    um_timer_akid_init(wifi);
+    um_timer_akid_init(aging);
+    um_timer_akid_init(online);
+    um_timer_akid_init(flow);
+    um_timer_akid_init(report);
 
-    UM_UBUS_AKID(connect);
-    UM_UBUS_AKID(disconnect);
-    UM_UBUS_AKID(bind);
-    UM_UBUS_AKID(unbind);
-    UM_UBUS_AKID(auth);
-    UM_UBUS_AKID(deauth);
-    UM_UBUS_AKID(update);
-    UM_UBUS_AKID(report);
+    um_ubus_akid_init(connect);
+    um_ubus_akid_init(disconnect);
+    um_ubus_akid_init(bind);
+    um_ubus_akid_init(unbind);
+    um_ubus_akid_init(auth);
+    um_ubus_akid_init(deauth);
+    um_ubus_akid_init(update);
+    um_ubus_akid_init(report);
 
-    UM_SCRIPT_AKID_INIT(connect);
-    UM_SCRIPT_AKID_INIT(disconnect);
-    UM_SCRIPT_AKID_INIT(bind);
-    UM_SCRIPT_AKID_INIT(unbind);
-    UM_SCRIPT_AKID_INIT(auth);
-    UM_SCRIPT_AKID_INIT(deauth);
-    UM_SCRIPT_AKID_INIT(update);
-    UM_SCRIPT_AKID_INIT(report);
+    um_script_akid_init(connect);
+    um_script_akid_init(disconnect);
+    um_script_akid_init(bind);
+    um_script_akid_init(unbind);
+    um_script_akid_init(auth);
+    um_script_akid_init(deauth);
+    um_script_akid_init(update);
+    um_script_akid_init(report);
 }
 
 AKID_DEBUGER; /* must last os_constructor */

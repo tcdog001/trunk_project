@@ -50,12 +50,6 @@ headip(uint32_t ip)
     return &umc.head.ip[haship(ip)];
 }
 
-static inline bool
-in_list(struct list_head *node)
-{
-    return  (node->next && node->prev) && false==list_empty(node);
-}
-
 static int
 __uptime(struct apuser *user)
 {
@@ -147,7 +141,7 @@ __remove(struct apuser *user)
     /*
     * not in list
     */
-    else if (false==in_list(&user->node.list)) {
+    else if (false==is_in_list(&user->node.list)) {
         debug_trace("__remove nothing(not in list)");
         
         return user;
@@ -178,7 +172,7 @@ __insert(struct apuser *user)
     /*
     * have in list
     */
-    else if (in_list(&user->node.list)) {
+    else if (is_in_list(&user->node.list)) {
         return user;
     }
     
@@ -206,7 +200,7 @@ __reinsert_byip(struct apuser *user, uint32_t ip)
     /*
     * NOT in list
     */
-    else if (false==in_list(&user->node.list)) {
+    else if (false==is_in_list(&user->node.list)) {
         __insert(user);
     }
     
@@ -592,13 +586,13 @@ um_user_update(struct apuser *old, struct apuser *new)
 }
 
 int
-um_user_foreach(um_foreach_f *foreach, void *data)
+um_user_foreach(um_foreach_f *foreach)
 {
     multi_value_u mv;
     struct apuser *user, *n;
     
     list_for_each_entry_safe(user, n, &umc.head.list, node.list) {
-        mv.value = (*foreach)(user, data);
+        mv.value = (*foreach)(user);
         
         if (mv2_is_break(mv)) {
             return mv2_result(mv);
@@ -803,53 +797,38 @@ match(struct apuser *user, struct user_filter *filter)
     return true;
 }
 
-static multi_value_t
-delby_cb(struct apuser *user, void *data)
-{
-    struct user_filter *filter = (struct user_filter *)data;
-
-    if (match(user, filter)) {
-        um_user_del(user);
-    }
-
-    return mv2_OK;
-}
-
 int
 um_user_delby(struct user_filter *filter)
 {
-    return um_user_foreach(delby_cb, filter);
-}
+    multi_value_t delby_cb(struct apuser *user)
+    {
+        if (match(user, filter)) {
+            um_user_del(user);
+        }
 
-static multi_value_t
-getby_cb(struct apuser *user, void *data)
-{
-    void **param = (void **)data;
-    struct user_filter *filter = (struct user_filter *)param[0];
-    um_get_f *get = (um_get_f *)param[1];
-    void *arg = param[2];
-    
-    if (match(user, filter)) {
-        return (*get)(user, arg);
-    } else {
         return mv2_OK;
     }
+    
+    return um_user_foreach(delby_cb);
 }
 
 int
-um_user_getby(struct user_filter *filter, um_get_f *get, void *data)
+um_user_getby(struct user_filter *filter, um_get_f *get)
 {
-    void *param[] = {
-        (void *)filter,
-        (void *)get,
-        (void *)data,
-    };
+    multi_value_t getby_cb(struct apuser *user)
+    {
+        if (match(user, filter)) {
+            return (*get)(user);
+        } else {
+            return mv2_OK;
+        }
+    }
     
-    return um_user_foreach(getby_cb, param);
+    return um_user_foreach(getby_cb);
 }
 
 static multi_value_t
-wifi_limit_update_cb(struct apuser *user, void *data)
+wifi_limit_update_cb(struct apuser *user)
 {
     um_user_limit_update(user, wifi);
     
@@ -859,11 +838,11 @@ wifi_limit_update_cb(struct apuser *user, void *data)
 int 
 um_user_wifi_limit_update(void)
 {
-    return um_user_foreach(wifi_limit_update_cb, NULL);
+    return um_user_foreach(wifi_limit_update_cb);
 }
 
 static multi_value_t
-auth_limit_update_cb(struct apuser *user, void *data)
+auth_limit_update_cb(struct apuser *user)
 {
     um_user_limit_update(user, auth);
     
@@ -873,7 +852,7 @@ auth_limit_update_cb(struct apuser *user, void *data)
 int 
 um_user_auth_limit_update(void)
 {
-    return um_user_foreach(auth_limit_update_cb, NULL);
+    return um_user_foreach(auth_limit_update_cb);
 }
 
 /******************************************************************************/

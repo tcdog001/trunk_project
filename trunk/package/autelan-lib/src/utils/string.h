@@ -133,6 +133,14 @@ os_strlcpy(char *dst, const char *src, size_t size)
 #define os_strtok(_s, _delim)       strtok(_s, _delim)
 #endif
 
+#ifndef os_strchr
+#define os_strchr(_s, _ch)          strchr(_s, _ch)
+#endif
+
+#ifndef os_strrchr
+#define os_strrchr(_s, _ch)         strrchr(_s, _ch)
+#endif
+
 #ifndef os_strtok_foreach
 #define os_strtok_foreach(_sub, _s, _delim) \
         for ((_sub)=os_strtok(_s, _delim);(_sub);(_sub)=os_strtok(NULL, _delim))
@@ -144,6 +152,12 @@ os_strlcpy(char *dst, const char *src, size_t size)
 #endif
 
 typedef bool char_is_something_f(int ch);
+
+static inline bool
+__char_is_ifs(int ch, int ifs)
+{
+    return ifs==ch;
+}
 
 static inline bool 
 __char_is(char_is_something_f *IS, int ch)
@@ -374,5 +388,79 @@ __is_notes_line_deft(char *line)
 {
     return __is_notes_line(line, __notes);
 }
+
+
+static inline char *
+__string_next(char *string, char_is_something_f *IS)
+{
+    char *p = string;
+
+    if (NULL==string) {
+        return NULL;
+    }
+    
+    while(*p && __char_is(IS, *p)) {
+        p++;
+    }
+    
+    if (0==*p) {
+        return NULL;
+    } else {
+        *p++ = 0;
+
+        return p;
+    }
+}
+
+static inline char *
+__string_next_byifs(char *string, int ifs)
+{
+    char *is_ifs(int ch)
+    {
+        return __char_is_ifs(ch, ifs);
+    }
+    
+    return __string_next(string, is_ifs);
+}
+
+static inline int
+__string_hash_idx(char *string, int size)
+{
+    int mask = size - 1;
+    int sum = 0;
+    char *p = string;
+    
+    while(*p) {
+        sum += *p++;
+    }
+
+    return sum & mask;
+}
+
+typedef struct {
+    int len;
+    char string[];
+} string_t;
+
+static inline string_t *
+string_create(char *string)
+{
+    if (NULL==string) {
+        return NULL;
+    }
+
+    int len = os_strlen(string);
+    string_t *s = (string_t *)os_malloc(1 + len + sizeof(s->len));
+    if (NULL==s) {
+        return NULL;
+    }
+    
+    os_memcpy(s->string, string, len);
+    s->string[len] = 0;
+    s->len = len;
+
+    return s;
+}
+
 /******************************************************************************/
 #endif /* __STRING_H_EBBADBD33FD514F013D3D84007A20302__ */

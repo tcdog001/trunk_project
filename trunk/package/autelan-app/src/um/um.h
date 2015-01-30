@@ -242,8 +242,8 @@ um_user_init(struct apuser *user)
     INIT_LIST_HEAD(&user->node.list);
 }
 
-typedef multi_value_t um_foreach_f(struct apuser *user, void *data);
-typedef multi_value_t um_get_f(struct apuser *user, void *data);
+typedef multi_value_t um_foreach_f(struct apuser *user);
+typedef multi_value_t um_get_f(struct apuser *user);
 
 #define UM_POLICY_INITER(_id, _name, _type) \
         [_id] = { .name = _name, .type = BLOBMSG_TYPE_##_type }
@@ -737,7 +737,7 @@ extern struct apuser *
 um_user_update(struct apuser *old, struct apuser *new);
 
 extern int
-um_user_foreach(um_foreach_f *foreach, void *data);
+um_user_foreach(um_foreach_f *foreach);
 
 extern struct apuser *
 um_user_getbymac(byte mac[]);
@@ -746,7 +746,7 @@ extern struct apuser *
 um_user_getbyip(uint32_t ip);
 
 extern int
-um_user_getby(struct user_filter *filter, um_get_f *get, void *data);
+um_user_getby(struct user_filter *filter, um_get_f *get);
 
 extern int
 um_user_del(struct apuser *user);

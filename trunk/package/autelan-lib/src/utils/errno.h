@@ -40,11 +40,13 @@ enum {
     ETOOBIG,    /* 16 */
     ELIMIT,     /* 17 */
     EINLIST,    /* 18 */
-    EBADCRC,    /* 19 */
-    ETIMEOUT,   /* 20 */
-    ENOSUPPORT, /* 21 */
-    EEMPTY,     /* 22 */
-    ENOEMPTY,   /* 23 */
+    ENOINLIST,  /* 19 */
+    EBADCRC,    /* 20 */
+    ETIMEOUT,   /* 21 */
+    ENOSUPPORT, /* 22 */
+    EEMPTY,     /* 23 */
+    ENOEMPTY,   /* 24 */
+    EBADIDX,    /* 25 */
 };
 
 

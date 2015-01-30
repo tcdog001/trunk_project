@@ -89,9 +89,10 @@ static inline bool is_good_common_id(int id)
     return id >= 0;
 }
 
-#define is_good_shmid(shmid)  is_good_common_id(shmid)
-#define is_good_semid(semid)  is_good_common_id(semid)
-#define is_good_fd(fd)        is_good_common_id(fd)
+#define is_good_shmid(shmid)    is_good_common_id(shmid)
+#define is_good_semid(semid)    is_good_common_id(semid)
+#define is_good_fd(fd)          is_good_common_id(fd)
+#define is_good_env(_env)       ((_env) && (_env)[0])
 
 /*
 * check value with [begin, end)

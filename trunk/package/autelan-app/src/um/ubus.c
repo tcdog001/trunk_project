@@ -70,12 +70,10 @@ pushuser(struct apuser *user, bool init, char *name, char *reason)
     um_close_table(handle);
 }
 
-static multi_value_t
-get_cb(struct apuser *user, void *data)
+static multi_value_t 
+pushuserby_cb(struct apuser *user)
 {
-    char *name = (char *)data;
-    
-    pushuser(user, false, name, NULL);
+    pushuser(user, false, NULL, NULL);
 
     return mv2_OK;
 }
@@ -89,7 +87,7 @@ pushuserby(struct user_filter *filter)
     um_blob_buf_init();
     
     handle = um_open_array("users");
-    err = um_user_getby(filter, get_cb, NULL);
+    err = um_user_getby(filter, pushuserby_cb);
     um_close_array(handle);
     
     return err;

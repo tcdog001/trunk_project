@@ -74,6 +74,7 @@
 #include "utils/errno.h"
 #include "utils/memory.h"
 #include "utils/string.h"
+#include "utils/kvlist.h"
 #include "utils/printf.h"
 #include "utils/appkey.h"
 #include "utils/debug.h"
