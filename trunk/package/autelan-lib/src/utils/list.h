@@ -786,14 +786,19 @@ struct mlist_head {
 
 #define MLIST_HEAD_INIT(name) { \
     .list = LIST_HEAD_INIT(name.list), \
-    .hash = HLIST_HEAD_INIT, \
+    .hash = {HLIST_HEAD_INIT}, \
 }
 
 static inline void 
-INIT_MLIST_HEAD(struct mlist_node *node)
+INIT_MLIST_HEAD(struct mlist_head *head)
 {
-    INIT_LIST_HEAD(&node->list);
-    INIT_HLIST_HEAD(&node->hash);
+    int i;
+    
+    INIT_LIST_HEAD(&head->list);
+
+    for (i=0; i<os_count_of(head->hash); i++) {
+        INIT_HLIST_HEAD(&head->hash[i]);
+    }
 }
 
 static inline bool
