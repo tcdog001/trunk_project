@@ -5,10 +5,16 @@
 #define NULL            ((void *)0)
 #endif
 
+#ifdef BOOL
+#undef BOOL
+#endif
 #ifndef BOOL
 #define BOOL            int
 #endif
 
+#ifdef bool
+#undef bool
+#endif
 #ifndef bool
 #define bool            BOOL
 #endif
