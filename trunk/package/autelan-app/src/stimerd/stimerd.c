@@ -303,7 +303,7 @@ client_handle(void)
     char *args   = TX;
     int i;
     
-    __string_strim(method);
+    __string_reduce(method, NULL);
 
     args = NEXT(args);
 

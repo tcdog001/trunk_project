@@ -260,7 +260,7 @@ __kv_from_argv(struct kvcontainer *container, int argc, char *argv[])
         }
 
         os_strdcpy(buf, argv[i]);
-        __string_strim(buf, NULL);
+        __string_reduce(buf, NULL);
         
         if (2!=os_sscanf(buf, "%s=%s", name, value)) {
             err = -EINVAL9;
