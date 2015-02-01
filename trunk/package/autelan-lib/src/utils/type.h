@@ -1,47 +1,16 @@
 #ifndef __TYPE_H_6BA367A7D4B17C3588DAABDD4B9B396D__
 #define __TYPE_H_6BA367A7D4B17C3588DAABDD4B9B396D__
 /******************************************************************************/
-#ifndef NULL
-#define NULL            ((void *)0)
-#endif
-
-#ifdef BOOL
-#undef BOOL
-#endif
-#ifndef BOOL
 #define BOOL            int
-#endif
-
-#ifdef bool
-#undef bool
-#endif
-#ifndef bool
-#define bool            BOOL
-#endif
-
-#ifndef TRUE
 #define TRUE            1
-#endif
-
-#ifndef true
-#define true            TRUE
-#endif
-
-#ifndef FALSE
 #define FALSE           0
-#endif
 
-#ifndef false
+#define bool            BOOL
+#define true            TRUE
 #define false           FALSE
-#endif
 
-#ifndef BYTE
 #define BYTE            unsigned char
-#endif
-
-#ifndef byte
 #define byte            BYTE
-#endif
 
 #if defined(LP64) || defined(ILP64) || defined(LLP64)
 #define OS64            1

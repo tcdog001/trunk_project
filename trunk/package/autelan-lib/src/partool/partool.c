@@ -636,7 +636,7 @@ part_line_read(struct part_block *block)
         /*
         * cut left and right blanks("\t \r\n")
         */
-        __string_strim_both_ends(line, NULL);
+        __string_strim_both(line, NULL);
         
         if (PART_COMMENT==line[0]) {
             continue; /* comment line */

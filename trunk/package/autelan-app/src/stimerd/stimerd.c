@@ -6,6 +6,8 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 static char RX[1 + STIMER_RXSIZE];
 static char TX[1 + STIMER_TXSIZE];
 
+#define HASHSIZE    256
+
 static struct {
     struct {
         int unit;
@@ -16,20 +18,27 @@ static struct {
         int fd;
 
         struct sockaddr_un addr;
-    } server_handle;
-    
-    int count;
-    struct mlist_head head;
+    } server;
+
+    struct {
+        struct list_head    list;
+        struct hlist_head   hash[HASHSIZE];
+        
+        int count;
+    } head;
 } 
 stimerd = {
-    .head = MLIST_HEAD_INIT(stimerd.head),
-
+    .head = {
+        .list = LIST_HEAD_INIT(stimerd.head.list),
+        .hash = {HLIST_HEAD_INIT},
+    },
+    
     .timer = {
         .unit   = STIMER_MSEC,
         .fd     = -1,
     },
 
-    .server_handle = {
+    .server = {
         .fd     = -1,
         
         .addr   = {
@@ -48,17 +57,26 @@ struct stimer {
     int interval;
     int limit;
     
-    int times;
-    int consume;
+    int triggers;
 
-    struct mlist_node node;
-    tm_node_t timer;
+    struct {
+        struct list_head    list;
+        struct hlist_node   hash;
+        
+        tm_node_t timer;
+    } node;
 };
 
 static struct stimer *
 __entry(tm_node_t *timer)
 {
     return container_of(timer, struct stimer, timer);
+}
+    
+static int 
+hash(char *name)
+{
+    return __string_hash_idx(name, HASHSIZE);
 }
 
 static int
@@ -69,18 +87,18 @@ __insert(struct stimer *entry)
     if (NULL==entry) {
         return -EKEYNULL;
     }
-    
-    int hash(void)
-    {
-        return mlist_string_hash_idx(entry->name);
-    }
-
-    err = mlist_insert(&stimerd.head, &entry->node, hash);
-    if (0==err) {
-        stimerd.count++;
+    /*
+    * have in list
+    */
+    else if (is_in_list(&entry.node->list)) {
+        return -EINLIST;
     }
     
-    return err;
+    list_add(&entry->node->list, &stimerd.head->list);
+    hlist_add_head(&entry->node->hash, &stimerd.head->hash[hash(entry->name)]);
+    stimerd.head.count++;
+    
+    return 0;
 }
 
 static int
@@ -91,35 +109,54 @@ __remove(struct stimer *entry)
     if (NULL==entry) {
         return -EKEYNULL;
     }
-
-    err = mlist_remove(&stimerd.head, &entry->node);
-    if (0==err) {
-        stimerd.count--;
+    /*
+    * NOT in list
+    */
+    else if (false==is_in_list(&entry->node->list)) {
+        return -ENOINLIST;
     }
 
-    return err;
+    os_tm_remove(&entry->node.timer);
+    
+    list_del(&entry->node->list);
+    hlist_del_init(&entry->node->hash);
+    stimerd.head.count--;
+    
+    return 0;
 }
 
 static struct stimer *
 __get(char *name)
 {
+    struct stimer *entry;
+    
     if (NULL==name) {
         return NULL;
     }
     
-    int hash(void)
-    {
-        return mlist_string_hash_idx(name);
+    hlist_for_each_entry(entry, &stimerd.head.hash[hash(name)], node.hash) {
+        if (0==os_stracmp(entry->name, name)) {
+            return entry;
+        }
+    }
+    
+    return name;
+}
+
+static int
+__foreach(multi_value_t (*cb)(struct stimer *entry))
+{
+    struct stimer *entry, *tmp;
+    multi_value_u mv;
+    
+    list_for_each_entry_safe(entry, tmp, &stimerd.head.list, node.list) {
+        mv.value = (*cb)(entry);
+        if (mv2_is_break(mv)) {
+            return mv2_result(mv);
+        }
     }
 
-    int eq(struct mlist_node *node)
-    {
-        struct stimer *entry = container_of(node, struct stimer, node);
-        
-        return 0==os_strcmp(name, entry->name);
-    }
-
-    return mlist_get(&stimerd.head, name, hash, eq);
+    return 0;
 }
 
 static struct stimer *
@@ -128,18 +165,20 @@ __create(char *name, char *command, int delay, int interval, int limit)
     struct stimer *entry = __get(name);
 
     if (NULL==entry) {
+        /*
+        * no found, create new
+        */
         entry = (struct stimer *)os_zalloc(sizeof(*entry));
         if (NULL==entry) {
             return NULL;
         }
-        
+    
         os_strdcpy(entry->name, name);
     } else if (false==os_tm_is_pending(&entry->node.timer)) {
         /*
         * have exist and timer is NOT pending, re-use it
         */
         os_tm_remove(&entry->node.timer);
-        os_memzero(entry, offsetof(struct stimer, node));
     } else {
         /*
         * have exist and timer is pending, do nothing
@@ -153,6 +192,8 @@ __create(char *name, char *command, int delay, int interval, int limit)
     entry->interval = interval;
     entry->limit    = limit;
 
+    entry->triggers = 0;
+    
     __insert(entry);
 }
 
@@ -182,6 +223,19 @@ handle(struct stimerd_table map[], int count, char *tag, char *args)
     return -EINVAL;
 }
 
+static int 
+stimer_cb(tm_node_t *timer)
+{
+    struct stimer *entry = container_of(timer, struct stimer, timer);
+
+    entry->triggers++;
+    os_v_system("%s &", entry->command);
+
+    if (entry->interval && entry->limit && entry->triggers < entry->limit) {
+        os_tm_insert(&entry->node.timer, entry->interval, stimer_cb, false);
+    }
+}
+
 static int
 handle_insert(char *args)
 {
@@ -191,10 +245,10 @@ handle_insert(char *args)
     char *limit     = args; args = NEXT(args);
     char *command   = args;
 
-    if (NULL==name ||
-        NULL==delay ||
-        NULL==interval ||
-        NULL==limit ||
+    if (NULL==name      ||
+        NULL==delay     ||
+        NULL==interval  ||
+        NULL==limit     ||
         NULL==command) {
         return -EINVAL;
     }
@@ -203,13 +257,27 @@ handle_insert(char *args)
     int i_interval  = atoi(interval);
     int i_limit     = atoi(limit));
     
-    if (0==i_interval && 0==i_delay) {
+    if (false==is_good_stimer_args(i_delay, i_interval, i_limit)) {
         return -EINVAL;
     }
 
-    __create(name, command, i_delay, i_interval, i_limit);
+    struct stimer *entry = __create(name, command, i_delay, i_interval, i_limit);
+    if (NULL==entry) {
+        return -ENOMEM;
+    }
 
-    return 0;
+    int after;
+    bool circle;
+    
+    if (i_interval) {
+        after   = i_delay + i_interval;
+        circle  = i_limit?false:true;
+    } else {
+        after   = i_delay;
+        circle  = false;
+    }
+    
+    return os_tm_insert(&entry->node.timer, after, stimer_cb, circle);
 }
 
 static int
@@ -220,10 +288,18 @@ handle_remove(char *args)
     if (NULL==name) {
         return -EINVAL;
     }
+
+    struct stimer *entry = __get(name);
+    if (NULL==entry) {
+        return -ENOEXIST;
+    }
+
+    __destroy(entry);
     
     return 0;
 }
 
+#if STIMER_SHOW_LOG
 static int
 handle_show_log_byname(char *name)
 {
@@ -247,15 +323,10 @@ handle_show_log(char *args)
         return handle_show_log_byname(name);
     }
 }
+#endif
 
 static int
-handle_show_status_byname(char *name)
-{
-    return 0;
-}
-
-static int
-handle_show_status_all(void)
+__handle_show_status(char *name)
 {
     return 0;
 }
@@ -265,11 +336,7 @@ handle_show_status(char *args)
 {
     char *name = args; args = NEXT(args);
 
-    if (NULL==name) {
-        return handle_show_status_all();
-    } else {
-        return handle_show_status_byname(name);
-    }
+    return __handle_show_status(name);
 }
 
 
@@ -277,8 +344,10 @@ static int
 handle_show(char *args)
 {
     static struct stimerd_table table[] = {
-        STIMER_TABLE_ITEM("log",     handle_show_log),
-        STIMER_TABLE_ITEM("status",  handle_show_status),
+#if STIMER_SHOW_LOG
+        STIMER_ENTRY("log",     handle_show_log),
+#endif
+        STIMER_ENTRY("status",  handle_show_status),
     };
     
     char *obj = args; args = NEXT(args);
@@ -294,15 +363,16 @@ static int
 client_handle(void)
 {
     static struct stimerd_table table[] = {
-        STIMER_TABLE_ITEM("insert",  handle_insert),
-        STIMER_TABLE_ITEM("remove",  handle_remove),
-        STIMER_TABLE_ITEM("show",    handle_show),
+        STIMER_ENTRY("insert",  handle_insert),
+        STIMER_ENTRY("remove",  handle_remove),
+        STIMER_ENTRY("show",    handle_show),
     };
 
     char *method = TX;
     char *args   = TX;
     int i;
-    
+
+    __string_strim_both(method, NULL);
     __string_reduce(method, NULL);
 
     args = NEXT(args);
@@ -337,18 +407,41 @@ __client(int fd)
 static int
 client(void)
 {
-    struct sockaddr_in addr;
+    struct sockaddr_un addr;
     int len = sizeof(addr);
-    int fd;
-    int err = 0;
-    
-    fd = accept(stimerd.server_handle.fd, (struct sockaddr *)&addr, &len);
+    int fd = accept(stimerd.server.fd, (struct sockaddr *)&addr, &len);
     if (fd<0) {
         return errno;
     }
     
-    err = __client(fd);
+    int err = __client(fd);
     close(fd);
+
+    return err;
+}
+
+static void
+timer(void)
+{
+    uint64_t timeout = 0;
+    
+    int err = read(stimerd.timer.fd, &timeout, sizeof(timeout));
+    uint32_t times = (err<0)?1:(uint32_t)timeout;
+    os_tm_trigger(times);
+}
+
+static int
+__server_handle(fd_set *r)
+{
+    int err = 0;
+    
+    if (FD_ISSET(stimerd.timer.fd, r)) {
+        timer();
+    }
+
+    if (FD_ISSET(stimerd.server.fd, r)) {
+        err = client();
+    }
 
     return err;
 }
@@ -361,40 +454,29 @@ server_handle(void)
         .tv_sec     = STIMER_SEC,
         .tv_usec    = 0,
     };
-    int maxfd = os_max(stimerd.timer.fd, stimerd.server_handle.fd);
+    int maxfd = os_max(stimerd.timer.fd, stimerd.server.fd);
     int err;
     
     FD_ZERO(&r);
 
     FD_SET(stimerd.timer.fd, &r);
-    FD_SET(stimerd.server_handle.fd, &r);
+    FD_SET(stimerd.server.fd, &r);
 
-    err = select(maxfd+1, &r, NULL, NULL, &tv);
-    switch(err) {
-        case -1:/* error */
-            if (EINTR==errno) {
-                // is breaked
-                return 0;
-            } else {
-                return errno;
-            }
-        case 0: /* timeout, retry */
-            return 0;
-        default: /* to accept */
-            break;
-    }
-
-    if (FD_ISSET(stimerd.timer.fd, &r)) {
-        uint64_t timeout = 0;
-        uint32_t times;
-        
-        err = read(stimerd.timer.fd, &timeout, sizeof(timeout));
-        times = (err<0)?1:(uint32_t)timeout;
-        os_tm_trigger(times);
-    }
-
-    if (FD_ISSET(stimerd.server_handle.fd, &r)) {
-        client();
+    while(1) {
+        err = select(maxfd+1, &r, NULL, NULL, &tv);
+        switch(err) {
+            case -1:/* error */
+                if (EINTR==errno) {
+                    // is breaked
+                    continue;
+                } else {
+                    return errno;
+                }
+            case 0: /* timeout, retry */
+                return -ETIMEOUT;
+            default: /* to accept */
+                return __server_handle(&r);
+        }
     }
 }
 
@@ -417,16 +499,8 @@ init_env()
     if (is_good_env(env)) {
         stimerd.timer.unit = atoi(env);
     }
-    
-    env = getenv(ENV_STIMER_PATH);
-    if (is_good_env(env)) {
-        if (os_strlen(env) > stimerd.server_handle.addr.sun_path) {
-            return -ETOOBIG;
-        }
-        os_strdcpy(stimerd.server_handle.addr.sun_path, env);
-    }
 
-    return 0;
+    return get_env_stimer_path(&stimerd.server.addr);
 }
 
 static int
@@ -481,7 +555,7 @@ init_server(void)
     }
 #endif
 
-    err = bind(fd, (struct sockaddr *)&stimerd.server_handle.addr, sizeof(stimerd.server_handle.addr));
+    err = bind(fd, (struct sockaddr *)&stimerd.server.addr, sizeof(stimerd.server.addr));
     if (err<0) {
         return errno;
     }
@@ -491,7 +565,7 @@ init_server(void)
         return errno;
     }
 
-    stimerd.server_handle.fd = fd;
+    stimerd.server.fd = fd;
 
     return 0;
 }

@@ -203,10 +203,6 @@ tm_dump()
     }
 }
 
-/* 
-* return
-*   success trigger nodes
-*/
 static int
 tm_ring_trigger(struct tm_ring *ring)
 {

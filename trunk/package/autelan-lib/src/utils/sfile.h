@@ -78,7 +78,7 @@ os_sfscan_file_handle
         /*
         * strim left/right blank
         */
-        __string_strim_both_ends(line, NULL);
+        __string_strim_both(line, NULL);
         
         /*
         * replace blank("\t \r\n") to ' '
@@ -244,7 +244,7 @@ os_sfscan_dir
     } else if (NULL==fgets(line, space, stream)) { \
         err = errno;                            \
     } else {                                    \
-        __string_strim_both_ends(line, NULL);   \
+        __string_strim_both(line, NULL);        \
     }                                           \
                                                 \
     if (stream) {                               \

@@ -6,13 +6,38 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 static char RX[1 + STIMER_RXSIZE];
 
 static struct {
+    char *self;
+    
     struct sockaddr_un server;
 } stimerc = {
     .server = { .sun_family = AF_UNIX },
 };
 
 static int
-client(char *buf)
+usage(int argc, char *argv[])
+{
+    "stimerc insert name delay interval limit command"
+    "stimerc remove name"
+    "stimerc show status [name]"
+    return -EINVAL;
+}
+
+static int
+handle(struct stimerc_table map[], int count, int argc, char *argv[])
+{
+    int i;
+    
+    for (i=0; i<count; i++) {
+        if (0==os_strcmp(map[i].tag, argv[0])) {
+            return (*map[i].cb)(argc-1, argv+1);
+        }
+    }
+
+    return -EINVAL;
+}
+
+static int
+__client(char *buf)
 {
     int fd;
     int err;
@@ -23,7 +48,15 @@ client(char *buf)
     if (fd<0) {
         return errno;
     }
-
+    
+#if 0
+    int opt = 1;
+    err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (err<0) {
+        return errno;
+    }
+#endif
+    
     err = connect(fd, (struct sockaddr *)&stimerc.server, sizeof(stimerc.server));
     if (err < 0) {
         return err;
@@ -45,29 +78,15 @@ client(char *buf)
     return 0;
 }
 
-#define CLIENT(fmt, args...)         ({ \
+#define client(fmt, args...)         ({ \
     char buf[1+OS_LINE_LEN] = {0};      \
     int err = 0;                        \
                                         \
     os_saprintf(buf, fmt, ##args);      \
-    err = handle(buf);                  \
+    err = __client(buf);                \
                                         \
     err;                                \
 })
-
-static int
-handle(struct stimerc_table map[], int count, int argc, char *argv[])
-{
-    int i;
-    
-    for (i=0; i<count; i++) {
-        if (0==os_strcmp(map[i].tag, argv[0])) {
-            return (*map[i].cb)(argc-1, argv+1);
-        }
-    }
-
-    return -EINVAL;
-}
 
 static int
 insert(int argc, char *argv[])
@@ -88,11 +107,11 @@ insert(int argc, char *argv[])
     int i_interval  = atoi(interval);
     int i_limit     = atoi(limit));
     
-    if (0==i_interval && 0==i_delay) {
+    if (false==is_good_stimer_args(i_delay, i_interval, i_limit)) {
         return -EINVAL;
     }
-
-    return CLIENT("insert %s %s %s %s %s",
+    
+    return client("insert %s %s %s %s %s",
                 name,
                 delay,
                 interval,
@@ -103,15 +122,16 @@ insert(int argc, char *argv[])
 static int
 remove(int argc, char *argv[])
 {
-    char *name      = argv[0];
+    char *name = argv[0];
 
     if (1!=argc) {
         return -EINVAL;
     }
 
-    return CLIENT("remove %s", name);
+    return client("remove %s", name);
 }
 
+#if STIMER_SHOW_LOG
 static int
 show_log(int argc, char *argv[])
 {
@@ -120,13 +140,14 @@ show_log(int argc, char *argv[])
     if (0!=argc || 1!=argc) {
         return -EINVAL;
     }
-
+    
     if (name) {
-        return CLIENT("show log %s", name);
+        return client("show log %s", name);
     } else {
-        return client("show log");
+        return __client("show log");
     }
 }
+#endif
 
 static int
 show_status(int argc, char *argv[])
@@ -138,9 +159,9 @@ show_status(int argc, char *argv[])
     }
     
     if (name) {
-        return CLIENT("show status %s", name);
+        return client("show status %s", name);
     } else {
-        return client("show status");
+        return __client("show status");
     }
 }
 
@@ -148,8 +169,10 @@ static int
 show(int argc, char *argv[])
 {
     static struct stimerc_table table[] = {
-        STIMER_TABLE_ITEM("log",    show_log),
-        STIMER_TABLE_ITEM("status", show_status),
+#if STIMER_SHOW_LOG
+        STIMER_ENTRY("log",    show_log),
+#endif
+        STIMER_ENTRY("status", show_status),
     };
     
     return handle(table, os_count_of(table), argc, argv);
@@ -159,9 +182,9 @@ static int
 command(int argc, char *argv[])
 {
     static struct stimerc_table table[] = {
-        STIMER_TABLE_ITEM("insert",  insert),
-        STIMER_TABLE_ITEM("remove",  remove),
-        STIMER_TABLE_ITEM("show",    show),
+        STIMER_ENTRY("insert",  insert),
+        STIMER_ENTRY("remove",  remove),
+        STIMER_ENTRY("show",    show),
     };
 
     return handle(table, os_count_of(table), argc, argv);
@@ -170,23 +193,14 @@ command(int argc, char *argv[])
 static int
 init_env() 
 {
-    char *env;
-    
-    env = getenv(ENV_STIMER_PATH);
-    if (is_good_env(env)) {
-        if (os_strlen(env) > stimerc.addr.sun_path) {
-            return -ETOOBIG;
-        }
-        
-        os_strdcpy(stimerc.addr.sun_path, env);
-    }
-
-    return 0;
+    return get_env_stimer_path(&stimerc.server);
 }
 
 int main(int argc, char *argv[])
 {
     int err;
+
+    stimerc.self = argv[0]; argc--; argv++;
     
     os_objzero(RX);
 

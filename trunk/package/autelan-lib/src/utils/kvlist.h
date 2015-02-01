@@ -9,6 +9,10 @@
 #define KVLINELEN   1023
 #endif
 
+#ifndef KVHASHSIZE
+#define KVHASHSIZE  256
+#endif
+
 struct kventry {
     /* 
     * must NOT include '=' 
@@ -21,80 +25,96 @@ struct kventry {
     */
     string_t *v;
 
-    struct mlist_node node;
+    struct {
+        struct list_head    list;
+        struct hlist_node   hash;
+    } node;
 };
 
 struct kvcontainer {
-    int count;
-    struct mlist_head head;
+    struct {
+        struct list_head    list;
+        struct hlist_head   hash[KVHASHSIZE];
+
+        int count;
+    } head;
 };
-#define KVCONTAINER(container) { .head = MLIST_HEAD_INIT(container.head) }
+
+#define KVCONTAINER(container) { \
+    .head = { \
+        .list = LIST_HEAD_INIT(container.head.list), \
+        .hash = {HLIST_HEAD_INIT}, \
+    }, \
+}
+
+static inline int
+kv_hash(char *name)
+{
+    return __string_hash_idx(name, KVHASHSIZE);
+}
 
 static inline int
 kv_insert(struct kvcontainer *container, struct kventry *entry)
 {
-    int err;
-    
     if (NULL==container) {
         return -EINVAL9;
     }
     else if (NULL==entry) {
         return -EINVAL8;
     }
+    /*
+    * have in list
+    */
+    else if (is_in_list(&entry->node.list)) {
+        return -EINLIST;
+    }
+
+    list_add(&entry->node.list, &container->head.list);
+    hlist_add_head(&entry->node.hash, &container->head.hash[kv_hash(entry->k.string)]);
+    container->head.count++;
     
-    int hash(void)
-    {
-        return mlist_string_hash_idx(entry->k->string);
-    }
-
-    err = mlist_insert(&container->head, &entry->node, hash);
-    if (0==err) {
-        container->count++;
-    }
-
-    return err;
+    return 0;
 }
 
 static inline int
 kv_remove(struct kvcontainer *container, struct kventry *entry)
-{
-    int err;
-    
+{    
     if (NULL==container) {
         return -EINVAL9;
     }
     else if (NULL==entry) {
         return -EINVAL8;
     }
-    
-    err = mlist_remove(&container->head, &entry->node);
-    if (0==err) {
-        container->count--;
+    /*
+    * NOT in list
+    */
+    else if (false==is_in_list(&entry->node.list)) {
+        return -ENOINLIST;
     }
+    
+    list_del(&entry->node.list);
+    hlist_del_init(&entry->node.hash);
+    container->head.count--;
+    
+    return 0;
 }
 
 static inline struct kventry *
 kv_get(struct kvcontainer *container, char *name)
 {
+    struct kventry *entry;
+    
     if (NULL==container || NULL==name) {
         return NULL;
     }
     
-    int hash(void)
-    {
-        return mlist_string_hash_idx(name);
+    hlist_for_each_entry(entry, &container->head.hash[kv_hash(name)], node.hash) {
+        if (0==os_strcmp(entry->k.string, name)) {
+            return entry;
+        }
     }
-    
-    int eq(struct mlist_node *node)
-    {
-        struct kventry *entry = container_of(node, struct kventry, node);
-        
-        return 0==os_strcmp(entry->k->string, name);
-    }
-    
-    struct mlist_node *node = mlist_get(&container->head, name, hash, eq);
 
-    return node?container_of(node, struct kventry, node):NULL;
+    return NULL;
 }
 
 static inline void
@@ -168,14 +188,10 @@ kv_delete(struct kvcontainer *container, char *name)
 static inline int
 kv_foreach(struct kvcontainer *container, multi_value_t (*cb)(struct kventry *entry))
 {
-    struct kventry *entry;
-    struct mlist_node *node, *tmp;
+    struct kventry *entry, *tmp;
+    multi_value_u mv;
     
-    list_for_each_entry_safe(node, tmp, &container->head.list, list) {
-        multi_value_u mv;
-        
-        entry = container_of(node, struct kventry, node);
-        
+    list_for_each_entry_safe(entry, tmp, &container->head.list, node.list) {
         mv.value = (*cb)(entry);
         if (mv2_is_break(mv)) {
             return mv2_result(mv);
@@ -260,6 +276,7 @@ __kv_from_argv(struct kvcontainer *container, int argc, char *argv[])
         }
 
         os_strdcpy(buf, argv[i]);
+        __string_strim_both(buf, NULL);
         __string_reduce(buf, NULL);
         
         if (2!=os_sscanf(buf, "%s=%s", name, value)) {

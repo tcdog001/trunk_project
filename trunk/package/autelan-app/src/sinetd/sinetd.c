@@ -32,10 +32,12 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 #endif
 
 struct app {
-    struct list_head node;
-
     int pid;
     time_t create;
+
+    struct {
+        struct list_head list;
+    } node;
 };
 
 static struct {
@@ -46,12 +48,16 @@ static struct {
     int pid;
     char script[1+MAX_SCRIPT];  /* fullname, include path */
     char *script_name;          /* just filename, NOT include path */
-    
-    int count;
-    struct list_head list;
+
+    struct {
+        struct list_head list;
+        int count;
+    } head;
 } C = {
-    .fd         = -1,
-    .list       = LIST_HEAD_INIT(C.list),
+    .fd     = -1,
+    .head   = {
+        .list = LIST_HEAD_INIT(C.head.list),
+    },
 };
 
 static struct app *
@@ -84,8 +90,8 @@ app_insert(struct app *app)
         return -EINVAL;
     }
     
-    list_add_tail(&app->node, &C.list);
-    C.count++;
+    list_add_tail(&app->node.list, &C.head.list);
+    C.head.count++;
 }
 
 static int
@@ -95,70 +101,45 @@ app_remove(struct app *app)
         return -EINVAL;
     }
     
-    C.count--;
-    list_del(&app->node);
+    C.head.count--;
+    list_del(&app->node.list);
 }
 
-typedef int app_foreach_t(struct app *app, void *in, void *out, int *go_on);
-
 static int
-app_foreach(app_foreach_t *cb, void *in, void *out)
+app_foreach(multi_value_t (*cb)(struct app *app))
 {
     struct app *app, *n;
-    int err;
-    int go_on;
+    multi_value_u mv;
     
     list_for_each_entry_safe(app, n, &C.list, node) {
-        err = (*cb)(app, in, out, &go_on);
-        if (err<0) {
-            // log
-        }
-        
-        if (go_on) {
-            continue;
-        } else {
-            return err;
+        mv.value = (*cb)(app);
+        if (mv2_is_break(mv)) {
+            return mv2_result(mv);
         }
     }
 
     return 0;
-}
-
-static int
-find_cb(struct app *app, void *in, void *out, int *go_on, int remove)
-{
-    int pid = (int)in;
-    struct app **item = (struct app **)out;
-
-    if (pid==app->pid) {
-        if (remove) {
-            app_remove(app);
-        }
-        
-        *item = app;
-        *go_on = 0;
-    } else {
-        *go_on = 1;
-    }
-
-    return 0;
-}
-
-
-static int
-app_find_cb(struct app *app, void *in, void *out, int *go_on)
-{
-    return find_cb(app, in, out, go_on, 0);
 }
 
 static struct app *
 app_find(int pid)
 {
-    struct app *app = NULL;
+    struct app *found = NULL;
+    
+    multi_value_t cb(struct app *app)
+    {
+        if (pid==app->pid) {
+            found = app;
 
-    app_foreach(app_find_cb, (void *)pid, (void *)&app);
+            return mv2_BREAK(0);
+        } else {
+            return mv2_OK;
+        }
+    }
 
-    return app;
+    app_foreach(cb);
+
+    return found;
 }
 
 static int
@@ -172,49 +153,43 @@ app_create(int pid)
 }
 
 static int
-app_delete_cb(struct app *app, void *in, void *out, int *go_on)
-{
-    return find_cb(app, in, out, go_on, 1);
-}
-
-static int
 app_delete(int pid)
 {
-    struct app *app = NULL;
-    
-    app_foreach(app_delete_cb, (void *)pid, (void *)&app);
-    if (NULL==app) {
-        return -ENOEXIST;
+    multi_value_t cb(struct app *app)
+    {
+        if (pid==app->pid) {
+            app_remove(app);
+
+            return mv2_BREAK(0);
+        } else {
+            return mv2_OK;
+        }
     }
+    
+    app_foreach(cb);
 
     return 0;
 }
-
-static int
-app_timeout_cb(struct app *app, void *in, void *out, int *go_on)
-{
-    time_t now = *(time_t *)in;
-
-    if ((now - app->create) > MAX_RUNTIME) {
-        D("app pid:%d timeout", app->pid);
-        
-        kill(app->pid, SIGKILL);
-        
-        app_remove(app);
-    }
-
-    *go_on = 1;
-    
-    return 0;
-}
-
 
 static int
 app_timeout(void)
 {
     time_t now = time(NULL);
+
+    multi_value_t cb(struct app *app)
+    {
+        if ((now - app->create) > MAX_RUNTIME) {
+            D("app pid:%d timeout", app->pid);
+            
+            kill(app->pid, SIGKILL);
+            
+            app_remove(app);
+        }
+
+        return mv2_OK;
+    }
     
-    return app_foreach(app_timeout_cb, (void *)&now, NULL);
+    return app_foreach(cb);
 }
 
 static void

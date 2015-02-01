@@ -153,20 +153,14 @@ os_strlcpy(char *dst, const char *src, size_t size)
 
 typedef bool char_is_something_f(int ch);
 
-static inline bool
-__char_is_ifs(int ch, int ifs)
-{
-    return ifs==ch;
-}
-
 static inline bool 
-__char_is(char_is_something_f *IS, int ch)
+__char_is(int ch, char_is_something_f *IS)
 {
     if (IS) {
         return (*IS)(ch);
     } else {
-#ifdef CHAR_IS_DEFAULT
-        return CHAR_IS_DEFAULT(ch)
+#ifdef DEFT_CHAR_IS
+        return DEFT_CHAR_IS(ch)
 #else
         return NULL!=strchr(__blanks, ch);
 #endif
@@ -184,7 +178,7 @@ __string_replace(char *string, char_is_something_f *IS_OLD, int new)
     char *s = string;
 
     while(*s) {
-        if (__char_is(IS_OLD, *s)) {
+        if (__char_is(*s, IS_OLD)) {
             *s++ = new;
         } else {
             s++;
@@ -207,7 +201,7 @@ __string_reduce(char *string, char_is_something_f *IS)
     bool in_reduce = false; /* reduce 模式 */
     
     while(*s) {
-        if (__char_is(IS, *s)) {
+        if (__char_is(*s, IS)) {
             /*
             * 扫描到 去重字符, 则记录之
             *
@@ -256,7 +250,7 @@ __string_strim(char *string, char_is_something_f *IS)
     char *s = string; /* 扫描指针 */
 
     while(*s) {
-        if (__char_is(IS, *s)) {
+        if (__char_is(*s, IS)) {
             s++;
         } else {
             *p++ = *s++;
@@ -278,7 +272,7 @@ __string_strim_left(char *string, char_is_something_f *IS)
     char *s = string; /* 扫描指针 */
 
     /* find first no-match IS */
-    while(*s && __char_is(IS, *s)) {
+    while(*s && __char_is(*s, IS)) {
         s++;
     }
 
@@ -304,7 +298,7 @@ __string_strim_right(char *string, char_is_something_f *IS)
     char *p = string + os_strlen(string) - 1;
 
     /* scan, from last char to begin */
-    while(p>=string && __char_is(IS, *p)) {
+    while(p>=string && __char_is(*p, IS)) {
         p--;
     }
 
@@ -315,7 +309,7 @@ __string_strim_right(char *string, char_is_something_f *IS)
 }
 
 static inline char *
-__string_strim_both_ends(char *string, char_is_something_f *IS)
+__string_strim_both(char *string, char_is_something_f *IS)
 {
     __string_strim_right(string, IS);
 
@@ -399,7 +393,7 @@ __string_next(char *string, char_is_something_f *IS)
         return NULL;
     }
     
-    while(*p && __char_is(IS, *p)) {
+    while(*p && __char_is(*p, IS)) {
         p++;
     }
     
@@ -417,7 +411,7 @@ __string_next_byifs(char *string, int ifs)
 {
     bool is_ifs(int ch)
     {
-        return __char_is_ifs(ch, ifs);
+        return ch==ifs;
     }
     
     return __string_next(string, is_ifs);
