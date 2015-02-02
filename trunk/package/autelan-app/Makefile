@@ -144,6 +144,60 @@ define Package/autelan-um/compile
 		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 ####################################################################
+define Package/autelan-stimerd
+  SECTION:=apps
+  CATEGORY:=autelan-app
+  TITLE:=Autelan Basic App
+  DEPENDS:=+libubacktrace +libautelan-appkey +libautelan-timer
+endef
+
+define Package/autelan-um/install
+	$(Package/autelan-stimerd/install/common)
+	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/um/
+
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stimerd/stimerd $(1)/usr/bin
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/stimerd/stimerd.key $(1)/$(APPKEY_PATH)/
+endef
+
+define Package/autelan-stimerd/compile
+	$(MAKE) -C $(PKG_BUILD_DIR)/stimerd \
+		CC="$(TARGET_CC)" \
+		CFLAGS=" \
+			$(TARGET_CFLAGS) \
+			$(TARGET_CPPFLAGS) \
+			-D__THIS_NAME=\\\"stimerd\\\" \
+			-D__AKID_DEBUG=__stimerd_debug \
+			" \
+		LDFLAGS="$(TARGET_LDFLAGS)"
+endef
+####################################################################
+define Package/autelan-stimerc
+  SECTION:=apps
+  CATEGORY:=autelan-app
+  TITLE:=Autelan Basic App
+  DEPENDS:=+libubacktrace +libautelan-appkey +libautelan-timer
+endef
+
+define Package/autelan-um/install
+	$(Package/autelan-stimerc/install/common)
+	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/um/
+
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stimerc/stimerc $(1)/usr/bin
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/stimerc/stimerc.key $(1)/$(APPKEY_PATH)/
+endef
+
+define Package/autelan-stimerc/compile
+	$(MAKE) -C $(PKG_BUILD_DIR)/stimerc \
+		CC="$(TARGET_CC)" \
+		CFLAGS=" \
+			$(TARGET_CFLAGS) \
+			$(TARGET_CPPFLAGS) \
+			-D__THIS_NAME=\\\"stimerc\\\" \
+			-D__AKID_DEBUG=__stimerc_debug \
+			" \
+		LDFLAGS="$(TARGET_LDFLAGS)"
+endef
+####################################################################
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(CP) ./src/* $(PKG_BUILD_DIR)
@@ -165,4 +219,6 @@ $(eval $(call BuildPackage,autelan-btt))
 $(eval $(call BuildPackage,autelan-appkey))
 $(eval $(call BuildPackage,autelan-partool))
 $(eval $(call BuildPackage,autelan-um))
+$(eval $(call BuildPackage,autelan-stimerd))
+$(eval $(call BuildPackage,autelan-stimerc))
 
