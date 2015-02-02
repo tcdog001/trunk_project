@@ -196,6 +196,8 @@ __create(char *name, char *command, int delay, int interval, int limit)
     entry->triggers = 0;
     
     __insert(entry);
+
+    return entry;
 }
 
 static void
@@ -422,6 +424,8 @@ __client(int fd)
     if (err <=0) {
         return errno;
     }
+
+    return 0;
 }
 
 static int
