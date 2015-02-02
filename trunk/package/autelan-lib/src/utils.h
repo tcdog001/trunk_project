@@ -59,6 +59,7 @@
 #   include <sys/sem.h>
 #   include <sys/shm.h>
 #   include <sys/socket.h>
+#   include <sys/un.h>
 #   include <netinet/ether.h>
 #   include <netinet/in.h>
 #   include <netinet/tcp.h>
