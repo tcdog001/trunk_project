@@ -151,9 +151,9 @@ define Package/autelan-stimerd
   DEPENDS:=+libubacktrace +libautelan-appkey +libautelan-timer
 endef
 
-define Package/autelan-um/install
+define Package/autelan-stimerd/install
 	$(Package/autelan-stimerd/install/common)
-	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/um/
+	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/stimerd/
 
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stimerd/stimerd $(1)/usr/bin
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/stimerd/stimerd.key $(1)/$(APPKEY_PATH)/
@@ -178,9 +178,9 @@ define Package/autelan-stimerc
   DEPENDS:=+libubacktrace +libautelan-appkey +libautelan-timer
 endef
 
-define Package/autelan-um/install
+define Package/autelan-stimerc/install
 	$(Package/autelan-stimerc/install/common)
-	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/um/
+	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/stimerc/
 
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stimerc/stimerc $(1)/usr/bin
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/stimerc/stimerc.key $(1)/$(APPKEY_PATH)/
