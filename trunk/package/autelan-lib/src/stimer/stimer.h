@@ -13,8 +13,7 @@
 #endif
 
 #ifndef STIMER_PATH
-#define STIMER_PATH         "/tmp/stimer_path"
-#endif
+#define STIMER_PATH         "/tmp/stimer_path"#endif
 
 #ifndef STIMER_MSEC
 #define STIMER_MSEC         5000
