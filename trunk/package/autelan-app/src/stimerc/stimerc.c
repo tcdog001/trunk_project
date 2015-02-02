@@ -16,9 +16,10 @@ static struct {
 static int
 usage(int argc, char *argv[])
 {
-    "stimerc insert name delay interval limit command"
-    "stimerc remove name"
-    "stimerc show status [name]"
+    os_println("stimerc __insert name delay interval limit command");
+    os_println("stimerc __remove name");
+    os_println("stimerc show status [name]");
+    
     return -EINVAL;
 }
 
@@ -89,7 +90,7 @@ __client(char *buf)
 })
 
 static int
-insert(int argc, char *argv[])
+__insert(int argc, char *argv[])
 {
     char *name      = argv[0];
     char *delay     = argv[1];
@@ -97,21 +98,19 @@ insert(int argc, char *argv[])
     char *limit     = argv[3];
     char *command   = argv[4];
 
-    int i_delay, i_interval, i_limit;
-
     if (5!=argc) {
         return -EINVAL;
     }
     
     int i_delay     = atoi(delay);
     int i_interval  = atoi(interval);
-    int i_limit     = atoi(limit));
+    int i_limit     = atoi(limit);
     
     if (false==is_good_stimer_args(i_delay, i_interval, i_limit)) {
         return -EINVAL;
     }
     
-    return client("insert %s %s %s %s %s",
+    return client("__insert %s %s %s %s %s",
                 name,
                 delay,
                 interval,
@@ -120,7 +119,7 @@ insert(int argc, char *argv[])
 }
 
 static int
-remove(int argc, char *argv[])
+__remove(int argc, char *argv[])
 {
     char *name = argv[0];
 
@@ -128,7 +127,7 @@ remove(int argc, char *argv[])
         return -EINVAL;
     }
 
-    return client("remove %s", name);
+    return client("__remove %s", name);
 }
 
 #if STIMER_SHOW_LOG
@@ -182,8 +181,8 @@ static int
 command(int argc, char *argv[])
 {
     static struct stimerc_table table[] = {
-        STIMER_ENTRY("insert",  insert),
-        STIMER_ENTRY("remove",  remove),
+        STIMER_ENTRY("__insert",  __insert),
+        STIMER_ENTRY("__remove",  __remove),
         STIMER_ENTRY("show",    show),
     };
 
