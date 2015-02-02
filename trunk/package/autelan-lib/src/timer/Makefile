@@ -6,7 +6,7 @@ LIBS_DEPEND=
 
 .PHONY:all
 all:$(TARGET)
-	
+
 .PHONY: clean
 clean:
 	rm -f $(OBJS) $(TARGET)
