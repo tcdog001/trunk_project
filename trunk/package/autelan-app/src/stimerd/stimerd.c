@@ -5,6 +5,11 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 
 static char RX[1 + STIMER_RXSIZE];
 static char TX[1 + STIMER_TXSIZE];
+static int TXLEN;
+
+#define txprintf(fmt, args...) do{ \
+    TXLEN += os_snprintf(TX + TXLEN, STIMER_TXSIZE - TXLEN, fmt, ##args); \
+}while(0)
 
 #define HASHSIZE    256
 
@@ -325,18 +330,36 @@ handle_show_log(char *args)
 }
 #endif
 
-static int
-__handle_show_status(char *name)
+static void
+show(struct stimer *entry)
 {
-    return 0;
+    txprintf("%s %d %d %d %d %d %s" __crlf,
+        entry->name,
+        entry->delay,
+        entry->interval,
+        entry->limit,
+        entry->triggers,
+        os_tm_left(&entry->node.timer),
+        entry->command);
 }
 
 static int
 handle_show_status(char *args)
 {
     char *name = args; args = NEXT(args);
+    
+    multi_value_t cb(struct stimer *entry)
+    {
+        if (NULL==name || 0==os_stracmp(entry->name, name)) {
+            show(entry);
+        }
 
-    return __handle_show_status(name);
+        return mv2_OK;
+    }
+    
+    txprintf("#name delay interval limit triggers left command" __crlf);
+    
+    return __foreach(cb);
 }
 
 
@@ -368,8 +391,8 @@ client_handle(void)
         STIMER_ENTRY("show",    handle_show),
     };
 
-    char *method = TX;
-    char *args   = TX;
+    char *method = RX;
+    char *args   = RX;
     int i;
 
     __string_strim_both(method, NULL);
@@ -386,7 +409,7 @@ __client(int fd)
     int err;
     
     os_objzero(RX);
-    os_objzero(TX);
+    os_objzero(TX); TXLEN = 0;
     
     err = read(fd, RX, sizeof(RX));
     if (err <=0) {
@@ -398,7 +421,7 @@ __client(int fd)
         return err;
     }
     
-    err = write(fd, TX, os_strlen(TX));
+    err = write(fd, TX, TXLEN);
     if (err <=0) {
         return errno;
     }

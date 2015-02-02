@@ -70,7 +70,7 @@ kv_insert(struct kvcontainer *container, struct kventry *entry)
     }
 
     list_add(&entry->node.list, &container->head.list);
-    hlist_add_head(&entry->node.hash, &container->head.hash[kv_hash(entry->k.string)]);
+    hlist_add_head(&entry->node.hash, &container->head.hash[kv_hash(entry->k->string)]);
     container->head.count++;
     
     return 0;
@@ -109,7 +109,7 @@ kv_get(struct kvcontainer *container, char *name)
     }
     
     hlist_for_each_entry(entry, &container->head.hash[kv_hash(name)], node.hash) {
-        if (0==os_strcmp(entry->k.string, name)) {
+        if (0==os_strcmp(entry->k->string, name)) {
             return entry;
         }
     }
