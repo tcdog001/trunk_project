@@ -1,5 +1,5 @@
 
-OBJS=stimerd.c
+OBJS=stimerd.o
 __TARGET=stimerd
 TARGET=$(__TARGET)
 LIBS_DEPEND=-lubacktrace -lautelan-appkey -lautelan-timer
