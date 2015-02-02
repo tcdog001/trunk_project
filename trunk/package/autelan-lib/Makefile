@@ -92,7 +92,7 @@ define Package/libautelan-timer
   DEPENDS:=+libubox +libautelan-appkey
 endef
 
-define Package/libautelan-partool/install
+define Package/libautelan-timer/install
 	$(Package/autelan-lib/install/common)
 
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/timer/libautelan-timer.so $(1)/lib/
@@ -109,7 +109,7 @@ define Package/libautelan-timer/compile
 			-D__AKID_DEBUG=__libtimer_debug \
 			" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
-	$(CP) $(PKG_BUILD_DIR)/partool/libautelan-timer.so $(STAGING_DIR)/lib
+	$(CP) $(PKG_BUILD_DIR)/timer/libautelan-timer.so $(STAGING_DIR)/lib
 endef
 ####################################################################
 define Build/Prepare
