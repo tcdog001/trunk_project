@@ -18,7 +18,7 @@ bt_div_0(void)
     int n;
 
     os_println("before div 0");
-    n = a/b;
+    n = a/b; (void)n;
     os_println("after div 0");
     
     return 0;
