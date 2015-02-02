@@ -1,5 +1,6 @@
 #!/bin/bash
 
+. /sbin/autelan_functions.sh
 file_path=/root/onoff
 
 get_onoff_log() {
