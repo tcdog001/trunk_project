@@ -3,6 +3,14 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
 #include "stimer/stimer.h"
 
+#ifndef STIMER_TIMEOUT_SEC
+#define STIMER_TIMEOUT_SEC  5
+#endif
+
+#ifndef STIMER_TIMEOUT_USEC
+#define STIMER_TIMEOUT_USEC 0
+#endif
+
 static char RX[1 + STIMER_RXSIZE];
 
 static struct {
@@ -24,13 +32,13 @@ usage(void)
 }
 
 static int
-handle(struct stimerc_table map[], int count, int argc, char *argv[])
+handle(struct stimer_table map[], int count, int argc, char *argv[])
 {
     int i;
     
     for (i=0; i<count; i++) {
         if (0==os_strcmp(map[i].tag, argv[0])) {
-            return (*map[i].cb)(argc-1, argv+1);
+            return (*(stimerc_f *)map[i].cb)(argc-1, argv+1);
         }
     }
 
@@ -67,20 +75,14 @@ __client(char *buf)
     }
 
     len = strlen(buf);
-    count = write(fd, buf, len);
-    if (len!=count) {
-        debug_error("write error");
-        return -EIO;
+    err = stimer_write(fd, buf, len);
+    if (err<0) {
+        return err;
     }
-    debug_trace("send:%s", buf);
 
-    /*
-    * todo: use select for timeout
-    */
-    count = read(fd, RX, sizeof(RX));
-    if (count<=0) {
-        debug_error("read error:%d", -errno);
-        return -errno;
+    err = stimer_read(fd, RX, sizeof(RX));
+    if (err<0) {
+        return err;
     }
 
     os_println("%s", RX);
@@ -176,7 +178,7 @@ show_status(int argc, char *argv[])
 static int
 show(int argc, char *argv[])
 {
-    static struct stimerc_table table[] = {
+    static struct stimer_table table[] = {
 #if STIMER_SHOW_LOG
         STIMER_ENTRY("log",    show_log),
 #endif
@@ -197,7 +199,7 @@ show(int argc, char *argv[])
 static int
 command(int argc, char *argv[])
 {
-    static struct stimerc_table table[] = {
+    static struct stimer_table table[] = {
         STIMER_ENTRY("insert",  insert),
         STIMER_ENTRY("remove",  remove),
         STIMER_ENTRY("show",    show),
@@ -214,7 +216,7 @@ command(int argc, char *argv[])
 static int
 init_env() 
 {
-    return get_env_stimer_path(&stimerc.server);
+    return get_stimer_path_env(&stimerc.server);
 }
 
 int main(int argc, char *argv[])

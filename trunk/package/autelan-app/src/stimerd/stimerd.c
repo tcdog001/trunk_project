@@ -3,6 +3,22 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
 #include "stimer/stimer.h"
 
+#ifndef STIMER_TIMEOUT_SEC
+#define STIMER_TIMEOUT_SEC  3
+#endif
+
+#ifndef STIMER_TIMEOUT_USEC
+#define STIMER_TIMEOUT_USEC 0
+#endif
+
+#ifndef STIMER_MSEC
+#define STIMER_MSEC         5000
+#endif
+
+#ifndef ENV_STIMER_MSEC
+#define ENV_STIMER_MSEC     "__STIMER_MSEC__"
+#endif
+
 static char RX[1 + STIMER_RXSIZE];
 static char TX[1 + STIMER_TXSIZE];
 static int TXLEN;
@@ -16,7 +32,7 @@ static int TXLEN;
 
 static struct {
     struct {
-        int ms;
+        unsigned int ms;
         int fd;
     } timer;
 
@@ -80,15 +96,21 @@ __msec(void)
 }
 
 static inline int
-__nsec(void)
+__sec(void)
 {
-    return (stimerd.timer.ms%1000) * 1000 * 1000;
+    return __msec()/1000;
 }
 
 static inline int
-__sec(void)
+__usec(void)
 {
-    return stimerd.timer.ms/1000;
+    return (__msec() % 1000) * 1000 ;
+}
+
+static inline int
+__nsec(void)
+{
+    return __usec() * 1000;
 }
 
 static struct stimer *
@@ -232,13 +254,13 @@ __destroy(struct stimer *entry)
 #define NEXT(_string)   __string_next_byifs(_string, ' ')
 
 static int
-handle(struct stimerd_table map[], int count, char *tag, char *args)
+handle(struct stimer_table map[], int count, char *tag, char *args)
 {
     int i;
     
     for (i=0; i<count; i++) {
         if (0==os_strcmp(map[i].tag, tag)) {
-            return (*map[i].cb)(args);
+            return (*(stimerd_f *)map[i].cb)(args);
         }
     }
 
@@ -426,7 +448,7 @@ handle_show_status(char *args)
 static int
 handle_show(char *args)
 {
-    static struct stimerd_table table[] = {
+    static struct stimer_table table[] = {
 #if STIMER_SHOW_LOG
         STIMER_ENTRY("log",     handle_show_log),
 #endif
@@ -445,7 +467,7 @@ handle_show(char *args)
 static int
 client_handle(void)
 {
-    static struct stimerd_table table[] = {
+    static struct stimer_table table[] = {
         STIMER_ENTRY("insert",  handle_insert),
         STIMER_ENTRY("remove",  handle_remove),
         STIMER_ENTRY("show",    handle_show),
@@ -466,14 +488,17 @@ static int
 __client(int fd)
 {
     int err;
+    int count;
     
     os_objzero(RX);
     os_objzero(TX); TXLEN = 0;
-    
-    err = read(fd, RX, sizeof(RX));
-    if (err <=0) {
-        debug_error("read error:%d", -errno);
-        return -errno;
+
+    /*
+    * todo: use select for timeout
+    */
+    err = stimer_read(fd, RX, sizeof(RX));
+    if (err <0) {
+        return err;
     }
     
     err = client_handle();
@@ -481,10 +506,9 @@ __client(int fd)
         return err;
     }
     
-    err = write(fd, TX, TXLEN);
-    if (err != TXLEN) {
-        debug_error("write error %d:%d", TXLEN, err);
-        return -EIO;
+    err = stimer_write(fd, TX, TXLEN);
+    if (err<0) {
+        return err;
     }
 
     return 0;
@@ -496,12 +520,12 @@ client(void)
     struct sockaddr_un addr;
     socklen_t len = sizeof(addr);
 
-    debug_trace("%s", __func__);
-    
     int fd = accept(stimerd.server.fd, (struct sockaddr *)&addr, &len);
     if (fd<0) {
+        debug_error("accept error:%d", -errno);
         return -errno;
     }
+    debug_trace("accept ok");
     
     int err = __client(fd);
     close(fd);
@@ -514,8 +538,6 @@ timer(void)
 {
     uint64_t timeout = 0;
 
-    debug_trace("%s", __func__);
-    
     int err = read(stimerd.timer.fd, &timeout, sizeof(timeout));
     uint32_t times = (err<0)?1:(uint32_t)timeout;
     os_tm_trigger(times);
@@ -543,7 +565,7 @@ server_handle(void)
     fd_set rset;
     struct timeval tv = {
         .tv_sec     = __sec(),
-        .tv_usec    = 0,
+        .tv_usec    = __usec(),
     };
     int maxfd = os_max(stimerd.timer.fd, stimerd.server.fd);
     int err;
@@ -609,7 +631,7 @@ init_env()
         return err;
     }
     
-    err = get_env_stimer_path(&stimerd.server.addr);
+    err = get_stimer_path_env(&stimerd.server.addr);
     if (err<0) {
         return err;
     }
@@ -644,7 +666,6 @@ init_timerfd(void)
     timerfd_settime(fd, 0, &new, &old);
     
     stimerd.timer.fd = fd;
-    debug_trace("timer fd=%d", fd);
 
     return 0;
 }
@@ -657,7 +678,7 @@ init_server(void)
     
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd<0) {
-    	debug_error("server socket error:%d", -errno);
+    	debug_error("socket error:%d", -errno);
         return -errno;
     }
 
@@ -665,7 +686,7 @@ init_server(void)
     int opt = 1;
     err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     if (err<0) {
-        debug_error("server socket setsockopt error:%d", -errno);
+        debug_error("setsockopt error:%d", -errno);
         return -errno;
     }
 #endif
@@ -674,18 +695,17 @@ init_server(void)
 
     err = bind(fd, (struct sockaddr *)&stimerd.server.addr, sizeof(stimerd.server.addr));
     if (err<0) {
-        debug_error("server socket bind error:%d", -errno);
+        debug_error("bind error:%d", -errno);
         return -errno;
     }
 
     err = listen(fd, SOMAXCONN);
     if (err<0) {
-        debug_error("server socket listen error:%d", -errno);
+        debug_error("listen error:%d", -errno);
         return -errno;
     }
 
     stimerd.server.fd = fd;
-    debug_trace("server fd=%d", fd);
 
     return 0;
 }
