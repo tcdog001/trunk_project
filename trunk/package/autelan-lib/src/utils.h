@@ -40,7 +40,6 @@
 #   include <malloc.h>
 #   include <assert.h>
 #   include <unistd.h>
-#   include <errno.h>
 #   include <fcntl.h>
 #   include <ctype.h>
 #   include <errno.h>
@@ -49,6 +48,7 @@
 #   include <syslog.h>
 #   include <ucontext.h>
 #   include <byteswap.h>
+#   include <libgen.h>
 #   include <sys/types.h>
 #   include <sys/stat.h>
 #   include <sys/file.h>

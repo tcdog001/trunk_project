@@ -74,7 +74,7 @@ os_sem_create(os_sem_t *sem, int key)
                     "sem get(key:%#x, flags:%#x) error:%d", 
                     sem->key,
                     flags,
-                    errno);
+                    -errno);
                 
                 return INVALID_SEM_ID;
             }
@@ -83,7 +83,7 @@ os_sem_create(os_sem_t *sem, int key)
                 "sem create (key:%#x, flags:%#x) error:%d.", 
                 sem->key,
                 flags,
-                errno);
+                -errno);
             
             return INVALID_SEM_ID;
         }

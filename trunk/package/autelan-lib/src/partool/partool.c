@@ -115,13 +115,13 @@ part_lock(struct part_block *block)
     
     fd = open(PART_LOCKFILE, O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR);
 	if (fd < 0) {
-		err = errno;
+		err = -errno;
 
 		goto error;
 	}
 
 	if (flock(fd, LOCK_EX)) {
-		err = errno;
+		err = -errno;
 
 		goto error;
 	}
@@ -548,7 +548,7 @@ part_human_read(struct part_block *block, char *human)
     
     f = fopen(human, "r");
     if (NULL==f) {
-        err = errno;
+        err = -errno;
 
         debug_error("part load read error(%d)", err);
         
@@ -557,7 +557,7 @@ part_human_read(struct part_block *block, char *human)
 
     err = fread(part_block_begin(block), size, 1, f);
     if (1!=err) {
-        err = errno;
+        err = -errno;
 
         debug_error("part load read error(%d)", err);
         

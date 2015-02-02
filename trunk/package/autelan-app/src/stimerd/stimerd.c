@@ -9,13 +9,14 @@ static int TXLEN;
 
 #define txprintf(fmt, args...) do{ \
     TXLEN += os_snprintf(TX + TXLEN, STIMER_TXSIZE - TXLEN, fmt, ##args); \
+    debug_trace(fmt, ##args); \
 }while(0)
 
 #define HASHSIZE    256
 
 static struct {
     struct {
-        int unit;
+        int ms;
         int fd;
     } timer;
 
@@ -39,7 +40,7 @@ stimerd = {
     },
     
     .timer = {
-        .unit   = STIMER_MSEC,
+        .ms     = STIMER_MSEC,
         .fd     = -1,
     },
 
@@ -71,6 +72,24 @@ struct stimer {
         tm_node_t timer;
     } node;
 };
+
+static inline int
+__msec(void)
+{
+    return stimerd.timer.ms;
+}
+
+static inline int
+__nsec(void)
+{
+    return (stimerd.timer.ms%1000) * 1000 * 1000;
+}
+
+static inline int
+__sec(void)
+{
+    return stimerd.timer.ms/1000;
+}
 
 static struct stimer *
 __entry(tm_node_t *timer)
@@ -234,7 +253,22 @@ stimer_cb(tm_node_t *timer)
     entry->triggers++;
     os_v_system("%s &", entry->command);
 
+    debug_trace("trigger timer:%s"
+                ", command:%s"
+                ", delay:%d"
+                ", interval:%d"
+                ", limit:%d"
+                ", triggers:%d",
+                entry->name,
+                entry->command,
+                entry->delay,
+                entry->interval,
+                entry->limit,
+                entry->triggers);
+
     if (entry->interval && entry->limit && entry->triggers < entry->limit) {
+        debug_trace("re-insert timer:%s", entry->name);
+
         os_tm_insert(&entry->node.timer, entry->interval, stimer_cb, false);
     }
 
@@ -255,6 +289,8 @@ handle_insert(char *args)
         NULL==interval  ||
         NULL==limit     ||
         NULL==command) {
+        debug_error("NULL name|delay|interval|limit|command");
+        
         return -EINVAL;
     }
     
@@ -263,6 +299,9 @@ handle_insert(char *args)
     int i_limit     = atoi(limit);
     
     if (false==is_good_stimer_args(i_delay, i_interval, i_limit)) {
+        debug_error("invalid args, delay:%d, interval:%d, limit:%d",
+            i_delay, i_interval, i_limit);
+        
         return -EINVAL;
     }
 
@@ -282,6 +321,21 @@ handle_insert(char *args)
         circle  = false;
     }
     
+    debug_trace("insert timer:%s"
+                ", command:%s"
+                ", delay:%d"
+                ", interval:%d"
+                ", limit:%d"
+                ", after:%d"
+                ", circle:%d",
+                entry->name,
+                entry->command,
+                entry->delay,
+                entry->interval,
+                entry->limit,
+                after,
+                circle);
+    
     return os_tm_insert(&entry->node.timer, after, stimer_cb, circle);
 }
 
@@ -291,14 +345,20 @@ handle_remove(char *args)
     char *name = args; args = NEXT(args);
 
     if (NULL==name) {
+        debug_trace("remove timer without name");
+        
         return -EINVAL;
     }
 
     struct stimer *entry = __get(name);
     if (NULL==entry) {
+        debug_trace("remove timer(%s) nofound", name);
+        
         return -ENOEXIST;
     }
 
+    debug_trace("remove timer(%s)", name);
+    
     __destroy(entry);
     
     return 0;
@@ -412,7 +472,8 @@ __client(int fd)
     
     err = read(fd, RX, sizeof(RX));
     if (err <=0) {
-        return errno;
+        debug_error("read error:%d", -errno);
+        return -errno;
     }
     
     err = client_handle();
@@ -421,8 +482,9 @@ __client(int fd)
     }
     
     err = write(fd, TX, TXLEN);
-    if (err <=0) {
-        return errno;
+    if (err != TXLEN) {
+        debug_error("write error %d:%d", TXLEN, err);
+        return -EIO;
     }
 
     return 0;
@@ -433,9 +495,12 @@ client(void)
 {
     struct sockaddr_un addr;
     socklen_t len = sizeof(addr);
+
+    debug_trace("%s", __func__);
+    
     int fd = accept(stimerd.server.fd, (struct sockaddr *)&addr, &len);
     if (fd<0) {
-        return errno;
+        return -errno;
     }
     
     int err = __client(fd);
@@ -448,6 +513,8 @@ static void
 timer(void)
 {
     uint64_t timeout = 0;
+
+    debug_trace("%s", __func__);
     
     int err = read(stimerd.timer.fd, &timeout, sizeof(timeout));
     uint32_t times = (err<0)?1:(uint32_t)timeout;
@@ -473,33 +540,37 @@ __server_handle(fd_set *r)
 static int
 server_handle(void)
 {
-    fd_set r;
+    fd_set rset;
     struct timeval tv = {
-        .tv_sec     = STIMER_SEC,
+        .tv_sec     = __sec(),
         .tv_usec    = 0,
     };
     int maxfd = os_max(stimerd.timer.fd, stimerd.server.fd);
     int err;
     
-    FD_ZERO(&r);
-
-    FD_SET(stimerd.timer.fd, &r);
-    FD_SET(stimerd.server.fd, &r);
+    FD_ZERO(&rset);
+    FD_SET(stimerd.timer.fd, &rset);
+    FD_SET(stimerd.server.fd, &rset);
 
     while(1) {
-        err = select(maxfd+1, &r, NULL, NULL, &tv);
+        err = select(maxfd+1, &rset, NULL, NULL, &tv);
         switch(err) {
             case -1:/* error */
                 if (EINTR==errno) {
                     // is breaked
+                    debug_trace("%s select breaked", __func__);
                     continue;
                 } else {
-                    return errno;
+                    debug_trace("%s select error:%d", __func__, -errno);
+                    return -errno;
                 }
             case 0: /* timeout, retry */
+                debug_trace("%s select timeout", __func__);
                 return -ETIMEOUT;
             default: /* to accept */
-                return __server_handle(&r);
+                debug_trace("%s select ok", __func__);
+                
+                return __server_handle(&rset);
         }
     }
 }
@@ -515,16 +586,35 @@ server(void)
 }
 
 static int
+init_env_msec()
+{
+    char *env = getenv(ENV_STIMER_MSEC);
+    if (is_good_env(env)) {
+        stimerd.timer.ms = atoi(env);
+    } else {
+        stimerd.timer.ms = STIMER_MSEC;
+    }
+    os_tm_unit_set(__msec());
+
+    return 0;
+}
+
+static int
 init_env() 
 {
-    char *env;
+    int err;
+
+    err = init_env_msec();
+    if (err<0) {
+        return err;
+    }
     
-    env = getenv(ENV_STIMER_MSEC);
-    if (is_good_env(env)) {
-        stimerd.timer.unit = atoi(env);
+    err = get_env_stimer_path(&stimerd.server.addr);
+    if (err<0) {
+        return err;
     }
 
-    return get_env_stimer_path(&stimerd.server.addr);
+    return 0;
 }
 
 static int
@@ -533,29 +623,28 @@ init_timerfd(void)
     struct itimerspec old;
     struct itimerspec new = {
         .it_interval = {
-            .tv_sec     = STIMER_SEC,
-            .tv_nsec    = STIMER_NSEC,
+            .tv_sec     = __sec(),
+            .tv_nsec    = __nsec(),
         },
     };
     int fd;
     
     fd = timerfd_create(CLOCK_REALTIME, 0);
     if (fd<0) {
-        return errno;
+        return -errno;
     }
-    debug_test("create timer fd(%d)", fd);
 
-    new.it_value.tv_sec += STIMER_SEC;
-    new.it_value.tv_nsec += STIMER_NSEC;
+    new.it_value.tv_sec += __sec();
+    new.it_value.tv_nsec += __nsec();
     if (new.it_value.tv_nsec >= 1000*1000*1000) {
         new.it_value.tv_nsec = 0;
         new.it_value.tv_sec++;
     }
     
     timerfd_settime(fd, 0, &new, &old);
-    debug_test("set timer fd(%d)", fd);
     
     stimerd.timer.fd = fd;
+    debug_trace("timer fd=%d", fd);
 
     return 0;
 }
@@ -568,28 +657,35 @@ init_server(void)
     
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd<0) {
-        return errno;
+    	debug_error("server socket error:%d", -errno);
+        return -errno;
     }
 
 #if 0
     int opt = 1;
     err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     if (err<0) {
-        return errno;
+        debug_error("server socket setsockopt error:%d", -errno);
+        return -errno;
     }
 #endif
 
+    unlink(stimerd.server.addr.sun_path);
+
     err = bind(fd, (struct sockaddr *)&stimerd.server.addr, sizeof(stimerd.server.addr));
     if (err<0) {
-        return errno;
+        debug_error("server socket bind error:%d", -errno);
+        return -errno;
     }
 
-    err = listen(fd, 1);
+    err = listen(fd, SOMAXCONN);
     if (err<0) {
-        return errno;
+        debug_error("server socket listen error:%d", -errno);
+        return -errno;
     }
 
     stimerd.server.fd = fd;
+    debug_trace("server fd=%d", fd);
 
     return 0;
 }
@@ -600,24 +696,31 @@ int main(int argc, char *argv[])
 
     err = init_env();
     if (err < 0) {
+        debug_error("init env error:%d", err);
         return err;
     }
-
+    debug_ok("init env ok.");
+    
     err = init_timerfd();
     if (err < 0) {
+        debug_error("init timerfd error:%d", err);
         return err;
     }
-
+    debug_ok("init timerfd ok");
+    
     err = init_server();
     if (err < 0) {
+        debug_error("init server error:%d", err);
+        return err;
+    }
+    debug_ok("init server ok");
+    
+    err = server();
+    if (err < 0) {
+        debug_error("run server error:%d", err);
         return err;
     }
     
-	err = server();
-    if (err < 0) {
-        return err;
-    }
-
     return 0;
 }
 /******************************************************************************/

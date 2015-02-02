@@ -71,7 +71,7 @@ get_env_stimer_path(struct sockaddr_un *addr)
     if (false==is_good_env(env)) {
         env = STIMER_PATH;
     }
-    if (os_strlen(env) > sizeof(addr->sun_path - 1)) {
+    if (os_strlen(env) > sizeof(addr->sun_path) - 1) {
         return -ETOOBIG;
     }
     os_strdcpy(addr->sun_path, env);

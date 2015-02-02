@@ -134,7 +134,7 @@
     } else if(WIFSTOPPED(err)) { /* 暂停子进程 */ \
         ret = WSTOPSIG(err); /* 引发子进程暂停的信号代码 */ \
 	} else {                    \
-        ret = errno;            \
+        ret = -errno;           \
 	}                           \
                                 \
     ret;                        \
@@ -170,7 +170,7 @@
         err = -EPIPE;                               \
     } else {                                        \
         if (NULL==fgets(line, space, fd)) {         \
-            err = errno;                            \
+            err = -errno;                            \
         } else {                                    \
             err = 0;                                \
         }                                           \
@@ -190,7 +190,7 @@
     } else {                                        \
         int count = fread(buf, 1, size, fd);        \
         if (count <= 0) {                           \
-            err = errno;                            \
+            err = -errno;                            \
         } else {                                    \
             err = 0;                                \
         }                                           \

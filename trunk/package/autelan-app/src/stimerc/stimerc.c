@@ -14,11 +14,11 @@ static struct {
 };
 
 static int
-usage(int argc, char *argv[])
+usage(void)
 {
-    os_println("stimerc __insert name delay interval limit command");
-    os_println("stimerc __remove name");
-    os_println("stimerc show status [name]");
+    os_fprintln(stderr, "%s insert name delay interval limit command", stimerc.self);
+    os_fprintln(stderr, "%s remove name", stimerc.self);
+    os_fprintln(stderr, "%s show status [name]", stimerc.self);
     
     return -EINVAL;
 }
@@ -34,7 +34,7 @@ handle(struct stimerc_table map[], int count, int argc, char *argv[])
         }
     }
 
-    return -EINVAL;
+    return usage();
 }
 
 static int
@@ -47,35 +47,44 @@ __client(char *buf)
     
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd<0) {
-        return errno;
+        debug_error("socket error:%d", err);
+        return -errno;
     }
     
 #if 0
     int opt = 1;
     err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     if (err<0) {
-        return errno;
+        return -errno;
     }
 #endif
-    
+
+    unlink(stimerc.server.sun_path);
     err = connect(fd, (struct sockaddr *)&stimerc.server, sizeof(stimerc.server));
     if (err < 0) {
+        debug_error("connect error:%d", err);
         return err;
     }
 
     len = strlen(buf);
     count = write(fd, buf, len);
     if (len!=count) {
+        debug_error("write error");
         return -EIO;
     }
-    
+    debug_trace("send:%s", buf);
+
+    /*
+    * todo: use select for timeout
+    */
     count = read(fd, RX, sizeof(RX));
     if (count<=0) {
-        return errno;
+        debug_error("read error:%d", -errno);
+        return -errno;
     }
-    
+
     os_println("%s", RX);
-    
+
     return 0;
 }
 
@@ -90,7 +99,7 @@ __client(char *buf)
 })
 
 static int
-__insert(int argc, char *argv[])
+insert(int argc, char *argv[])
 {
     char *name      = argv[0];
     char *delay     = argv[1];
@@ -99,7 +108,7 @@ __insert(int argc, char *argv[])
     char *command   = argv[4];
 
     if (5!=argc) {
-        return -EINVAL;
+        return usage();
     }
     
     int i_delay     = atoi(delay);
@@ -107,10 +116,10 @@ __insert(int argc, char *argv[])
     int i_limit     = atoi(limit);
     
     if (false==is_good_stimer_args(i_delay, i_interval, i_limit)) {
-        return -EINVAL;
+        return usage();
     }
     
-    return client("__insert %s %s %s %s %s",
+    return client("insert %s %s %s %s %s",
                 name,
                 delay,
                 interval,
@@ -119,15 +128,15 @@ __insert(int argc, char *argv[])
 }
 
 static int
-__remove(int argc, char *argv[])
+remove(int argc, char *argv[])
 {
     char *name = argv[0];
 
     if (1!=argc) {
-        return -EINVAL;
+        return usage();
     }
 
-    return client("__remove %s", name);
+    return client("remove %s", name);
 }
 
 #if STIMER_SHOW_LOG
@@ -154,7 +163,7 @@ show_status(int argc, char *argv[])
     char *name = argv[0];
 
     if (0!=argc || 1!=argc) {
-        return -EINVAL;
+        return usage();
     }
     
     if (name) {
@@ -174,19 +183,32 @@ show(int argc, char *argv[])
         STIMER_ENTRY("status", show_status),
     };
     
-    return handle(table, os_count_of(table), argc, argv);
+    int err = handle(table, os_count_of(table), argc, argv);
+    if (err<0) {
+        debug_error("show %s %s error:%d", 
+            argv[0], 
+            argv[1]?argv[1]:"",
+            err);
+    }
+    
+    return err;
 }
 
 static int
 command(int argc, char *argv[])
 {
     static struct stimerc_table table[] = {
-        STIMER_ENTRY("__insert",  __insert),
-        STIMER_ENTRY("__remove",  __remove),
+        STIMER_ENTRY("insert",  insert),
+        STIMER_ENTRY("remove",  remove),
         STIMER_ENTRY("show",    show),
     };
 
-    return handle(table, os_count_of(table), argc, argv);
+    int err = handle(table, os_count_of(table), argc, argv);
+    if (err<0) {
+        debug_error("%s error:%d", argv[0], err);
+    }
+    
+    return err;
 }
 
 static int
@@ -205,6 +227,7 @@ int main(int argc, char *argv[])
 
     err = init_env();
     if (err < 0) {
+        debug_error("init env error:%d", err);
         return err;
     }
 

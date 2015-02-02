@@ -66,7 +66,7 @@ os_sfscan_file_handle
     
     stream = os_v_fopen("r", "%s/%s", path, filename);
     if (NULL==stream) {
-        mv2_result(mv) = errno;
+        mv2_result(mv) = -errno;
 
         goto error;
     }
@@ -148,7 +148,7 @@ __os_sfscan_dir
     
     dir = opendir(path);
     if (NULL == dir) {
-        err = errno;
+        err = -errno;
         
         goto error;
     }
@@ -220,7 +220,7 @@ os_sfscan_dir
     int err = 0;                            \
                                                 \
     if (NULL==(stream)) {                       \
-        err = errno;                            \
+        err = -errno;                            \
     } else if (1!=fscanf(stream, vfmt, pv)) {   \
         err = -EFORMAT;                         \
     }                                           \
@@ -240,9 +240,9 @@ os_sfscan_dir
     } else if ((space)<=0) {                    \
         err = -EINVAL8;                         \
     } else if (NULL==(stream)) {                \
-        err = errno;                            \
+        err = -errno;                            \
     } else if (NULL==fgets(line, space, stream)) { \
-        err = errno;                            \
+        err = -errno;                            \
     } else {                                    \
         __string_strim_both(line, NULL);        \
     }                                           \
@@ -309,7 +309,7 @@ os_sfscan_dir
     int err = 0;                            \
                                                 \
     if (NULL==(stream)) {                       \
-        err = errno;                            \
+        err = -errno;                            \
     } else {                                    \
         err = fprintf(stream, vfmt, v);         \
     }                                           \
@@ -362,7 +362,7 @@ os_sfsize(char *filename)
     
     err = stat(filename, &st);
     if (err<0) {
-        return errno;
+        return -errno;
     } else {
         return st.st_size;
     }

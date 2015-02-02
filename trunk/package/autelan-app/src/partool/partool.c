@@ -283,14 +283,14 @@ part_read(char *partition)
     
     f = fopen(partition, "r");
     if (NULL==f) {
-        err = errno;
+        err = -errno;
 
         goto error;
     }
 
     err = fread(part_tmp, partool_size, 1, f);
     if (1!=err) {
-        err = errno;
+        err = -errno;
 
         goto error;
     }
@@ -312,14 +312,14 @@ part_write(char *partition)
     
     f = fopen(partition, "r+");
     if (NULL==f) {
-        err = errno;
+        err = -errno;
 
         goto error;
     }
     
     err = fwrite(part_tmp, partool_size, 1, f);
     if (1!=err) {
-        err = errno;
+        err = -errno;
 
         goto error;
     }

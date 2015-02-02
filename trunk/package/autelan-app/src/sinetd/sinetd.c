@@ -70,7 +70,7 @@ app_new(int pid)
         return NULL;
     }
     memset(app, 0, sizeof(*app));
-    INIT_LIST_HEAD(&app->node);
+    INIT_LIST_HEAD(&app->node.list);
     app->pid = pid;
     time(&app->create);
     
@@ -111,7 +111,7 @@ app_foreach(multi_value_t (*cb)(struct app *app))
     struct app *app, *n;
     multi_value_u mv;
     
-    list_for_each_entry_safe(app, n, &C.list, node) {
+    list_for_each_entry_safe(app, n, &C.head.list, node.list) {
         mv.value = (*cb)(app);
         if (mv2_is_break(mv)) {
             return mv2_result(mv);
@@ -215,9 +215,9 @@ child(void)
     
     fd = accept(C.fd, (struct sockaddr *)&addr, &size);
     if (fd<0) {
-        E("accept error:%d", errno);
+        E("accept error:%d", -errno);
         
-        return errno;
+        return -errno;
     }
 
     int pid = fork();
@@ -235,16 +235,16 @@ child(void)
         
         execl(C.script, C.script_name, NULL);
 
-        E("execl error:%d", errno);
-        err = errno;
+        E("execl error:%d", -errno);
+        err = -errno;
     }
     else if (pid>0) { // father
         err = app_create(pid);
     }
     else { // (pid<0), error
-        E("fork error:%d", errno);
+        E("fork error:%d", -errno);
         
-        err = errno;
+        err = -errno;
     }
     
     close(fd);
@@ -271,9 +271,9 @@ is_new(int *new)
                 // is breaked
                 return 0;
             } else {
-                E("select error:%d", errno);
+                E("select error:%d", -errno);
 		
-                return errno;
+                return -errno;
             }
         case 0: /* timeout, retry */
             return 0;
@@ -287,7 +287,6 @@ static void
 service(void)
 {
     int err;
-    int pid;
     
     while(1) {
         int new = 0;
@@ -314,16 +313,16 @@ run(void)
    
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (fd<0) {
-        E("socket error:%d", errno);
+        E("socket error:%d", -errno);
         
-        err = errno; goto error;
+        err = -errno; goto error;
     }
     C.fd = fd;
     
     int opt = 1;
     err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     if (err<0) {
-        err = errno; goto error;
+        err = -errno; goto error;
     }
     
     struct sockaddr_in addr = {
@@ -335,16 +334,16 @@ run(void)
     };
     err = bind(fd, (struct sockaddr *)&addr, sizeof(addr));
     if (err<0) {
-        E("bind error:%d", errno);
+        E("bind error:%d", -errno);
         
-        err = errno; goto error;
+        err = -errno; goto error;
     }
 
     err = listen(fd, MAX_CLIENTS);
     if (err<0) {
-        E("listen error:%d", errno);
+        E("listen error:%d", -errno);
         
-        err = errno; goto error;
+        err = -errno; goto error;
     }
 
     C.pid = getpid();
