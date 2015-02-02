@@ -428,7 +428,7 @@ static int
 client(void)
 {
     struct sockaddr_un addr;
-    int len = sizeof(addr);
+    socklen_t len = sizeof(addr);
     int fd = accept(stimerd.server.fd, (struct sockaddr *)&addr, &len);
     if (fd<0) {
         return errno;

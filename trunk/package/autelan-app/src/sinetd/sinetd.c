@@ -211,7 +211,7 @@ child(void)
     int err = 0;
     
     struct sockaddr_in addr;
-    int size = sizeof(addr);
+    socklen_t size = sizeof(addr);
     
     fd = accept(C.fd, (struct sockaddr *)&addr, &size);
     if (fd<0) {
