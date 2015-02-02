@@ -213,6 +213,8 @@ define Build/Compile
 	$(Package/autelan-appkey/compile)
 	$(Package/autelan-partool/compile)
 	$(Package/autelan-um/compile)
+	$(Package/autelan-stimerd/compile)
+	$(Package/autelan-stimerc/compile)
 endef
 ####################################################################
 $(eval $(call BuildPackage,autelan-btt))

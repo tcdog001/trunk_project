@@ -125,6 +125,7 @@ endef
 define Build/Compile
 	$(Package/libautelan-appkey/compile)
 	$(Package/libautelan-partool/compile)
+	$(Package/libautelan-timer/compile)
 endef
 ####################################################################
 $(eval $(call BuildPackage,libautelan-appkey))
