@@ -43,7 +43,7 @@ struct stimerc_table {
 };
 
 #define STIMER_ENTRY(_tag, _cb)   { \
-    .tab    = _tag,         \
+    .tag    = _tag,         \
     .cb     = _cb,          \
 }
 

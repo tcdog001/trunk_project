@@ -75,7 +75,7 @@ struct stimer {
 static struct stimer *
 __entry(tm_node_t *timer)
 {
-    return container_of(timer, struct stimer, timer);
+    return container_of(timer, struct stimer, node.timer);
 }
     
 static int 
@@ -87,20 +87,18 @@ hash(char *name)
 static int
 __insert(struct stimer *entry)
 {
-    int err;
-    
     if (NULL==entry) {
         return -EKEYNULL;
     }
     /*
     * have in list
     */
-    else if (is_in_list(&entry.node->list)) {
+    else if (is_in_list(&entry->node.list)) {
         return -EINLIST;
     }
     
-    list_add(&entry->node->list, &stimerd.head->list);
-    hlist_add_head(&entry->node->hash, &stimerd.head->hash[hash(entry->name)]);
+    list_add(&entry->node.list, &stimerd.head.list);
+    hlist_add_head(&entry->node.hash, &stimerd.head.hash[hash(entry->name)]);
     stimerd.head.count++;
     
     return 0;
@@ -109,22 +107,20 @@ __insert(struct stimer *entry)
 static int
 __remove(struct stimer *entry)
 {
-    int err;
-
     if (NULL==entry) {
         return -EKEYNULL;
     }
     /*
     * NOT in list
     */
-    else if (false==is_in_list(&entry->node->list)) {
+    else if (false==is_in_list(&entry->node.list)) {
         return -ENOINLIST;
     }
 
     os_tm_remove(&entry->node.timer);
     
-    list_del(&entry->node->list);
-    hlist_del_init(&entry->node->hash);
+    list_del(&entry->node.list);
+    hlist_del_init(&entry->node.hash);
     stimerd.head.count--;
     
     return 0;
@@ -145,7 +141,7 @@ __get(char *name)
         }
     }
     
-    return name;
+    return NULL;
 }
 
 static int
@@ -231,7 +227,7 @@ handle(struct stimerd_table map[], int count, char *tag, char *args)
 static int 
 stimer_cb(tm_node_t *timer)
 {
-    struct stimer *entry = container_of(timer, struct stimer, timer);
+    struct stimer *entry = __entry(timer);
 
     entry->triggers++;
     os_v_system("%s &", entry->command);
@@ -239,6 +235,8 @@ stimer_cb(tm_node_t *timer)
     if (entry->interval && entry->limit && entry->triggers < entry->limit) {
         os_tm_insert(&entry->node.timer, entry->interval, stimer_cb, false);
     }
+
+    return 0;
 }
 
 static int
@@ -260,7 +258,7 @@ handle_insert(char *args)
     
     int i_delay     = atoi(delay);
     int i_interval  = atoi(interval);
-    int i_limit     = atoi(limit));
+    int i_limit     = atoi(limit);
     
     if (false==is_good_stimer_args(i_delay, i_interval, i_limit)) {
         return -EINVAL;
@@ -393,7 +391,6 @@ client_handle(void)
 
     char *method = RX;
     char *args   = RX;
-    int i;
 
     __string_strim_both(method, NULL);
     __string_reduce(method, NULL);
