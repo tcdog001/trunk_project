@@ -152,7 +152,7 @@ define Package/autelan-stimerd
 endef
 
 define Package/autelan-stimerd/install
-	$(Package/autelan-stimerd/install/common)
+	$(Package/autelan-app/install/common)
 	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/stimerd/
 
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stimerd/stimerd $(1)/usr/bin
@@ -179,7 +179,7 @@ define Package/autelan-stimerc
 endef
 
 define Package/autelan-stimerc/install
-	$(Package/autelan-stimerc/install/common)
+	$(Package/autelan-app/install/common)
 	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/stimerc/
 
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stimerc/stimerc $(1)/usr/bin
