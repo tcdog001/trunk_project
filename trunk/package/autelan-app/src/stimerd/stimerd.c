@@ -620,5 +620,5 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
 /******************************************************************************/
+AKID_DEBUGER; /* must last os_constructor */
