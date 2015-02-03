@@ -10,6 +10,7 @@ ifdef LTEFI_V2
 endif
 
 all:clean
+	$(CC) $(AUTE_CFLAGS) -o at_ttyUSB0 at_ttyUSB0.c -lpthread
 	$(CC) $(AUTE_CFLAGS) -o at_ttyUSB1 at_ttyUSB1.c -lpthread
 	$(CC) $(AUTE_CFLAGS) -o at_ttyUSB3 at_ttyUSB3.c -lpthread
 clean:
