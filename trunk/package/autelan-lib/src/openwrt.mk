@@ -17,6 +17,7 @@ TARGET_CFLAGS += -Wall -fPIC \
 		-fexceptions -fno-omit-frame-pointer \
 		-I$(AUTELAN_LIBS) \
 		-D__OPENWRT__ \
+		-DOS_TYPE=openwrt \
 		-D__TAB_AS_SPACE=4
 		
 TARGET_LDFLAGS+= -shared

@@ -3,22 +3,6 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
 #include "stimer/stimer.h"
 
-#ifndef STIMER_TIMEOUT_SEC
-#define STIMER_TIMEOUT_SEC  3
-#endif
-
-#ifndef STIMER_TIMEOUT_USEC
-#define STIMER_TIMEOUT_USEC 0
-#endif
-
-#ifndef STIMER_MSEC
-#define STIMER_MSEC         5000
-#endif
-
-#ifndef ENV_STIMER_MSEC
-#define ENV_STIMER_MSEC     "__STIMER_MSEC__"
-#endif
-
 static char RX[1 + STIMER_RXSIZE];
 static char TX[1 + STIMER_TXSIZE];
 static int TXLEN;
@@ -32,7 +16,9 @@ static int TXLEN;
 
 static struct {
     struct {
-        unsigned int ms;
+        int ticks;  /* ms */
+        int timeout;/* ms */
+        
         int fd;
     } timer;
 
@@ -56,7 +42,8 @@ stimerd = {
     },
     
     .timer = {
-        .ms     = STIMER_MSEC,
+        .timeout= STIMER_TIMEOUT_TICKS,
+        .ticks  = STIMER_TICKS,
         .fd     = -1,
     },
 
@@ -75,8 +62,8 @@ struct stimer {
     char name[1+NAMESIZE];
     char command[1+CMDSIZE];
     
-    int delay;
-    int interval;
+    int delay;      /* ms */
+    int interval;   /* ms */
     int limit;
     
     int triggers;
@@ -90,27 +77,27 @@ struct stimer {
 };
 
 static inline int
-__msec(void)
+__ticks(void)
 {
-    return stimerd.timer.ms;
+    return stimerd.timer.ticks;
 }
 
 static inline int
 __sec(void)
 {
-    return __msec()/1000;
+    return stimer_sec(__ticks());
 }
 
 static inline int
 __usec(void)
 {
-    return (__msec() % 1000) * 1000 ;
+    return stimer_usec(__ticks());
 }
 
 static inline int
 __nsec(void)
 {
-    return __usec() * 1000;
+    return stimer_nsec(__ticks());
 }
 
 static struct stimer *
@@ -260,7 +247,7 @@ handle(struct stimer_table map[], int count, char *tag, char *args)
     
     for (i=0; i<count; i++) {
         if (0==os_strcmp(map[i].tag, tag)) {
-            return (*(stimerd_f *)map[i].cb)(args);
+            return (*map[i].u.dcb)(args);
         }
     }
 
@@ -291,7 +278,7 @@ stimer_cb(tm_node_t *timer)
     if (entry->interval && entry->limit && entry->triggers < entry->limit) {
         debug_trace("re-insert timer:%s", entry->name);
 
-        os_tm_insert(&entry->node.timer, entry->interval, stimer_cb, false);
+        os_tm_insert(&entry->node.timer, entry->interval/__ticks(), stimer_cb, false);
     }
 
     return 0;
@@ -315,6 +302,14 @@ handle_insert(char *args)
         
         return -EINVAL;
     }
+
+    debug_test("function:%s name:%s delay:%s interval:%s, limit:%s, command:%s", 
+        __func__, 
+        name, 
+        delay,
+        interval,
+        limit,
+        command);
     
     int i_delay     = atoi(delay);
     int i_interval  = atoi(interval);
@@ -358,7 +353,7 @@ handle_insert(char *args)
                 after,
                 circle);
     
-    return os_tm_insert(&entry->node.timer, after, stimer_cb, circle);
+    return os_tm_insert(&entry->node.timer, after/__ticks(), stimer_cb, circle);
 }
 
 static int
@@ -371,7 +366,9 @@ handle_remove(char *args)
         
         return -EINVAL;
     }
-
+    
+    debug_test("function:%s name:%s", __func__, name);
+        
     struct stimer *entry = __get(name);
     if (NULL==entry) {
         debug_trace("remove timer(%s) nofound", name);
@@ -386,32 +383,6 @@ handle_remove(char *args)
     return 0;
 }
 
-#if STIMER_SHOW_LOG
-static int
-handle_show_log_byname(char *name)
-{
-    return 0;
-}
-
-static int
-handle_show_log_all(void)
-{
-    return 0;
-}
-
-static int
-handle_show_log(char *args)
-{
-    char *name = args; args = NEXT(args);
-
-    if (NULL==name) {
-        return handle_show_log_all();
-    } else {
-        return handle_show_log_byname(name);
-    }
-}
-#endif
-
 static void
 show(struct stimer *entry)
 {
@@ -421,7 +392,7 @@ show(struct stimer *entry)
         entry->interval,
         entry->limit,
         entry->triggers,
-        os_tm_left(&entry->node.timer),
+        os_tm_left(&entry->node.timer) * __ticks(),
         entry->command);
 }
 
@@ -449,17 +420,16 @@ static int
 handle_show(char *args)
 {
     static struct stimer_table table[] = {
-#if STIMER_SHOW_LOG
-        STIMER_ENTRY("log",     handle_show_log),
-#endif
         STIMER_ENTRY("status",  handle_show_status),
     };
     
     char *obj = args; args = NEXT(args);
     
-    if (NULL==obj || NULL==args) {
+    if (NULL==obj) {
         return -EINVAL;
     }
+
+    debug_test("function:%s obj:%s, name:%s", __func__, obj, args?args:__nil);
     
     return handle(table, os_count_of(table), obj, args);
 }
@@ -481,6 +451,8 @@ client_handle(void)
 
     args = NEXT(args);
 
+    debug_test("function:%s method:%s, args:%s", __func__, method, args);
+    
     return handle(table, os_count_of(table), method, args);
 }
 
@@ -490,13 +462,13 @@ __client(int fd)
     int err;
     int count;
     
-    os_objzero(RX);
-    os_objzero(TX); TXLEN = 0;
+    os_memzero(RX, os_count_of(RX));
+    os_memzero(TX, os_count_of(TX)); TXLEN = 0;
 
     /*
     * todo: use select for timeout
     */
-    err = stimer_read(fd, RX, sizeof(RX));
+    err = stimer_read(fd, RX, sizeof(RX), stimerd.timer.timeout);
     if (err <0) {
         return err;
     }
@@ -505,12 +477,14 @@ __client(int fd)
     if (err<0) {
         return err;
     }
-    
-    err = stimer_write(fd, TX, TXLEN);
-    if (err<0) {
-        return err;
-    }
 
+    if (TXLEN) {
+        err = stimer_write(fd, TX, TXLEN);
+        if (err<0) {
+            return err;
+        }
+    }
+    
     return 0;
 }
 
@@ -608,29 +582,14 @@ server(void)
 }
 
 static int
-init_env_msec()
-{
-    char *env = getenv(ENV_STIMER_MSEC);
-    if (is_good_env(env)) {
-        stimerd.timer.ms = atoi(env);
-    } else {
-        stimerd.timer.ms = STIMER_MSEC;
-    }
-    os_tm_unit_set(__msec());
-
-    return 0;
-}
-
-static int
 init_env() 
 {
     int err;
-
-    err = init_env_msec();
-    if (err<0) {
-        return err;
-    }
     
+    stimerd.timer.ticks     = get_stimer_ticks_env();
+    stimerd.timer.timeout   = get_stimer_timeout_env();
+    os_tm_unit_set(__ticks());
+
     err = get_stimer_path_env(&stimerd.server.addr);
     if (err<0) {
         return err;

@@ -13,6 +13,10 @@
 #define __null          "null"
 #endif
 
+#ifndef __nil
+#define __nil           "nil"
+#endif
+
 #ifndef __space2
 #define __space2        __space __space
 #endif
@@ -64,7 +68,7 @@
 #endif
 
 #ifndef os_safestring
-#define os_safestring(s)            ((s)?(s):__null)
+#define os_safestring(s)            ((s)?(s):__nil)
 #endif
 
 #ifndef os_strlen
@@ -393,7 +397,7 @@ __string_next(char *string, char_is_something_f *IS)
         return NULL;
     }
     
-    while(*p && __char_is(*p, IS)) {
+    while(*p && false==__char_is(*p, IS)) {
         p++;
     }
     

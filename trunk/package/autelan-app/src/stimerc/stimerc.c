@@ -3,23 +3,30 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
 #include "stimer/stimer.h"
 
-#ifndef STIMER_TIMEOUT_SEC
-#define STIMER_TIMEOUT_SEC  5
-#endif
-
-#ifndef STIMER_TIMEOUT_USEC
-#define STIMER_TIMEOUT_USEC 0
-#endif
-
 static char RX[1 + STIMER_RXSIZE];
 
 static struct {
     char *self;
+
+    int ticks;
+    int timeout;
     
     struct sockaddr_un server;
 } stimerc = {
-    .server = { .sun_family = AF_UNIX },
+    .server     = { .sun_family = AF_UNIX },
+    .timeout    = STIMER_TIMEOUT_TICKS,
+    .ticks      = STIMER_TICKS,
 };
+
+static void
+dump_args(const char *func, int argc, char *argv[])
+{
+    int i;
+
+    for (i=0; i<argc; i++) {
+        debug_test("function:%s argv[%d]=%s", func, i, argv[i]);
+    }
+}
 
 static int
 usage(void)
@@ -35,10 +42,16 @@ static int
 handle(struct stimer_table map[], int count, int argc, char *argv[])
 {
     int i;
+
+    if (argc < 1) {
+        return usage();
+    }
     
     for (i=0; i<count; i++) {
         if (0==os_strcmp(map[i].tag, argv[0])) {
-            return (*(stimerc_f *)map[i].cb)(argc-1, argv+1);
+            debug_test("tag:%s, method:%s", map[i].tag, argv[0]);
+            
+            return (*map[i].u.ccb)(argc-1, argv+1);
         }
     }
 
@@ -46,16 +59,15 @@ handle(struct stimer_table map[], int count, int argc, char *argv[])
 }
 
 static int
-__client(char *buf)
+__client(bool rpc, char *buf)
 {
     int fd;
     int err;
-    int count;
     int len;
     
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd<0) {
-        debug_error("socket error:%d", err);
+        debug_error("socket error:%d", -errno);
         return -errno;
     }
     
@@ -67,11 +79,11 @@ __client(char *buf)
     }
 #endif
 
-    unlink(stimerc.server.sun_path);
+    // unlink(stimerc.server.sun_path);
     err = connect(fd, (struct sockaddr *)&stimerc.server, sizeof(stimerc.server));
     if (err < 0) {
-        debug_error("connect error:%d", err);
-        return err;
+        debug_error("connect error:%d", -errno);
+        return -errno;
     }
 
     len = strlen(buf);
@@ -80,28 +92,30 @@ __client(char *buf)
         return err;
     }
 
-    err = stimer_read(fd, RX, sizeof(RX));
-    if (err<0) {
-        return err;
+    if (rpc) {
+        err = stimer_read(fd, RX, sizeof(RX), stimerc.timeout);
+        if (err<0) {
+            return err;
+        }
+
+        os_println("%s", RX);
     }
-
-    os_println("%s", RX);
-
+    
     return 0;
 }
 
-#define client(fmt, args...)         ({ \
+#define client(rpc, fmt, args...)    ({ \
     char buf[1+OS_LINE_LEN] = {0};      \
     int err = 0;                        \
                                         \
     os_saprintf(buf, fmt, ##args);      \
-    err = __client(buf);                \
+    err = __client(rpc, buf);           \
                                         \
     err;                                \
 })
 
 static int
-insert(int argc, char *argv[])
+__insert(int argc, char *argv[])
 {
     char *name      = argv[0];
     char *delay     = argv[1];
@@ -109,6 +123,8 @@ insert(int argc, char *argv[])
     char *limit     = argv[3];
     char *command   = argv[4];
 
+    dump_args(__func__, argc, argv);
+    
     if (5!=argc) {
         return usage();
     }
@@ -121,7 +137,8 @@ insert(int argc, char *argv[])
         return usage();
     }
     
-    return client("insert %s %s %s %s %s",
+    return client(false,
+                "insert %s %s %s %s %s",
                 name,
                 delay,
                 interval,
@@ -130,60 +147,45 @@ insert(int argc, char *argv[])
 }
 
 static int
-remove(int argc, char *argv[])
+__remove(int argc, char *argv[])
 {
     char *name = argv[0];
 
+    dump_args(__func__, argc, argv);
+    
     if (1!=argc) {
         return usage();
     }
 
-    return client("remove %s", name);
+    return client(false, "remove %s", name);
 }
-
-#if STIMER_SHOW_LOG
-static int
-show_log(int argc, char *argv[])
-{
-    char *name = argv[0];
-
-    if (0!=argc || 1!=argc) {
-        return -EINVAL;
-    }
-    
-    if (name) {
-        return client("show log %s", name);
-    } else {
-        return __client("show log");
-    }
-}
-#endif
 
 static int
 show_status(int argc, char *argv[])
 {
     char *name = argv[0];
 
-    if (0!=argc || 1!=argc) {
+    dump_args(__func__, argc, argv);
+    
+    if (0!=argc && 1!=argc) {
         return usage();
     }
     
     if (name) {
-        return client("show status %s", name);
+        return client(true, "show status %s", name);
     } else {
-        return __client("show status");
+        return __client(true, "show status");
     }
 }
 
 static int
-show(int argc, char *argv[])
+__show(int argc, char *argv[])
 {
     static struct stimer_table table[] = {
-#if STIMER_SHOW_LOG
-        STIMER_ENTRY("log",    show_log),
-#endif
         STIMER_ENTRY("status", show_status),
     };
+
+    dump_args(__func__, argc, argv);
     
     int err = handle(table, os_count_of(table), argc, argv);
     if (err<0) {
@@ -200,11 +202,13 @@ static int
 command(int argc, char *argv[])
 {
     static struct stimer_table table[] = {
-        STIMER_ENTRY("insert",  insert),
-        STIMER_ENTRY("remove",  remove),
-        STIMER_ENTRY("show",    show),
+        STIMER_ENTRY("insert",  __insert),
+        STIMER_ENTRY("remove",  __remove),
+        STIMER_ENTRY("show",    __show),
     };
 
+    dump_args(__func__, argc, argv);
+    
     int err = handle(table, os_count_of(table), argc, argv);
     if (err<0) {
         debug_error("%s error:%d", argv[0], err);
@@ -216,6 +220,9 @@ command(int argc, char *argv[])
 static int
 init_env() 
 {
+    stimerc.ticks   = get_stimer_ticks_env();
+    stimerc.timeout = get_stimer_timeout_env();
+    
     return get_stimer_path_env(&stimerc.server);
 }
 
@@ -223,17 +230,19 @@ int main(int argc, char *argv[])
 {
     int err;
 
-    stimerc.self = argv[0]; argc--; argv++;
+    dump_args(__func__, argc, argv);
+    stimerc.self = argv[0];
     
-    os_objzero(RX);
+    os_memzero(RX, os_count_of(RX));
 
     err = init_env();
     if (err < 0) {
         debug_error("init env error:%d", err);
         return err;
     }
-
-	err = command(argc, argv);
+    debug_ok("init env ok.");
+    
+    err = command(argc-1, argv+1);
     if (err < 0) {
         return err;
     }

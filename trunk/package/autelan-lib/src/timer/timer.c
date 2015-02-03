@@ -308,7 +308,7 @@ os_tm_unit(void)
 int
 os_tm_insert(
     tm_node_t *timer, 
-    int after,
+    int after, // ticks, after now
     tm_callback *cb,
     bool cycle
 )

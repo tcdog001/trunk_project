@@ -92,6 +92,8 @@ app_insert(struct app *app)
     
     list_add_tail(&app->node.list, &C.head.list);
     C.head.count++;
+
+    return 0;
 }
 
 static int
@@ -103,6 +105,8 @@ app_remove(struct app *app)
     
     C.head.count--;
     list_del(&app->node.list);
+
+    return 0;
 }
 
 static int

@@ -3,6 +3,7 @@ OBJS=stimerd.o
 __TARGET=stimerd
 TARGET=$(__TARGET)
 LIBS_DEPEND=-lubacktrace -lautelan-appkey -lautelan-timer
+CFLAGS+=-DSTIMERD -DSTIMER_TICKS=1000 -DSTIMER_TIMEOUT_TICKS=3000
 
 .PHONY:all
 all:$(TARGET)
