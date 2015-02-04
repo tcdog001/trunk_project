@@ -1,4 +1,4 @@
-TARGET=at_ttyUSB1 at_ttyUSB3
+TARGET=at_ttyUSB1 at_ttyUSB3 at_ttyUSB0
 CC:=$(CROSS_COMPILE)gcc
 RM:=rm -rf 
 
