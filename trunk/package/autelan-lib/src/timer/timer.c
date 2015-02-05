@@ -324,6 +324,9 @@ os_tm_insert(
     else if (after <= 0) {
         return os_assert_value(-EINVAL2);
     }
+    else if (tm_is_pending(node)) {
+        return -EINLIST; /* NO assert */
+    } 
     
     node->create    = CLOCK.ticks;
     node->expires   = (uint32_t)after;

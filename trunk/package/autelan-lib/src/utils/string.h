@@ -67,6 +67,14 @@
 #define __unknow        "unknow"
 #endif
 
+#ifndef __true
+#define __true          "true"
+#endif
+
+#ifndef __false
+#define __false         "false"
+#endif
+
 #ifndef os_safestring
 #define os_safestring(s)            ((s)?(s):__nil)
 #endif

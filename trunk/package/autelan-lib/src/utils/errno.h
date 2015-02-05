@@ -14,6 +14,7 @@
 enum {
     __ERRNO_COMMON      = 0,
     __ERRNO_APPKEY      = 1,
+    __ERRNO_STIMER      = 2,
     
     ERRNO_END
 };

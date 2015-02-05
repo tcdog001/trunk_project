@@ -3,14 +3,19 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
 #include "stimer/stimer.h"
 
-static char RX[1 + STIMER_RXSIZE];
-static char TX[1 + STIMER_TXSIZE];
-static int TXLEN;
+static char TX[1 + STIMER_RESSIZE];
+static struct stimer_response *RES = (static struct stimer_response *)TX;
 
-#define txprintf(fmt, args...) do{ \
-    TXLEN += os_snprintf(TX + TXLEN, STIMER_TXSIZE - TXLEN, fmt, ##args); \
+#define res_sprintf(fmt, args...) do{ \
+    stimer_res_sprintf(RES, fmt, ##args); \
     debug_trace(fmt, ##args); \
 }while(0)
+
+static inline int
+res_error(int errno)
+{
+    return stimer_res_error(RES, errno);
+}
 
 #define HASHSIZE    256
 
@@ -56,11 +61,9 @@ stimerd = {
     },
 };
 
-#define NAMESIZE    32
-#define CMDSIZE     127
 struct stimer {
-    char name[1+NAMESIZE];
-    char command[1+CMDSIZE];
+    char name[1+STIMER_NAMESIZE];
+    char command[1+STIMER_CMDSIZE];
     
     int delay;      /* ms */
     int interval;   /* ms */
@@ -85,19 +88,19 @@ __ticks(void)
 static inline int
 __sec(void)
 {
-    return stimer_sec(__ticks());
+    return time_sec(__ticks());
 }
 
 static inline int
 __usec(void)
 {
-    return stimer_usec(__ticks());
+    return time_usec(__ticks());
 }
 
 static inline int
 __nsec(void)
 {
-    return stimer_nsec(__ticks());
+    return time_nsec(__ticks());
 }
 
 static struct stimer *
@@ -241,17 +244,17 @@ __destroy(struct stimer *entry)
 #define NEXT(_string)   __string_next_byifs(_string, ' ')
 
 static int
-handle(struct stimer_table map[], int count, char *tag, char *args)
+handle(struct cmd_table map[], int count, char *tag, char *args)
 {
     int i;
     
     for (i=0; i<count; i++) {
         if (0==os_strcmp(map[i].tag, tag)) {
-            return (*map[i].u.dcb)(args);
+            return (*map[i].u.line_cb)(args);
         }
     }
 
-    return -EINVAL;
+    return res_error(-ESTIMER_INVAL0);
 }
 
 static int 
@@ -292,7 +295,8 @@ handle_insert(char *args)
     char *interval  = args; args = NEXT(args);
     char *limit     = args; args = NEXT(args);
     char *command   = args;
-
+    int err;
+    
     if (NULL==name      ||
         NULL==delay     ||
         NULL==interval  ||
@@ -300,7 +304,7 @@ handle_insert(char *args)
         NULL==command) {
         debug_error("NULL name|delay|interval|limit|command");
         
-        return -EINVAL;
+        return res_error(-ESTIMER_INVAL1);
     }
 
     debug_test("function:%s name:%s delay:%s interval:%s, limit:%s, command:%s", 
@@ -319,12 +323,12 @@ handle_insert(char *args)
         debug_error("invalid args, delay:%d, interval:%d, limit:%d",
             i_delay, i_interval, i_limit);
         
-        return -EINVAL;
+        return res_error(-ESTIMER_INVAL2);
     }
 
     struct stimer *entry = __create(name, command, i_delay, i_interval, i_limit);
     if (NULL==entry) {
-        return -ENOMEM;
+        return res_error(-ESTIMER_NOMEM);
     }
 
     int after;
@@ -344,16 +348,23 @@ handle_insert(char *args)
                 ", interval:%d"
                 ", limit:%d"
                 ", after:%d"
-                ", circle:%d",
+                ", circle:%d"
+                ", pending:%s",
                 entry->name,
                 entry->command,
                 entry->delay,
                 entry->interval,
                 entry->limit,
                 after,
-                circle);
+                circle,
+                os_tm_is_pending(&entry->node.timer)?__true:__false);
     
-    return os_tm_insert(&entry->node.timer, after/__ticks(), stimer_cb, circle);
+    err = os_tm_insert(&entry->node.timer, after/__ticks(), stimer_cb, circle);
+    if (err<0) {
+        return res_error(-ESTIMER_EXIST);
+    }
+
+    return 0;
 }
 
 static int
@@ -364,16 +375,16 @@ handle_remove(char *args)
     if (NULL==name) {
         debug_trace("remove timer without name");
         
-        return -EINVAL;
+        return res_error(-ESTIMER_INVAL3);
     }
     
     debug_test("function:%s name:%s", __func__, name);
-        
+    
     struct stimer *entry = __get(name);
     if (NULL==entry) {
         debug_trace("remove timer(%s) nofound", name);
         
-        return -ENOEXIST;
+        return res_error(-ESTIMER_NOEXIST);
     }
 
     debug_trace("remove timer(%s)", name);
@@ -386,7 +397,7 @@ handle_remove(char *args)
 static void
 show(struct stimer *entry)
 {
-    txprintf("%s %d %d %d %d %d %s" __crlf,
+    res_sprintf("%s %d %d %d %d %d %s" __crlf,
         entry->name,
         entry->delay,
         entry->interval,
@@ -410,7 +421,7 @@ handle_show_status(char *args)
         return mv2_OK;
     }
     
-    txprintf("#name delay interval limit triggers left command" __crlf);
+    res_sprintf("#name delay interval limit triggers left command" __crlf);
     
     return __foreach(cb);
 }
@@ -419,8 +430,8 @@ handle_show_status(char *args)
 static int
 handle_show(char *args)
 {
-    static struct stimer_table table[] = {
-        STIMER_ENTRY("status",  handle_show_status),
+    static struct cmd_table table[] = {
+        CMD_ENTRY("status",  handle_show_status),
     };
     
     char *obj = args; args = NEXT(args);
@@ -435,16 +446,16 @@ handle_show(char *args)
 }
 
 static int
-client_handle(void)
+client_handle(char *buf)
 {
-    static struct stimer_table table[] = {
-        STIMER_ENTRY("insert",  handle_insert),
-        STIMER_ENTRY("remove",  handle_remove),
-        STIMER_ENTRY("show",    handle_show),
+    static struct cmd_table table[] = {
+        CMD_ENTRY("insert",  handle_insert),
+        CMD_ENTRY("remove",  handle_remove),
+        CMD_ENTRY("show",    handle_show),
     };
 
-    char *method = RX;
-    char *args   = RX;
+    char *method = buf;
+    char *args   = buf;
 
     __string_strim_both(method, NULL);
     __string_reduce(method, NULL);
@@ -461,28 +472,26 @@ __client(int fd)
 {
     int err;
     int count;
+    char buf[1+STIMER_REQSIZE] = {0};
     
-    os_memzero(RX, os_count_of(RX));
-    os_memzero(TX, os_count_of(TX)); TXLEN = 0;
+    os_memzero(TX, os_count_of(TX));
 
     /*
     * todo: use select for timeout
     */
-    err = stimer_read(fd, RX, sizeof(RX), stimerd.timer.timeout);
+    err = io_read(fd, buf, sizeof(buf), stimerd.timer.timeout);
     if (err <0) {
         return err;
     }
     
-    err = client_handle();
+    err = client_handle(buf);
     if (err<0) {
         return err;
     }
 
-    if (TXLEN) {
-        err = stimer_write(fd, TX, TXLEN);
-        if (err<0) {
-            return err;
-        }
+    err = io_write(fd, RES, stimer_res_size(RES));
+    if (err<0) {
+        return err;
     }
     
     return 0;

@@ -323,6 +323,31 @@ show_help:
     
     return -EFORMAT;
 }
+/******************************************************************************/
+struct cmd_table {
+    char *tag;
 
+    union {
+        void *cb;
+        int (*line_cb)(char *args);
+        int (*argv_cb)(int argc, char *argv[]);
+    } u;
+};
+
+#define CMD_ENTRY(_tag, _cb)   { \
+    .tag    = _tag,         \
+    .u      = {             \
+        .cb = _cb,          \
+    },                      \
+}
+
+#define cmd_dump_argv(_dump, _argc, _argv) do { \
+    int i;                                      \
+                                                \
+    for (i=0; i<_argc; i++) {                   \
+        _dump("function:%s argv[%d]=%s",        \
+            __func__, i, _argv[i]);             \
+    }                                           \
+}while(0)
 /******************************************************************************/
 #endif /* __CMD_H_F3687584F159827DAA20B322924194D1__ */

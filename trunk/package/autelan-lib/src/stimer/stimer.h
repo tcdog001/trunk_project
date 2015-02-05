@@ -21,12 +21,12 @@
 #define STIMER_PATH                 "/tmp/.stimer.unix"
 #endif
 
-#ifndef STIMER_TXSIZE
-#define STIMER_TXSIZE               (1024*1024 - 1)
+#ifndef STIMER_REQSIZE
+#define STIMER_REQSIZE              OS_LINE_LEN
 #endif
 
-#ifndef STIMER_RXSIZE
-#define STIMER_RXSIZE               (1024*1024 - 1)
+#ifndef STIMER_RESSIZE
+#define STIMER_RESSIZE              (1024*1024 - 1)
 #endif
 
 #ifndef STIMER_TICKS
@@ -37,55 +37,65 @@
 #define STIMER_TIMEOUT_TICKS        5000
 #endif
 
-typedef int stimerd_f(char *args);
-typedef int stimerc_f(int argc, char *argv[]);
+#ifndef STIMER_NAMESIZE
+#define STIMER_NAMESIZE             31
+#endif
 
-struct stimer_table {
-    char *tag;
+#ifndef STIMER_CMDSIZE
+#define STIMER_CMDSIZE              127
+#endif
 
-    union {
-        void *cb; /* stimerd_f or stimerc_f */
-        stimerd_f *dcb;
-        stimerc_f *ccb;
-    } u;
+#define ERRNO_STIMER                __ERRNO(__ERRNO_STIMER) /* 3000 */
+
+enum {
+    ESTIMER_INVAL0    = ERRNO_STIMER,
+    ESTIMER_INVAL1,
+    ESTIMER_INVAL2,
+    ESTIMER_INVAL3,
+    ESTIMER_INVAL4,
+    ESTIMER_INVAL5,
+    ESTIMER_INVAL6,
+    ESTIMER_INVAL7,
+    ESTIMER_INVAL8,
+    ESTIMER_INVAL9,
+    ESTIMER_NOMEM,      /* 10 */
+    ESTIMER_EXIST,      /* 11 */
+    ESTIMER_NOEXIST,    /* 12 */
 };
 
-#define STIMER_ENTRY(_tag, _cb)   { \
-    .tag    = _tag,         \
-    .u      = {             \
-        .cb = _cb,          \
-    },                      \
+struct stimer_request {
+    char buf[0];
+};
+
+struct stimer_response {
+    int errno;
+    int len;
+    char buf[0];
+};
+#define stimer_res_bufsize  (STIMER_RESSIZE - sizeof(struct stimer_response))
+
+static inline int
+stimer_res_size(struct stimer_response *res)
+{
+    return sizeof(struct stimer_response) + res->len;
 }
 
 static inline int
-stimer_sec(int ticks /* ms */)
+stimer_res_error(struct stimer_response *res, int errno)
 {
-    return ticks/1000;
+    if (res) {
+        res->errno = errno;
+    }
+
+    return errno;
 }
 
-static inline int
-stimer_msec(int ticks /* ms */)
-{
-    return ticks;
-}
-
-static inline int
-stimer_usec(int ticks /* ms */)
-{
-    return (ticks * 1000) % 1000;
-}
-
-static inline int
-stimer_nsec(int ticks /* ms */)
-{
-    return (ticks * 1000 * 1000) % 1000;
-}
-
-#if 0
-insert  name delay interval limit command
-remove  name
-show    status  [name]
-#endif
+#define stimer_res_sprintf(_res, _fmt, args...)     \
+        (_res)->len += os_snprintf((_res)->buf + (_res)->len, \
+                stimer_res_bufsize - (_res)->len,   \
+                _fmt,                               \
+                ##args)                             \
+        /* end of stimer_res_sprintf */
 
 static bool
 is_good_stimer_args(int delay, int interval, int limit)
@@ -100,13 +110,11 @@ is_good_stimer_args(int delay, int interval, int limit)
 static inline int
 get_stimer_path_env(struct sockaddr_un *addr) 
 {
-    char *env = getenv(ENV_STIMER_PATH);
-    if (false==is_good_env(env)) {
-        env = STIMER_PATH;
-    }
+    char *env = get_string_env(ENV_STIMER_PATH, STIMER_PATH);
     if (os_strlen(env) > sizeof(addr->sun_path) - 1) {
         return -ETOOBIG;
     }
+    
     os_strdcpy(addr->sun_path, env);
     debug_trace("unix path:%s", addr->sun_path);
     
@@ -116,103 +124,13 @@ get_stimer_path_env(struct sockaddr_un *addr)
 static inline int
 get_stimer_ticks_env(void) 
 {
-    char *env = getenv(ENV_STIMER_TICKS);
-    if (false==is_good_env(env)) {
-        debug_trace("no-found ticks env");
-        
-        return STIMER_TICKS;
-    }
-
-    int ticks = atoi(env);
-    if (ticks<=0) {
-        debug_error("bad ticks env:%d", ticks);
-        
-        return STIMER_TICKS;
-    }
-    
-    return ticks;
+    return get_int_env(ENV_STIMER_TICKS, STIMER_TICKS);
 }
 
 static inline int
 get_stimer_timeout_env(void) 
 {
-    char *env = getenv(ENV_STIMER_TIMEOUT_TICKS);
-    if (false==is_good_env(env)) {
-        debug_trace("no-found timeout env");
-        
-        return STIMER_TIMEOUT_TICKS;
-    }
-
-    int timeout = atoi(env);
-    if (timeout<=0) {
-        debug_error("bad timeout env:%d", timeout);
-        
-        return STIMER_TIMEOUT_TICKS;
-    }
-    
-    return timeout;
-}
-
-static int
-stimer_read(int fd, char *buf, int size, int timeout /* ms */)
-{
-    fd_set rset;
-    struct timeval tv = {
-        .tv_sec     = stimer_sec(timeout),
-        .tv_usec    = stimer_usec(timeout),
-    };
-    int err, count;
-    
-    FD_ZERO(&rset);
-    FD_SET(fd, &rset);
-
-    while(1) {
-        err = select(fd + 1, &rset, NULL, NULL, &tv);
-        switch(err) {
-            case -1:/* error */
-                if (EINTR==errno) {
-                    // is breaked
-                    debug_trace("read breaked");
-                    
-                    continue;
-                } else {
-                    debug_trace("read error:%d", -errno);
-                    
-                    return -errno;
-                }
-            case 0: /* timeout, retry */
-                debug_trace("read timeout");
-                
-                return -ETIMEOUT;
-            default: /* to accept */
-                count = read(fd, buf, size);
-
-                debug_trace("read:%s", buf);
-                
-                return count;
-        }
-    }
-}
-
-static int
-stimer_write(int fd, char *buf, int len)
-{
-    int count = 0;
-    int err;
-
-    while(count < len) {
-        err = write(fd, buf + count, len - count);
-        if (err<0) {
-            debug_error("write error:%d", -errno);
-            return -errno;
-        } else {
-            count += err;
-        }
-    }
-
-    debug_trace("write:%s", buf);
-    
-    return 0;
+    return get_int_env(ENV_STIMER_TIMEOUT_TICKS, STIMER_TIMEOUT_TICKS);
 }
 /******************************************************************************/
 #endif
