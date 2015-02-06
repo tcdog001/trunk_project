@@ -110,7 +110,7 @@ is_good_stimer_args(int delay, int interval, int limit)
 static inline int
 get_stimer_path_env(struct sockaddr_un *addr) 
 {
-    char *env = get_string_env(ENV_STIMER_PATH, STIMER_PATH);
+    const char *env = get_string_env(ENV_STIMER_PATH, STIMER_PATH);
     if (os_strlen(env) > sizeof(addr->sun_path) - 1) {
         return -ETOOBIG;
     }

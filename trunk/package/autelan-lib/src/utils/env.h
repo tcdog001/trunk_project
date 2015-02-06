@@ -7,7 +7,7 @@ is_good_env(char *env)
     return env && env[0];
 }
 
-static inline char *
+static inline const char *
 get_string_env(char *envname, const char *deft) 
 {
     if (NULL==envname) {
