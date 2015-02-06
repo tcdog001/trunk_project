@@ -92,7 +92,7 @@ __client(char *buf)
     }
 
     if (0==RES->err) {
-        os_println(RES->buf);
+        os_println("%s", RES->buf);
     }
 
     return RES->err;
