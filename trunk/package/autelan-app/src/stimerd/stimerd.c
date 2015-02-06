@@ -10,7 +10,7 @@ static struct stimer_response *RES = (struct stimer_response *)TX;
     int len = stimer_res_sprintf(RES, fmt, ##args); \
     debug_trace(fmt, ##args); \
     len; \
-)}
+})
 
 static inline int
 res_error(int err)
