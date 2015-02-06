@@ -21,6 +21,22 @@ enum {
 
 #define ERRNO_COMMON        __ERRNO(__ERRNO_COMMON) /* 1000 */
 
+static inline int
+shell_error(int err)
+{
+    if (err<0) {
+        err = -err;
+    }
+
+    if (err < __ERRNO_BASE) {
+        return err;
+    } else {
+        err -= __ERRNO_BASE;
+
+        return (err % __ERRNO_STEP);
+    }
+}
+
 enum {
     EINVAL0 = ERRNO_COMMON,
     EINVAL1,

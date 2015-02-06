@@ -18,6 +18,8 @@ res_error(int err)
     return stimer_res_error(RES, err);
 }
 
+#define res_ok  res_error(0)
+
 #define HASHSIZE    256
 
 static struct {
@@ -247,11 +249,13 @@ __destroy(struct stimer *entry)
 static int
 handle(struct cmd_table map[], int count, char *tag, char *args)
 {
-    int i;
+    int i, err;
     
     for (i=0; i<count; i++) {
         if (0==os_strcmp(map[i].tag, tag)) {
-            return (*map[i].u.line_cb)(args);
+            err = (*map[i].u.line_cb)(args);
+
+            return res_error(err);
         }
     }
 
@@ -365,7 +369,7 @@ handle_insert(char *args)
         return res_error(-ESTIMER_EXIST);
     }
 
-    return 0;
+    return res_ok;
 }
 
 static int
@@ -392,7 +396,7 @@ handle_remove(char *args)
     
     __destroy(entry);
     
-    return 0;
+    return res_ok;
 }
 
 static void
@@ -412,13 +416,17 @@ static int
 handle_show_status(char *args)
 {
     char *name = args; args = NEXT(args);
-    int count = 0;
+    bool nofound = true;
     
     multi_value_t cb(struct stimer *entry)
     {
-        if (NULL==name || 0==os_stracmp(entry->name, name)) {
+        if (NULL==name) {
             show(entry);
-            count++;
+        }
+        else if (0==os_stracmp(entry->name, name)) {
+            show(entry);
+
+            nofound = false;
         }
 
         return mv2_OK;
@@ -426,9 +434,19 @@ handle_show_status(char *args)
     
     res_sprintf("#name delay interval limit triggers left command" __crlf);
     __foreach(cb);
-    if (name && 0==count) {
+    if (name && nofound) {
+        /*
+        * drop head line
+        */
+        RES->buf[0] = 0;
+        RES->len = 0;
+
+        debug_trace("remove timer(%s) nofound", name);
+        
         return res_error(-ESTIMER_NOEXIST);
     }
+
+    return res_ok;
 }
 
 
@@ -442,11 +460,9 @@ handle_show(char *args)
     char *obj = args; args = NEXT(args);
     
     if (NULL==obj) {
-        return -EINVAL;
+        return res_error(-ESTIMER_INVAL4);
     }
 
-    debug_test("function:%s obj:%s, name:%s", __func__, obj, args?args:__nil);
-    
     return handle(table, os_count_of(table), obj, args);
 }
 
@@ -467,9 +483,16 @@ client_handle(char *buf)
 
     args = NEXT(args);
 
-    debug_test("function:%s method:%s, args:%s", __func__, method, args);
+    int err = handle(table, os_count_of(table), method, args);
     
-    return handle(table, os_count_of(table), method, args);
+    debug_trace("method:%s, args:%s, buf:%s, error:%d, len:%d", 
+        method, 
+        args,
+        RES->buf,
+        RES->err,
+        RES->len);
+    
+    return err;
 }
 
 static int
@@ -490,7 +513,7 @@ __client(int fd)
     
     err = client_handle(buf);
     if (err<0) {
-        return err;
+        /* just log, NOT return */
     }
 
     err = io_write(fd, (char *)RES, stimer_res_size(RES));

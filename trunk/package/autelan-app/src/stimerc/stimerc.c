@@ -94,8 +94,9 @@ __client(char *buf)
     if (0==RES->err) {
         os_println("%s", RES->buf);
     }
-
-    return RES->err;
+    debug_trace("RES buf:%s, error:%d, len:%d", RES->buf, RES->err, RES->len);
+    
+    return shell_error(RES->err);
 }
 
 #define client(fmt, args...)        ({ \
@@ -250,10 +251,10 @@ int main(int argc, char *argv[])
     
     err = command(argc-1, argv+1);
     if (err < 0) {
-        return err;
+        /* just log, NOT return */
     }
 
-    return 0;
+    return shell_error(err);
 }
 /******************************************************************************/
 AKID_DEBUGER; /* must last os_constructor */

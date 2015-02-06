@@ -37,7 +37,9 @@ io_read(int fd, char *buf, int size, int timeout /* ms */)
             default: /* to accept */
                 count = read(fd, buf, size);
 
-                debug_trace("read:%s", buf);
+                if (count >=0 && __is_debug_init_trace) {
+                    os_dump_buffer(buf, count, NULL);
+                }
                 
                 return count;
         }
@@ -59,8 +61,10 @@ io_write(int fd, char *buf, int len)
             count += err;
         }
     }
-
-    debug_trace("write:%s", buf);
+    
+    if (__is_debug_init_trace) {
+        os_dump_buffer(buf, len, NULL);
+    }
     
     return 0;
 }
