@@ -4,7 +4,7 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 #include "stimer/stimer.h"
 
 static char TX[1 + STIMER_RESSIZE];
-static struct stimer_response *RES = (static struct stimer_response *)TX;
+static struct stimer_response *RES = (struct stimer_response *)TX;
 
 #define res_sprintf(fmt, args...) do{ \
     stimer_res_sprintf(RES, fmt, ##args); \
