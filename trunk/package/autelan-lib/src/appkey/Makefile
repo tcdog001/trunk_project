@@ -1,7 +1,5 @@
-ifeq (openwrt,$(OS_TYPE))
-  include openwrt.mk
-else ifeq (linux,$(OS_TYPE))
+ifeq (linux,$(OS_TYPE))
   include linux.mk
 else
-  include linux.mk
+  include openwrt.mk
 endif

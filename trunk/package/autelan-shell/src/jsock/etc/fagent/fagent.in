@@ -90,6 +90,7 @@ fagent_cb() {
 	local dir="$3"
 	local file="$4"
 
+	local config="$(get_fagent_conf ${action})"
 	local _ mask buildin args
 	#
 	# must bash

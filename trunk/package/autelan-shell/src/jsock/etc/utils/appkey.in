@@ -58,7 +58,7 @@ get_uci_value() {
 #   ucikey==section.option
 #
 readonly -A appkeymap=(
-	["debug"]="debug.debug"
+	[debug]=debug.debug
 )
 
 #

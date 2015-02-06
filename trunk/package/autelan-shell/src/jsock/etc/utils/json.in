@@ -37,7 +37,7 @@ __json_create_bykvs() {
 	if [[ -z "${key}" ]]; then
 		echo ""
 	else
-		local first=",\"${key}\":\"${value}\""
+		local first=$(printf ',"%s":"%s"' "${key}" "${value}")
 		local tail=$(__json_create_bykvs "$@")
 
 		echo "${first}${tail}"
@@ -53,7 +53,7 @@ json_create_bykvs() {
 
 	local first
 	if [[ -n "${key}" ]]; then
-		first="\"${key}\":\"${value}\""
+		first=$(printf '"%s":"%s"' "${key}" "${value}")
 	fi
 
 	local tail=$(__json_create_bykvs "$@")
@@ -69,7 +69,7 @@ __json_create_bykv() {
 	local key="$1"; shift
 	local value="$*"
 
-	echo "{\"${key}\":\"${value}\"}"
+	printf '{"%s":"%s"}' "${key}" "${value}"
 }
 
 #
@@ -80,7 +80,7 @@ __json_create_byko() {
 	local key="$1"; shift
 	local obj="$*"
 
-	echo "{\"${key}\":${obj}}"
+	printf '{"%s":%s}' "${key}" "${obj}"
 }
 
 #

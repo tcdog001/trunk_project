@@ -172,7 +172,7 @@ getmultifilevalue() {
 	local key="$2"
 
 	local _ value
-	read _ value <<< $(grep "${key}" ${file})
+	read _ value <<< $(grep "${key}" ${file} 2>/dev/null)
 	echo ${value}
 }
 
