@@ -168,7 +168,6 @@ define Package/autelan-stimerd/compile
 			$(TARGET_CPPFLAGS) \
 			-D__THIS_NAME=\\\"stimerd\\\" \
 			-D__AKID_DEBUG=__stimerd_debug \
-			-DSTIMERD \
 			-DSTIMER_TICKS=1000 \
 			-DSTIMER_TIMEOUT_TICKS=5000 \
 			" \
@@ -198,9 +197,35 @@ define Package/autelan-stimerc/compile
 			$(TARGET_CPPFLAGS) \
 			-D__THIS_NAME=\\\"stimerc\\\" \
 			-D__AKID_DEBUG=__stimerc_debug \
-			-DSTIMERC \
 			-DSTIMER_TICKS=1000 \
 			-DSTIMER_TIMEOUT_TICKS=10000 \
+			" \
+		LDFLAGS="$(TARGET_LDFLAGS)"
+endef
+####################################################################
+define Package/autelan-rsha
+  SECTION:=apps
+  CATEGORY:=autelan-app
+  TITLE:=Autelan Basic App
+  DEPENDS:=+libubacktrace +libautelan-appkey +libautelan-timer +libautelan-rsh
+endef
+
+define Package/autelan-rsha/install
+	$(Package/autelan-app/install/common)
+	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/rsha/
+
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rsha/rsha $(1)/usr/bin
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rsha/rsha.key $(1)/$(APPKEY_PATH)/
+endef
+
+define Package/autelan-rsha/compile
+	$(MAKE) -C $(PKG_BUILD_DIR)/rsha \
+		CC="$(TARGET_CC)" \
+		CFLAGS=" \
+			$(TARGET_CFLAGS) \
+			$(TARGET_CPPFLAGS) \
+			-D__THIS_NAME=\\\"rsha\\\" \
+			-D__AKID_DEBUG=__rsha_debug \
 			" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
 endef

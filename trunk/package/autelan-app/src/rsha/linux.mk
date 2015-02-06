@@ -16,12 +16,12 @@ include $(DIR_ROOT)/mk/define.mk
 #
 #changed me, append obj
 #
-OBJS=$(DIR_SELF)/stimerd.o
-TARGET_NAME=stimerd
+OBJS=$(DIR_SELF)/rsha.o
+TARGET_NAME=rsha
 TARGET=$(TARGET_NAME)
 TARGET_TYPE=exe
 LIB_DEPEND=c appkey timer
-CFLAGS+=-DSTIMER_TICKS=1000 -DSTIMER_TIMEOUT_TICKS=5000
+CFLAGS+=
 
 #
 #don't change it

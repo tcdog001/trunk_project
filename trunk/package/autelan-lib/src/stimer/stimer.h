@@ -1,6 +1,6 @@
 #ifndef __STIMER_H_03B9C4BFCDC8EF03E5E39A08D5201373__
 #define __STIMER_H_03B9C4BFCDC8EF03E5E39A08D5201373__
-#if defined(STIMERD) || defined(STIMERC)
+#ifdef __STIMER__
 /******************************************************************************/
 #include "utils.h"
 #include "timer/timer.h"
@@ -113,15 +113,11 @@ is_good_stimer_args(int delay, int interval, int limit)
 static inline int
 get_stimer_path_env(struct sockaddr_un *addr) 
 {
-    const char *env = get_string_env(ENV_STIMER_PATH, STIMER_PATH);
-    if (os_strlen(env) > sizeof(addr->sun_path) - 1) {
-        return -ETOOBIG;
-    }
-    
-    os_strdcpy(addr->sun_path, env);
-    debug_trace("unix path:%s", addr->sun_path);
-    
-    return 0;
+    return copy_string_env(
+                ENV_STIMER_PATH, 
+                STIMER_PATH, 
+                addr->sun_path, 
+                sizeof(addr->sun_path));
 }
 
 static inline int
@@ -136,5 +132,5 @@ get_stimer_timeout_env(void)
     return get_int_env(ENV_STIMER_TIMEOUT_TICKS, STIMER_TIMEOUT_TICKS);
 }
 /******************************************************************************/
-#endif
+#endif /* __STIMER__ */
 #endif /* __STIMER_H_03B9C4BFCDC8EF03E5E39A08D5201373__ */
