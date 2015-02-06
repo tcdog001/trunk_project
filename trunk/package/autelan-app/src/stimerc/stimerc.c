@@ -91,11 +91,11 @@ __client(char *buf)
         return err;
     }
 
-    if (0==RES->errno) {
+    if (0==RES->err) {
         os_println(RES->buf);
     }
 
-    return RES->errno;
+    return RES->err;
 }
 
 #define client(fmt, args...)        ({ \
