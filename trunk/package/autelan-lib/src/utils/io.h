@@ -3,7 +3,7 @@
 /******************************************************************************/
 #include "utils/time.h"
 /******************************************************************************/
-static int
+static inline int
 io_read(int fd, char *buf, int size, int timeout /* ms */)
 {
     fd_set rset;
@@ -44,7 +44,7 @@ io_read(int fd, char *buf, int size, int timeout /* ms */)
     }
 }
 
-static int
+static inline int
 io_write(int fd, char *buf, int len)
 {
     int count = 0;
