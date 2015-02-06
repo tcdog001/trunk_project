@@ -91,5 +91,6 @@
 #include "utils/env.h"
 #include "utils/time.h"
 #include "utils/io.h"
+#include "utils/cmd.h"
 /******************************************************************************/
 #endif /* __UTILS_H_F5F47009AF9E5B811C77BFEA13C326CB__ */

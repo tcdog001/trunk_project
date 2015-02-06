@@ -68,7 +68,7 @@ struct stimer_request {
 };
 
 struct stimer_response {
-    int errno;
+    int err;
     int len;
     char buf[0];
 };
@@ -81,13 +81,13 @@ stimer_res_size(struct stimer_response *res)
 }
 
 static inline int
-stimer_res_error(struct stimer_response *res, int errno)
+stimer_res_error(struct stimer_response *res, int err)
 {
     if (res) {
-        res->errno = errno;
+        res->err = err;
     }
 
-    return errno;
+    return err;
 }
 
 #define stimer_res_sprintf(_res, _fmt, args...)     \
