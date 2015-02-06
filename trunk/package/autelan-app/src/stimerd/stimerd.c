@@ -12,9 +12,9 @@ static struct stimer_response *RES = (struct stimer_response *)TX;
 }while(0)
 
 static inline int
-res_error(int errno)
+res_error(int err)
 {
-    return stimer_res_error(RES, errno);
+    return stimer_res_error(RES, err);
 }
 
 #define HASHSIZE    256
@@ -471,7 +471,6 @@ static int
 __client(int fd)
 {
     int err;
-    int count;
     char buf[1+STIMER_REQSIZE] = {0};
     
     os_memzero(TX, os_count_of(TX));
@@ -489,7 +488,7 @@ __client(int fd)
         return err;
     }
 
-    err = io_write(fd, RES, stimer_res_size(RES));
+    err = io_write(fd, (char *)RES, stimer_res_size(RES));
     if (err<0) {
         return err;
     }
