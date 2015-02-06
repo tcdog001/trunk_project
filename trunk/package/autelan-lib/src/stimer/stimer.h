@@ -90,12 +90,15 @@ stimer_res_error(struct stimer_response *res, int err)
     return err;
 }
 
-#define stimer_res_sprintf(_res, _fmt, args...)     \
-        (_res)->len += os_snprintf((_res)->buf + (_res)->len, \
-                stimer_res_bufsize - (_res)->len,   \
-                _fmt,                               \
-                ##args)                             \
-        /* end of stimer_res_sprintf */
+#define stimer_res_sprintf(_res, _fmt, args...)     ({  \
+    int len = os_snprintf((_res)->buf + (_res)->len,    \
+            stimer_res_bufsize - (_res)->len,           \
+            _fmt,                                       \
+            ##args);                                    \
+    (_res)->len += len;                                 \
+                                                        \
+    len;                                                \
+})
 
 static bool
 is_good_stimer_args(int delay, int interval, int limit)

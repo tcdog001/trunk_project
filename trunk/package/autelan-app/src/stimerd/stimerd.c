@@ -6,10 +6,11 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 static char TX[1 + STIMER_RESSIZE];
 static struct stimer_response *RES = (struct stimer_response *)TX;
 
-#define res_sprintf(fmt, args...) do{ \
-    stimer_res_sprintf(RES, fmt, ##args); \
+#define res_sprintf(fmt, args...) ({ \
+    int len = stimer_res_sprintf(RES, fmt, ##args); \
     debug_trace(fmt, ##args); \
-}while(0)
+    len; \
+)}
 
 static inline int
 res_error(int err)
@@ -411,19 +412,23 @@ static int
 handle_show_status(char *args)
 {
     char *name = args; args = NEXT(args);
+    int count = 0;
     
     multi_value_t cb(struct stimer *entry)
     {
         if (NULL==name || 0==os_stracmp(entry->name, name)) {
             show(entry);
+            count++;
         }
 
         return mv2_OK;
     }
     
     res_sprintf("#name delay interval limit triggers left command" __crlf);
-    
-    return __foreach(cb);
+    __foreach(cb);
+    if (name && 0==count) {
+        return res_error(-ESTIMER_NOEXIST);
+    }
 }
 
 
