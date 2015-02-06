@@ -168,6 +168,9 @@ define Package/autelan-stimerd/compile
 			$(TARGET_CPPFLAGS) \
 			-D__THIS_NAME=\\\"stimerd\\\" \
 			-D__AKID_DEBUG=__stimerd_debug \
+			-DSTIMERD \
+			-DSTIMER_TICKS=1000 \
+			-DSTIMER_TIMEOUT_TICKS=5000 \
 			" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
@@ -195,6 +198,9 @@ define Package/autelan-stimerc/compile
 			$(TARGET_CPPFLAGS) \
 			-D__THIS_NAME=\\\"stimerc\\\" \
 			-D__AKID_DEBUG=__stimerc_debug \
+			-DSTIMERC \
+			-DSTIMER_TICKS=1000 \
+			-DSTIMER_TIMEOUT_TICKS=10000 \
 			" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
