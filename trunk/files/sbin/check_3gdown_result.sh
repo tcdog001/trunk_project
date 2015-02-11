@@ -95,21 +95,23 @@ check_lte_modules() {
 check_prefmodel() {
         local model_3g=$(cat /tmp/3g_model)
         local i=0
-        while [ $i -lt 3 ]
-        do
-                local current_prefmodel=$(at_ctrl at^prefmode? |awk -F ':' '/PREFMODE/{print $2}' |sed -n '$p' 2>/dev/null)
-                if [[ -z "${current_prefmodel}" ]];then
-                        sleep 1
-                        i=$((i+1))
-                else
-                        break
-                fi
-        done
 
         if [[ "${model_3g}" == "MC271X" ]];then
+                while [ $i -lt 3 ]
+                do
+                        local current_prefmodel=$(at_ctrl at^prefmode? |awk -F ':' '/PREFMODE/{print $2}' |sed -n '$p' 2>/dev/null)
+                        if [[ -z "${current_prefmodel}" ]];then
+                                sleep 1
+                                i=$((i+1))
+                        else
+                                break
+                        fi
+                done
                 if [[ "${current_prefmodel}" != "4" ]];then
                         at_ctrl at^prefmode=4 >/dev/null 2>&1
                 fi
+        else
+                return 1
         fi
 }
 
