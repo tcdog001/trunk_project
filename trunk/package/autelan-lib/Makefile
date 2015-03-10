@@ -56,36 +56,6 @@ define Package/libautelan-appkey/compile
 	$(CP) $(PKG_BUILD_DIR)/appkey/libautelan-appkey.so $(STAGING_DIR)/lib
 endef
 ####################################################################
-define Package/libautelan-partool
-  SECTION:=libs
-  CATEGORY:=autelan-lib
-  TITLE:=Autelan Basic library
-  DEPENDS:=+libubox +libautelan-appkey
-endef
-
-define Package/libautelan-partool/install
-	$(Package/autelan-lib/install/common)
-	
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/partool/libautelan-partool.so $(1)/lib/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/partool/libpartool.key $(1)/$(APPKEY_PATH)/
-endef
-
-define Package/libautelan-partool/compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/partool \
-		CC="$(TARGET_CC)" \
-		CFLAGS=" \
-			$(TARGET_CFLAGS) \
-			$(TARGET_CPPFLAGS) \
-			-D__THIS_NAME=\\\"libpartool\\\" \
-			-D__AKID_DEBUG=__libpartool_debug \
-			-DNAME_PRODUCT=\\\"mtd7\\\" \
-			-DNAME_OSENV=\\\"mtd2\\\" \
-			-DPART_XOR=0 \
-			" \
-		LDFLAGS="$(TARGET_LDFLAGS)"
-	$(CP) $(PKG_BUILD_DIR)/partool/libautelan-partool.so $(STAGING_DIR)/lib
-endef
-####################################################################
 define Package/libautelan-timer
   SECTION:=libs
   CATEGORY:=autelan-lib
@@ -113,33 +83,6 @@ define Package/libautelan-timer/compile
 	$(CP) $(PKG_BUILD_DIR)/timer/libautelan-timer.so $(STAGING_DIR)/lib
 endef
 ####################################################################
-define Package/libautelan-rsh
-  SECTION:=libs
-  CATEGORY:=autelan-lib
-  TITLE:=Autelan Basic library
-  DEPENDS:=+libubox +libautelan-appkey
-endef
-
-define Package/libautelan-rsh/install
-	$(Package/autelan-lib/install/common)
-
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rsh/libautelan-rsh.so $(1)/lib/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rsh/librsh.key $(1)/$(APPKEY_PATH)/
-endef
-
-define Package/libautelan-rsh/compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/rsh \
-		CC="$(TARGET_CC)" \
-		CFLAGS=" \
-			$(TARGET_CFLAGS) \
-			$(TARGET_CPPFLAGS) \
-			-D__THIS_NAME=\\\"librsh\\\" \
-			-D__AKID_DEBUG=__librsh_debug \
-			" \
-		LDFLAGS="$(TARGET_LDFLAGS)"
-	$(CP) $(PKG_BUILD_DIR)/rsh/libautelan-rsh.so $(STAGING_DIR)/lib
-endef
-####################################################################
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(CP) ./src/* $(PKG_BUILD_DIR)
@@ -152,12 +95,8 @@ endef
 
 define Build/Compile
 	$(Package/libautelan-appkey/compile)
-	$(Package/libautelan-partool/compile)
 	$(Package/libautelan-timer/compile)
-	$(Package/libautelan-rsh/compile)
 endef
 ####################################################################
 $(eval $(call BuildPackage,libautelan-appkey))
-$(eval $(call BuildPackage,libautelan-partool))
 $(eval $(call BuildPackage,libautelan-timer))
-$(eval $(call BuildPackage,libautelan-rsh))
