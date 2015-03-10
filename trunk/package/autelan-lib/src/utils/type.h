@@ -4,10 +4,12 @@
 #define BOOL            int
 #define TRUE            1
 #define FALSE           0
+#define __BOOL(x)       ((BOOL)!!(x))
 
 #define bool            BOOL
 #define true            TRUE
 #define false           FALSE
+#define __bool(x)       __BOOL(x)
 
 #define BYTE            unsigned char
 #define byte            BYTE

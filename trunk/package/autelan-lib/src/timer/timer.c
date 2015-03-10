@@ -7,7 +7,9 @@
 
 #ifndef TM_BIT
 #define TM_BIT          8
-#elif 2!=TM_BIT || 4!=TM_BIT || 8!=TM_BIT || 16!=TM_BIT
+#endif
+
+#if 2!=TM_BIT || 4!=TM_BIT || 8!=TM_BIT || 16!=TM_BIT
 #error "TM_BIT must be 2/4/8/16"
 #endif
 
@@ -142,7 +144,8 @@ tm_insert(struct tm_node *node)
     ring->slot[slot].count++;
     ring->count++;
     CLOCK.count++;
-
+    CLOCK.inserted++;
+    
     if (CLOCK.ticks) {
         //debug_test("timer(expires:%u) insert to ring(%d) slot(%d)", node->expires, node->ring_idx, node->ring_slot);
     }
@@ -161,6 +164,7 @@ tm_remove(struct tm_node *node)
     ring->slot[node->ring_slot].count--;
     ring->count--;
     CLOCK.count--;
+    CLOCK.removed++;
     node->flags &= ~TM_PENDING;
 }
 
@@ -335,8 +339,6 @@ os_tm_insert(
 
     tm_insert(node);
     
-    CLOCK.inserted++;
-    
     return 0;
 }
 
@@ -351,7 +353,6 @@ os_tm_remove(tm_node_t *timer)
     else if (tm_is_pending(node)) {
         tm_remove(node);
         
-        CLOCK.removed++;
         os_objzero(node);
 
         return 0;

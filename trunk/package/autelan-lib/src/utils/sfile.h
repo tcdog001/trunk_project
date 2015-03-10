@@ -169,7 +169,7 @@ __os_sfscan_dir
         if (stat(filename, &st) >= 0 && S_ISDIR(st.st_mode)) {
             if (recur) {
                 err = __os_sfscan_dir(path, recur, file_filter, file_handle, line_handle, control);
-                if (err<0) {
+                if (err) {
                     goto error;
                 }
             } else {
@@ -361,7 +361,7 @@ os_sfsize(char *filename)
     int err;
     
     err = stat(filename, &st);
-    if (err<0) {
+    if (err) {
         return -errno;
     } else {
         return st.st_size;

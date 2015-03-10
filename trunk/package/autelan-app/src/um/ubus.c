@@ -6,8 +6,31 @@ struct blob_buf b;
 static inline void
 notify(char *event)
 {
-    ubus_notify(umc.ctx, &umc.obj.object, event, b.head, -1);
+    ubus_notify(umc.ctx, &umc.ubus.object, event, b.head, -1);
 }
+
+#define um_user_add_objs(_user, _OBJ, _obj) do{ \
+    um_user_add_u32(UM_USER_##_OBJ##_UPTIME,        _user->_obj.uptime);        \
+    um_user_add_u32(UM_USER_##_OBJ##_ONLINE,        _user->_obj.online);        \
+    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWTOTAL,   _user->_obj.up.flow.total); \
+    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWCACHE,   _user->_obj.up.flow.cache); \
+    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWMAX,     _user->_obj.up.flow.max);   \
+    um_user_add_u32(UM_USER_##_OBJ##_UPRATENOW,     _user->_obj.up.rate.now);   \
+    um_user_add_u32(UM_USER_##_OBJ##_UPRATEMAX,     _user->_obj.up.rate.max);   \
+    um_user_add_u32(UM_USER_##_OBJ##_UPRATEAVG,     _user->_obj.up.rate.avg);   \
+    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWTOTAL, _user->_obj.down.flow.total); \
+    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWCACHE, _user->_obj.down.flow.cache); \
+    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWMAX,   _user->_obj.down.flow.max); \
+    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATENOW,   _user->_obj.down.rate.now); \
+    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATEMAX,   _user->_obj.down.rate.max); \
+    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATEAVG,   _user->_obj.down.rate.avg); \
+    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWTOTAL,  _user->_obj.all.flow.total);\
+    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWCACHE,  _user->_obj.all.flow.cache);\
+    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWMAX,    _user->_obj.all.flow.max);  \
+    um_user_add_u32(UM_USER_##_OBJ##_ALLRATENOW,    _user->_obj.all.rate.now);  \
+    um_user_add_u32(UM_USER_##_OBJ##_ALLRATEMAX,    _user->_obj.all.rate.max);  \
+    um_user_add_u32(UM_USER_##_OBJ##_ALLRATEAVG,    _user->_obj.all.rate.avg);  \
+}while(0)
 
 static void
 pushuser(struct apuser *user, bool init, char *name, char *reason)
@@ -29,44 +52,19 @@ pushuser(struct apuser *user, bool init, char *name, char *reason)
 	
 	um_user_add_u32(UM_USER_WLANID, user->wlanid);
 	um_user_add_u32(UM_USER_RADIOID, user->radioid);
+	
+	um_user_add_string(UM_USER_IFNAME, user->ifname);
 	um_user_add_string(UM_USER_IP, os_ipstring(user->ip));
 	um_user_add_string(UM_USER_STATE, um_user_state_string(user->state));
-
-	um_user_add_u32(UM_USER_WIFI_UPTIME, user->wifi.uptime);
-	um_user_add_u32(UM_USER_WIFI_SIGNAL, user->wifi.signal);
-	um_user_add_u32(UM_USER_WIFI_ONLINELIMIT, user->wifi.onlinelimit);
-	um_user_add_u64(UM_USER_WIFI_UPFLOWTOTAL, user->wifi.up.flowtotal);
-	um_user_add_u64(UM_USER_WIFI_UPFLOWCACHE, user->wifi.up.flowcache);
-	um_user_add_u64(UM_USER_WIFI_UPFLOWLIMIT, user->wifi.up.flowlimit);
-	um_user_add_u32(UM_USER_WIFI_UPRATELIMIT, user->wifi.up.ratelimit);
-	um_user_add_u64(UM_USER_WIFI_DOWNFLOWTOTAL, user->wifi.down.flowtotal);
-	um_user_add_u64(UM_USER_WIFI_DOWNFLOWCACHE, user->wifi.down.flowcache);
-	um_user_add_u64(UM_USER_WIFI_DOWNFLOWLIMIT, user->wifi.down.flowlimit);
-	um_user_add_u32(UM_USER_WIFI_DOWNRATELIMIT, user->wifi.down.ratelimit);
-	um_user_add_u64(UM_USER_WIFI_ALLFLOWTOTAL, user->wifi.all.flowtotal);
-	um_user_add_u64(UM_USER_WIFI_ALLFLOWCACHE, user->wifi.all.flowcache);
-	um_user_add_u64(UM_USER_WIFI_ALLFLOWLIMIT, user->wifi.all.flowlimit);
-	um_user_add_u32(UM_USER_WIFI_ALLRATELIMIT, user->wifi.all.ratelimit);
-	
-	um_user_add_u32(UM_USER_AUTH_UPTIME, user->auth.uptime);
-	um_user_add_u32(UM_USER_AUTH_ONLINELIMIT, user->auth.onlinelimit);
-	um_user_add_u64(UM_USER_AUTH_UPFLOWTOTAL, user->auth.up.flowtotal);
-	um_user_add_u64(UM_USER_AUTH_UPFLOWCACHE, user->auth.up.flowcache);
-	um_user_add_u64(UM_USER_AUTH_UPFLOWLIMIT, user->auth.up.flowlimit);
-	um_user_add_u32(UM_USER_AUTH_UPRATELIMIT, user->auth.up.ratelimit);
-	um_user_add_u64(UM_USER_AUTH_DOWNFLOWTOTAL, user->auth.down.flowtotal);
-	um_user_add_u64(UM_USER_AUTH_DOWNFLOWCACHE, user->auth.down.flowcache);
-	um_user_add_u64(UM_USER_AUTH_DOWNFLOWLIMIT, user->auth.down.flowlimit);
-	um_user_add_u32(UM_USER_AUTH_DOWNRATELIMIT, user->auth.down.ratelimit);
-	um_user_add_u64(UM_USER_AUTH_ALLFLOWTOTAL, user->auth.all.flowtotal);
-	um_user_add_u64(UM_USER_AUTH_ALLFLOWCACHE, user->auth.all.flowcache);
-	um_user_add_u64(UM_USER_AUTH_ALLFLOWLIMIT, user->auth.all.flowlimit);
-	um_user_add_u32(UM_USER_AUTH_ALLRATELIMIT, user->auth.all.ratelimit);
-
+	um_user_add_string(UM_USER_CLASS, um_user_class_string(user->class));
+	um_user_add_string(UM_USER_LEVEL, um_user_level_string(user->level));
 	if (reason) {
-	    um_user_add_string(UM_USER_DEAUTH_REASON, reason);
+	    um_user_add_string(UM_USER_REASON, reason);
     }
     
+    um_user_add_objs(user, WIFI, wifi);
+    um_user_add_objs(user, AUTH, auth);
+
     um_close_table(handle);
 }
 
@@ -111,7 +109,7 @@ um_ubus_deauth_notify(struct apuser *user, int reason)
         return;
     }
     
-    char *reasonstring= um_user_deauth_reason_string(reason);
+    char *reasonstring = um_user_deauth_reason_string(reason);
     
     pushuser(user, true, "user", reasonstring);
 	notify("um.deauth");
@@ -187,7 +185,7 @@ report(void)
     int err;
     
     err = pushuserby(&f);
-    if (err<0) {
+    if (err) {
         return err;
     }
 
@@ -349,7 +347,7 @@ um_ubus_handle_getuser(
     
 filter_ok:
     err = pushuserby(&f);
-    if (err<0) {
+    if (err) {
         return err;
     }
 
@@ -464,14 +462,27 @@ um_ubus_handle_auth(
     struct blob_attr *msg
 )
 {
-    byte *mac = getmac(msg);
+    struct blob_attr *attr[UM_USER_END] = {NULL};
+    struct apuser *user;
+    
+    blobmsg_parse(umc.policy.user, os_count_of(umc.policy.user), attr, blob_data(msg), blob_len(msg));
+    if (NULL==attr[UM_USER_MAC]) {
+        return UBUS_STATUS_INVALID_ARGUMENT;
+    }
+    
+    byte *mac = os_getmac(blobmsg_get_string(attr[UM_USER_MAC]));
     if (NULL==mac) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
 
-    um_user_auth(mac);
+    int class = UM_CLASS_NORMAL;
+    if (attr[UM_USER_CLASS]) {
+        class = um_user_class_idx(blobmsg_get_string(attr[UM_USER_CLASS]));
+    }
 
-    return 0;
+    user = um_user_auth(mac, class);
+
+    return user?0:-ENOMEM;
 }
 
 int
@@ -488,7 +499,7 @@ um_ubus_handle_deauth(
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
     
-    um_user_deauth(mac, UM_USER_DEAUTH_INITIATIVE);
+    um_user_deauth(mac, UM_DEAUTH_INITIATIVE);
     
     return 0;
 }
@@ -572,12 +583,12 @@ um_ubus_init(char *path)
 
     uloop_init();
 	err = um_ubus_connect(path);
-	if (err<0) {
+	if (err) {
         return err;
 	}
     
-	add_object(&umc.obj.object);
-    add_subscriber(&umc.obj.subscriber);
+	add_object(&umc.ubus.object);
+    add_subscriber(&umc.ubus.subscriber);
     
     debug_ubus_ok("ubus init");
     

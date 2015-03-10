@@ -20,7 +20,7 @@ OBJS=$(DIR_SELF)/partool.o
 TARGET_NAME=partool
 TARGET=$(TARGET_NAME)
 TARGET_TYPE=exe
-LIB_DEPEND=c appkey partool
+LIB_DEPEND=c appkey
 CFLAGS+=-D__TEST__ -DPART_RW_CP
 
 #

@@ -24,7 +24,7 @@ enum {
 static inline int
 shell_error(int err)
 {
-    if (err<0) {
+    if (err) {
         err = -err;
     }
 
@@ -48,22 +48,24 @@ enum {
     EINVAL7,
     EINVAL8,
     EINVAL9,
-    ENOEXIST,   /* 10 */
-    EKEYNULL,   /* 11 */
-    EKEYBAD,    /* 12 */
+    ENOSUPPORT, /* 10 */
+    ENOINIT,    /* 11 */
+    ENOEXIST,   /* 12 */
     ENOSPACE,   /* 13 */
-    ESYSTEM,    /* 14 */
-    EFORMAT,    /* 15 */
-    ETOOBIG,    /* 16 */
-    ELIMIT,     /* 17 */
-    EINLIST,    /* 18 */
-    ENOINLIST,  /* 19 */
-    EBADCRC,    /* 20 */
-    ETIMEOUT,   /* 21 */
-    ENOSUPPORT, /* 22 */
-    EEMPTY,     /* 23 */
-    ENOEMPTY,   /* 24 */
-    EBADIDX,    /* 25 */
+    ENOEMPTY,   /* 14 */
+    ENOINLIST,  /* 15 */
+    EBADIDX,    /* 16 */
+    EBADREF,    /* 17 */
+    EBADCRC,    /* 18 */
+    EKEYNULL,   /* 19 */
+    EKEYBAD,    /* 20 */
+    ESYSTEM,    /* 21 */
+    EFORMAT,    /* 22 */
+    ETOOBIG,    /* 23 */
+    ELIMIT,     /* 24 */
+    EINLIST,    /* 25 */
+    ETIMEOUT,   /* 26 */
+    EEMPTY,     /* 27 */
 };
 
 

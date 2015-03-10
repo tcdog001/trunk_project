@@ -341,7 +341,19 @@ struct cmd_table {
     },                      \
 }
 
-#define cmd_dump_argv(_dump, _argc, _argv) do { \
+static inline int
+os_cmd_line_cb(struct cmd_table *table, char *args)
+{
+    return (*table->u.line_cb)(args);
+}
+
+static inline int
+os_cmd_argv_cb(struct cmd_table *table, int argc, char *argv[])
+{
+    return (*table->u.argv_cb)(argc, argv);
+}
+
+#define os_cmd_dump_argv(_dump, _argc, _argv) do { \
     int i;                                      \
                                                 \
     for (i=0; i<_argc; i++) {                   \

@@ -54,7 +54,7 @@ get_int_env(char *envname, int deft)
         
         return deft;
     } else {
-        int value = atoi(env);
+        int value = os_atoi(env);
 
         debug_trace("get env:%s=%d", envname, value);
 

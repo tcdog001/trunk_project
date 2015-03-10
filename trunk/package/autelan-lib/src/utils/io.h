@@ -3,8 +3,10 @@
 /******************************************************************************/
 #include "utils/time.h"
 /******************************************************************************/
+#ifdef __APP__
+
 static inline int
-io_read(int fd, char *buf, int size, int timeout /* ms */)
+os_io_read(int fd, char *buf, int size, int timeout /* ms */)
 {
     fd_set rset;
     struct timeval tv = {
@@ -47,14 +49,14 @@ io_read(int fd, char *buf, int size, int timeout /* ms */)
 }
 
 static inline int
-io_write(int fd, char *buf, int len)
+os_io_write(int fd, char *buf, int len)
 {
     int count = 0;
     int err;
 
     while(count < len) {
         err = write(fd, buf + count, len - count);
-        if (err<0) {
+        if (err) {
             debug_error("write error:%d", -errno);
             return -errno;
         } else {
@@ -69,5 +71,9 @@ io_write(int fd, char *buf, int len)
     return 0;
 }
 
+#elif defined(__BOOT__)
+#define io_read(addr)           (*(volatile unsigned int *)(addr))
+#define io_write(addr,val)      (*(volatile unsigned int *)(addr)=(val))
+#endif
 /******************************************************************************/
 #endif /* __IO_H_D4A9C58D7819A78E004AD0C1E795940A__ */

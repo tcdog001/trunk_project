@@ -101,15 +101,15 @@ agingtimer(struct uloop_timeout *timeout)
 static multi_value_t 
 online_cb(struct apuser *user)
 {
-    if (0==user->auth.onlinelimit || false==is_online_um_user_state(user->state)) {
+    if (0==user->auth.online || false==is_online_um_user_state(user->state)) {
         return mv2_OK;
     }
     
     time_t now = time(NULL);
     time_t used = now - user->auth.uptime;
     
-    if (used > user->auth.onlinelimit) {
-        user_deauth(user, UM_USER_DEAUTH_ONLINETIME);
+    if (used > user->auth.online) {
+        user_deauth(user, UM_DEAUTH_ONLINETIME);
     }
     
     return mv2_OK;
@@ -158,15 +158,15 @@ flow_cb(struct apuser *user)
     
     if (user->auth.up.flowlimit &&
         user->auth.up.flowlimit < user->auth.up.flowtotal) {
-        user_deauth(user, UM_USER_DEAUTH_FLOWLIMIT);
+        user_deauth(user, UM_DEAUTH_FLOWLIMIT);
     }
     else if (user->auth.down.flowlimit &&
         user->auth.down.flowlimit < user->auth.down.flowtotal) {
-        user_deauth(user, UM_USER_DEAUTH_FLOWLIMIT);
+        user_deauth(user, UM_DEAUTH_FLOWLIMIT);
     }
     else if (user->auth.all.flowlimit &&
         user->auth.all.flowlimit < user->auth.all.flowtotal) {
-        user_deauth(user, UM_USER_DEAUTH_FLOWLIMIT);
+        user_deauth(user, UM_DEAUTH_FLOWLIMIT);
     }
     
     return mv2_OK;
@@ -260,24 +260,28 @@ struct um_control umc = {
         },
         
         .limit = {
-            .wifi = {
-                .param  = UM_PARAM_INITER(umc.policy.limit),
-                .uci_type = UM_UCI_LIMIT,
-            },
-            
-            .auth = {
-                .param  = UM_PARAM_INITER(umc.policy.limit),
-                .uci_type = UM_UCI_LIMIT,
+            [0 ... (UM_CLASS_END-1)] = {
+                [0 ... (UM_LEVEL_END-1)] = {
+                    .wifi = {
+                        .param  = UM_PARAM_INITER(umc.policy.limit),
+                        .uci_type = UM_UCI_LIMIT,
+                    },
+                    
+                    .auth = {
+                        .param  = UM_PARAM_INITER(umc.policy.limit),
+                        .uci_type = UM_UCI_LIMIT,
+                    },
+                }
             },
         },
     },
     
-    .obj = {
+    .ubus = {
         .methods= um_user_object_methods,
         .type   = UBUS_OBJECT_TYPE("umd", um_user_object_methods),
         .object = {
         	.name = "user-manage",
-        	.type = &umc.obj.type,
+        	.type = &umc.ubus.type,
         	.methods = um_user_object_methods,
         	.n_methods = os_count_of(um_user_object_methods),
         }
@@ -338,12 +342,12 @@ int main(int argc, char **argv)
 	setup_signals();
 	
 	err = um_uci_load();
-    if (err<0) {
+    if (err) {
 		goto finish;
 	}
 
     err = um_ubus_init(path);
-    if (err<0) {
+    if (err) {
 		goto finish;
 	}
     
@@ -377,8 +381,24 @@ finish:
         um_akid_init(umc.sh._var.akid, "script." #_var, umc.sh._var.deft)
 
 static os_constructor void 
-um_akid_initer(void)
+__init(void)
 {
+    int i, j;
+
+    for (i=0; i<UM_CLASS_END; i++) {
+        for (j=0; j<UM_LEVEL_END; j++) {
+            struct um_uci *uci;
+            
+            uci = &umc.uci.limit[i][j].wifi;
+            INIT_LIST_HEAD(&uci->cfg);
+            INIT_LIST_HEAD(&uci->tmp);
+            
+            uci = &umc.uci.limit[i][j].auth;
+            INIT_LIST_HEAD(&uci->cfg);
+            INIT_LIST_HEAD(&uci->tmp);
+        }
+    }
+    
     um_debug_akid_init(uci);
     um_debug_akid_init(ubus);
     um_debug_akid_init(user);

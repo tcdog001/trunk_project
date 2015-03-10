@@ -1,11 +1,21 @@
 #ifndef __UTILS_H_F5F47009AF9E5B811C77BFEA13C326CB__
 #define __UTILS_H_F5F47009AF9E5B811C77BFEA13C326CB__
 /******************************************************************************/
-#ifdef __BOOT__
-#undef __KERNEL__
+#ifdef __FASTBOOT__
+#define __BOOT__
 #endif
 
-#ifdef __KERNEL__
+#ifdef __BOOT__
+#   undef __KERNEL__
+#   define __AKID_DEBUG __boot_akid
+#   include <malloc.h>
+#   include <command.h>
+#   ifndef __FASTBOOT__
+#       include <common.h>
+#   endif
+#   include <linux/ctype.h>
+#   include <linux/string.h>
+#elif defined(__KERNEL__)
 #   include <linux/moduleparam.h>
 #   include <linux/module.h>
 #   include <linux/skbuff.h>
@@ -21,14 +31,6 @@
 #   include <linux/errno.h>
 #   include <linux/list.h>
 #   include <net/sock.h>
-#elif defined(__BOOT__)
-#   include <malloc.h>
-#   include <command.h>
-#   ifndef __FASTBOOT__
-#       include <common.h>
-#   endif
-#   include <linux/ctype.h>
-#   include <linux/string.h>
 #else /* __APP__ */
 #   define __APP__
 #   include <stdint.h>
@@ -73,24 +75,24 @@
 #include "utils/bits.h"
 #include "utils/assert.h"
 #include "utils/errno.h"
+#include "utils/list.h"
+#include "utils/number.h"
 #include "utils/memory.h"
 #include "utils/string.h"
 #include "utils/printf.h"
-#include "utils/list.h"
-#include "utils/kvlist.h"
 #include "utils/appkey.h"
 #include "utils/debug.h"
-#include "utils/number.h"
 #include "utils/dump.h"
+#include "utils/time.h"
 #include "utils/sem.h"
 #include "utils/shm.h"
 #include "utils/sfile.h"
 #include "utils/crc32.h"
+#include "utils/cmd.h"
+#include "utils/env.h"
 #include "utils/mac.h"
 #include "utils/ip.h"
-#include "utils/env.h"
-#include "utils/time.h"
 #include "utils/io.h"
-#include "utils/cmd.h"
+#include "utils/kv.h"
 /******************************************************************************/
 #endif /* __UTILS_H_F5F47009AF9E5B811C77BFEA13C326CB__ */

@@ -75,6 +75,10 @@
 #define __false         "false"
 #endif
 
+#ifndef string_array_item
+#define string_array_item(_, idx)   [_(idx)] = #idx
+#endif
+
 #ifndef os_safestring
 #define os_safestring(s)            ((s)?(s):__nil)
 #endif
@@ -87,11 +91,22 @@
 #define os_strcpy(_dst, _src)       strcpy(_dst, _src)
 #endif
 
+#ifndef os_strmcpy
+#define os_strmcpy(_dst, _src, _len/* src len */) ({ \
+    char *dst = (_dst);             \
+                                    \
+    os_memcpy(dst, _src, _len);     \
+    dst[_len] = 0;                  \
+                                    \
+    dst;                            \
+})
+#endif
+
 /*
 * no use strncpy(is unsafe)
 */
-static inline size_t 
-os_strlcpy(char *dst, const char *src, size_t size)
+static inline uint32_t 
+os_strlcpy(char *dst, const char *src, uint32_t size)
 {
     char *d = (char *)dst;
     char *s = (char *)src;
@@ -363,18 +378,6 @@ __string_r_drop(char *string, char_is_something_f *IS)
     return string;
 }
 
-/*
-* string long copy
-*/
-static inline char *
-__string_copy(char *dst, char *src, int len)
-{
-    os_memcpy(dst, src, len);
-    dst[len] = 0;
-
-    return dst;
-}
-
 static inline bool 
 __is_blank_line(char *line)
 {
@@ -429,44 +432,432 @@ __string_next_byifs(char *string, int ifs)
     return __string_next(string, is_ifs);
 }
 
-static inline int
-__string_hash_idx(char *string, int size)
-{
-    int mask = size - 1;
-    int sum = 0;
-    char *p = string;
-    
-    while(*p) {
-        sum += *p++;
-    }
+#ifndef OS_STRING_BKDR_NUMBER
+#define OS_STRING_BKDR_NUMBER   31
+#endif
 
-    return sum & mask;
+static inline uint32_t
+__bkdr_push(uint32_t a, uint32_t b)
+{
+    return a * OS_STRING_BKDR_NUMBER + b;
+}
+
+static inline uint32_t
+__bkdr_pop(uint32_t a, uint32_t b)
+{
+    return (a - b) / OS_STRING_BKDR_NUMBER;
+}
+
+static inline uint32_t
+__string_BKDR(const char *string, uint32_t *plen)
+{
+    uint32_t hash = 0;
+    
+    if (string) {
+        const char *p = string;
+        uint32_t len = 0;
+        
+        while(*p) {
+            len++;
+            hash = __bkdr_push(hash, *p++);
+        }
+
+        if (plen) {
+            *plen = len;
+        }
+    }
+    
+    return hash;
+}
+
+static inline uint32_t
+__string_bkdr(const char *string)
+{
+    uint32_t hash = 0;
+
+    if (string) {
+        const char *p = string;
+
+        while(*p) {
+            hash = __bkdr_push(hash, *p++);
+        }
+    }
+    
+    return hash;
+}
+
+static inline uint32_t
+__binary_bkdr(const byte *binary, uint32_t len)
+{
+    uint32_t hash = 0;
+
+    if (binary) {
+        int i;
+        
+        for (i=0; i<len; i++) {
+            hash = __bkdr_push(hash, *(binary + i));
+        }
+    }
+    
+    return hash;
 }
 
 typedef struct {
-    int len;
-    char string[];
+    uint32_t sym:1;
+    uint32_t bin:1;
+    uint32_t len:30;
+    uint32_t hash;
+    char string[0];
 } string_t;
 
 static inline string_t *
-string_create(char *string)
+__string_new(
+    uint32_t resv, 
+    const void *binary, 
+    bool bin, 
+    uint32_t len, 
+    uint32_t hash
+)
 {
-    if (NULL==string) {
-        return NULL;
+    if (NULL==binary) {
+        return os_assert_value(NULL);
     }
 
-    int len = os_strlen(string);
-    string_t *s = (string_t *)os_malloc(1 + len + sizeof(s->len));
-    if (NULL==s) {
-        return NULL;
+    byte *p = (byte *)os_zalloc(resv + 1 + len + sizeof(string_t));
+    if (NULL==p) {
+        return os_assert_value(NULL);
     }
     
-    os_memcpy(s->string, string, len);
+    string_t *s = (string_t *)(p + resv);
+    os_memcpy(s->string, binary, len);
     s->string[len] = 0;
-    s->len = len;
-
+    s->len  = len;
+    s->hash = hash;
+    s->bin  = bin;
+    
     return s;
 }
 
+static inline string_t *
+string_new(uint32_t resv, const char *string)
+{
+    uint32_t len = 0;
+    uint32_t hash = __string_BKDR(string, &len);
+
+    return __string_new(resv, string, false, len, hash);
+}
+
+#define string_NEW(_type, _member, _string) ({  \
+    _type *p = NULL;                            \
+    string_t *s = string_new(offsetof(_type, _member), _string); \
+    if (s) {                                    \
+        p = container_of(s, _type, _member);    \
+    }                                           \
+                                                \
+    p;                                          \
+})
+
+static inline string_t *
+binary_new(uint32_t resv, const void *binary, uint32_t len)
+{
+    return __string_new(resv, binary, true, len, __binary_bkdr(binary, len));
+}
+
+#define binary_NEW(_type, _member, _binary, _len) ({  \
+    _type *p = NULL;                            \
+    string_t *s = binary_new(offsetof(_type, _member), _binary, _len); \
+    if (s) {                                    \
+        p = container_of(s, _type, _member);    \
+    }                                           \
+                                                \
+    p;                                          \
+})
+
+static inline bool
+__string_eq(
+    const string_t *s, 
+    const void *binary, 
+    bool sym, 
+    bool bin, 
+    uint32_t len, 
+    uint32_t hash
+)
+{
+    if (s->sym  != sym ||
+        s->bin  != bin ||
+        s->len  != len ||
+        s->hash != hash) {
+        return false;
+    } else {
+        return 0==os_memcmp(s->string, binary, len);
+    }
+}
+
+static inline int
+__string_cmp(
+    const string_t *s, 
+    const void *binary, 
+    bool sym, 
+    bool bin, 
+    uint32_t len
+)
+{
+    if (s->sym != sym) {
+        /*
+        * symbol > NOT symboe
+        */
+        return (int)s->sym - (int)sym;
+    }
+    else if (s->bin != bin) {
+        /*
+        * binary > string
+        */
+        return (int)s->bin - (int)bin;
+    }
+    else if (s->len != len) {
+        int ret = os_memcmp(s->string, binary, os_min((uint32_t)s->len, len));
+        if (ret) {
+            return ret;
+        } else {
+            return (int)s->len - (int)len;
+        }
+    }
+    else {
+        return os_memcmp(s->string, binary, len);
+    }
+}
+
+static inline bool
+string_eq(const string_t *a, const string_t *b)
+{
+    if (NULL==a) {
+        return os_assert_value(false);
+    }
+    else if (NULL==b) {
+        return os_assert_value(false);
+    }
+    else {
+        return __string_eq(a, b->string, b->sym, b->bin, b->len, b->hash);
+    }
+}
+
+static inline int
+string_cmp(const string_t *a, const string_t *b)
+{
+    if (NULL==a && NULL==b) {
+        return os_assert_value(0);
+    }
+    else if (NULL==a) {
+        return os_assert_value(-1);
+    }
+    else if (NULL==b) {
+        return os_assert_value(1);
+    }
+    else {
+        return __string_cmp(a, b->string, b->sym, b->bin, b->len);
+    }
+}
+
+static inline bool
+string_is_symbol(const string_t *s)
+{
+    return s?s->sym:false;
+}
+
+static inline bool
+string_is_binary(const string_t *s)
+{
+    return s?s->bin:false;
+}
+
+typedef struct {
+    struct mlist_node node;
+    string_t s;
+} symbol_t;
+
+typedef struct mlist_table symbol_table_t;
+
+static inline int
+sysbol_table_init(symbol_table_t *table, uint32_t size)
+{
+    return mlist_table_init(table, size);
+}
+
+static inline symbol_t *
+__symbol_init(symbol_t *sym)
+{
+    INIT_LIST_HEAD(&sym->node.list);
+    sym->s.sym = true;
+    
+    return sym;
+}
+
+static inline symbol_t *
+__symbol_string_new(const char *string)
+{
+    symbol_t *sym = string_NEW(symbol_t, s, string);
+
+    return sym?__symbol_init(sym):NULL;
+}
+
+static inline symbol_t *
+__symbol_binary_new(const void *binary, uint32_t len)
+{
+    symbol_t *sym = binary_NEW(symbol_t, s, binary, len);
+
+    return sym?__symbol_init(sym):NULL;
+}
+
+static inline symbol_t *
+__symbol_entry(const struct mlist_node *node)
+{
+    return container_of(node, symbol_t, node);
+}
+
+static inline bool
+__symbol_eq(
+    const symbol_t *sym, 
+    const void *binary, 
+    bool bin, 
+    uint32_t len, 
+    uint32_t hash
+)
+{
+    return __string_eq(&sym->s, binary, true, bin, len, hash);
+}
+
+static inline int
+__symbol_cmp(
+    const symbol_t *sym, 
+    const void *binary, 
+    bool bin, 
+    uint32_t len
+)
+{
+    return __string_cmp(&sym->s, binary, true, bin, len);
+}
+
+static inline symbol_t *
+__symbol_insert(
+    struct mlist_table *table, 
+    int (*data_hash)(void),
+    int (*node_hash)(struct mlist_node *node),
+    bool (*eq)(struct mlist_node *node),
+    struct mlist_node *(*new)(void)
+)
+{
+    struct mlist_node *node = mlist_insert(table, data_hash, node_hash, eq, new);
+    if (NULL==node) {
+        return NULL;
+    }
+
+    symbol_t *sym = __symbol_entry(node);
+
+    return sym;
+}
+
+static inline symbol_t *
+__symbol_push_string(symbol_table_t *table, const char *string)
+{
+    uint32_t len = 0;
+    uint32_t hash = __string_BKDR(string, &len);
+
+    int data_hash(void)
+    {
+        return hash & (table->size - 1);
+    }
+    
+    bool eq(struct mlist_node *node)
+    {
+        return __symbol_eq(__symbol_entry(node), string, false, len, hash);
+    }
+    
+    int node_hash(struct mlist_node *node)
+    {
+        symbol_t *sym = __symbol_entry(node);
+        
+        return sym->s.hash & (table->size - 1);
+    }
+    
+    struct mlist_node *new(void)
+    {
+        symbol_t *sym = __symbol_string_new(string);
+
+        return sym?&sym->node:NULL;
+    }
+
+    return __symbol_insert(table, data_hash, node_hash, eq, new);
+}
+
+static inline symbol_t *
+__symbol_push_binary(symbol_table_t *table, void *binary, uint32_t len)
+{
+    uint32_t hash = __binary_bkdr(binary, len);
+
+    int data_hash(void)
+    {
+        return hash & (table->size - 1);
+    }
+    
+    bool eq(struct mlist_node *node)
+    {
+        return __symbol_eq(__symbol_entry(node), binary, true, len, hash);
+    }
+    
+    int node_hash(struct mlist_node *node)
+    {
+        symbol_t *sym = __symbol_entry(node);
+        
+        return sym->s.hash & (table->size - 1);
+    }
+    
+    struct mlist_node *new(void)
+    {
+        symbol_t *sym = __symbol_binary_new(binary, len);
+
+        return sym?&sym->node:NULL;
+    }
+    
+    return __symbol_insert(table, data_hash, node_hash, eq, new);
+}
+
+static inline symbol_t *
+symbol_push_string(symbol_table_t *table, char *string)
+{
+    if (NULL==table) {
+        return os_assert_value(NULL);
+    }
+    else if (NULL==string) {
+        return os_assert_value(NULL);
+    }
+    else {
+        return __symbol_push_string(table, string);
+    }
+}
+
+static inline symbol_t *
+symbol_push_binary(symbol_table_t *table, void *binary, uint32_t len)
+{
+    if (NULL==table) {
+        return os_assert_value(NULL);
+    }
+    else if (NULL==binary) {
+        return os_assert_value(NULL);
+    }
+    else {
+        return __symbol_push_binary(table, binary, len);
+    }
+}
+
+static inline int
+symbol_foreach(symbol_table_t *table, multi_value_t (*cb)(symbol_t *sym))
+{
+    multi_value_t node_cb(struct mlist_node *node)
+    {
+        return (*cb)(__symbol_entry(node));
+    }
+    
+    return mlist_foreach(table, node_cb);
+}
 /******************************************************************************/
 #endif /* __STRING_H_EBBADBD33FD514F013D3D84007A20302__ */

@@ -41,5 +41,16 @@ os_digitchar2int(int ch)
     n;                                          \
 })
 
+#ifdef __BOOT__
+#define os_atoi(string)     simple_strtol(string)
+#define os_atol(string)     simple_strtol(string)
+#define os_atoll(string)    simple_strtoull(string)
+#elif defined(__KERNEL__)
+#error "need to define atoi/atol/atoll"
+#elif defined(__APP___)
+#define os_atoi(string)     atoi(string)
+#define os_atol(string)     atol(string)
+#define os_atoll(string)    atoll(string)
+#endif
 /******************************************************************************/
 #endif /* __NUMBER_H_D1912A84AB1249D4A3313CDD1D2C0B44__ */

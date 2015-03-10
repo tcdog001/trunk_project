@@ -20,7 +20,7 @@ static struct {
 };
 
 #define dump_argv(_argc, _argv) \
-        cmd_dump_argv(debug_trace, _argc, _argv)
+        os_cmd_dump_argv(debug_trace, _argc, _argv)
 
 static int
 usage(int error)
@@ -43,9 +43,8 @@ handle(struct cmd_table map[], int count, int argc, char *argv[])
     
     for (i=0; i<count; i++) {
         if (0==os_strcmp(map[i].tag, argv[0])) {
-            debug_test("tag:%s, method:%s", map[i].tag, argv[0]);
-            
-            return (*map[i].u.argv_cb)(argc-1, argv+1);
+
+            return os_cmd_argv_cb(&map[i], argc-1, argv+1);
         }
     }
 
@@ -68,7 +67,7 @@ __client(char *buf)
 #if 0
     int opt = 1;
     err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (err<0) {
+    if (err) {
         return -errno;
     }
 #endif
@@ -81,13 +80,13 @@ __client(char *buf)
     }
 
     len = os_strlen(buf);
-    err = io_write(fd, buf, len);
-    if (err<0) {
+    err = os_io_write(fd, buf, len);
+    if (err) {
         return err;
     }
 
-    err = io_read(fd, RX, sizeof(RX), stimerc.timeout);
-    if (err<0) {
+    err = os_io_read(fd, RX, sizeof(RX), stimerc.timeout);
+    if (err) {
         return err;
     }
 
@@ -130,9 +129,9 @@ __insert(int argc, char *argv[])
         return usage(-ETOOBIG);
     }
     
-    int i_delay     = atoi(delay);
-    int i_interval  = atoi(interval);
-    int i_limit     = atoi(limit);
+    int i_delay     = os_atoi(delay);
+    int i_interval  = os_atoi(interval);
+    int i_limit     = os_atoi(limit);
     
     if (false==is_good_stimer_args(i_delay, i_interval, i_limit)) {
         return usage(-EINVAL);
@@ -195,7 +194,7 @@ __show(int argc, char *argv[])
     dump_argv(argc, argv);
     
     int err = handle(table, os_count_of(table), argc, argv);
-    if (err<0) {
+    if (err) {
         debug_error("show %s %s error:%d", 
             argv[0], 
             argv[1]?argv[1]:"",
@@ -217,7 +216,7 @@ command(int argc, char *argv[])
     dump_argv(argc, argv);
     
     int err = handle(table, os_count_of(table), argc, argv);
-    if (err<0) {
+    if (err) {
         debug_error("%s error:%d", argv[0], err);
     }
     
@@ -242,12 +241,10 @@ int main(int argc, char *argv[])
     
     os_memzero(RX, os_count_of(RX));
 
-    err = init_env();
+    err = init_env(); debug_ok_error("init env", err);
     if (err < 0) {
-        debug_error("init env error:%d", err);
         return err;
     }
-    debug_ok("init env ok.");
     
     err = command(argc-1, argv+1);
     if (err < 0) {

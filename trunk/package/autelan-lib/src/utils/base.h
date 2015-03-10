@@ -83,6 +83,7 @@
 #define INVALID_SOCKET      INVALID_COMMON_ID
 
 #define OS_PROTECTED        0x2012dead
+#define OS_INVALID          0xffffffff
 
 static inline bool is_good_common_id(int id)
 {
@@ -189,7 +190,7 @@ static inline bool os_seq_before(unsigned int seq1, unsigned int seq2)
 */
 #define os_seq_after(seq1, seq2) 	os_seq_before(seq2, seq1)
 
-#define __APP_NAMELEN           31
+#define __APP_NAMELEN           (31 - sizeof(unsigned int))
 #define __APP_KEY_NAMELEN       31
 
 #ifndef OS_IFNAMELEN
@@ -203,6 +204,8 @@ static inline bool os_seq_before(unsigned int seq1, unsigned int seq2)
 #ifndef OS_FILENAME_LEN
 #define OS_FILENAME_LEN         1023
 #endif
+
+
 
 /******************************************************************************/
 #endif /* __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__ */

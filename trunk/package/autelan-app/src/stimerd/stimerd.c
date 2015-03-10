@@ -20,8 +20,6 @@ res_error(int err)
 
 #define res_ok  res_error(0)
 
-#define HASHSIZE    256
-
 static struct {
     struct {
         int ticks;  /* ms */
@@ -37,18 +35,10 @@ static struct {
     } server;
 
     struct {
-        struct list_head    list;
-        struct hlist_head   hash[HASHSIZE];
-        
-        int count;
+        struct mlist_table mlist;
     } head;
 } 
 stimerd = {
-    .head = {
-        .list = LIST_HEAD_INIT(stimerd.head.list),
-        .hash = {HLIST_HEAD_INIT},
-    },
-    
     .timer = {
         .timeout= STIMER_TIMEOUT_TICKS,
         .ticks  = STIMER_TICKS,
@@ -75,9 +65,7 @@ struct stimer {
     int triggers;
 
     struct {
-        struct list_head    list;
-        struct hlist_node   hash;
-        
+        struct mlist_node   mlist;
         tm_node_t timer;
     } node;
 };
@@ -106,16 +94,22 @@ __nsec(void)
     return time_nsec(__ticks());
 }
 
-static struct stimer *
-__entry(tm_node_t *timer)
+static inline struct stimer *
+__tm_entry(tm_node_t *timer)
 {
     return container_of(timer, struct stimer, node.timer);
 }
-    
-static int 
-hash(char *name)
+
+static inline struct stimer *
+__mlist_entry(struct mlist_node *node)
 {
-    return __string_hash_idx(name, HASHSIZE);
+    return container_of(node, struct stimer, node.mlist);
+}
+
+static inline uint32_t 
+__hash(char *name)
+{
+    return __string_bkdr(name) & (stimerd.head.mlist.size - 1);
 }
 
 static int
@@ -124,18 +118,16 @@ __insert(struct stimer *entry)
     if (NULL==entry) {
         return -EKEYNULL;
     }
-    /*
-    * have in list
-    */
-    else if (is_in_list(&entry->node.list)) {
-        return -EINLIST;
+
+    int hash(struct mlist_node *node)
+    {
+        return __hash(entry->name);
     }
     
-    list_add(&entry->node.list, &stimerd.head.list);
-    hlist_add_head(&entry->node.hash, &stimerd.head.hash[hash(entry->name)]);
-    stimerd.head.count++;
-    
-    return 0;
+    struct mlist_node *node = 
+        __mlist_insert(&stimerd.head.mlist, &entry->node.mlist, hash);
+
+    return node?0:-EINLIST;
 }
 
 static int
@@ -144,54 +136,45 @@ __remove(struct stimer *entry)
     if (NULL==entry) {
         return -EKEYNULL;
     }
-    /*
-    * NOT in list
-    */
-    else if (false==is_in_list(&entry->node.list)) {
-        return -ENOINLIST;
-    }
 
     os_tm_remove(&entry->node.timer);
-    
-    list_del(&entry->node.list);
-    hlist_del_init(&entry->node.hash);
-    stimerd.head.count--;
-    
-    return 0;
+
+    return mlist_remove(&stimerd.head.mlist, &entry->node.mlist);
 }
 
 static struct stimer *
 __get(char *name)
 {
-    struct stimer *entry;
-    
     if (NULL==name) {
         return NULL;
     }
-    
-    hlist_for_each_entry(entry, &stimerd.head.hash[hash(name)], node.hash) {
-        if (0==os_stracmp(entry->name, name)) {
-            return entry;
-        }
+
+    int hash(void)
+    {
+        return __hash(name);
     }
     
-    return NULL;
+    bool eq(struct mlist_node *node)
+    {
+        struct stimer *entry = __mlist_entry(node);
+        
+        return 0==os_stracmp(entry->name, name);
+    }
+
+    return mlist_find(&stimerd.head.mlist, hash, eq);
 }
 
 static int
 __foreach(multi_value_t (*cb)(struct stimer *entry))
 {
-    struct stimer *entry, *tmp;
-    multi_value_u mv;
-    
-    list_for_each_entry_safe(entry, tmp, &stimerd.head.list, node.list) {
-        mv.value = (*cb)(entry);
-        if (mv2_is_break(mv)) {
-            return mv2_result(mv);
-        }
-    }
+    multi_value_t foreach(struct mlist_node *node)
+    {
+        struct stimer *entry = __mlist_entry(node);
 
-    return 0;
+        return (*cb)(entry);
+    }
+    
+    return mlist_foreach(&stimerd.head.mlist, foreach);
 }
 
 static struct stimer *
@@ -253,7 +236,7 @@ handle(struct cmd_table map[], int count, char *tag, char *args)
     
     for (i=0; i<count; i++) {
         if (0==os_strcmp(map[i].tag, tag)) {
-            err = (*map[i].u.line_cb)(args);
+            err = os_cmd_line_cb(&map[i], args);
 
             return res_error(err);
         }
@@ -265,7 +248,7 @@ handle(struct cmd_table map[], int count, char *tag, char *args)
 static int 
 stimer_cb(tm_node_t *timer)
 {
-    struct stimer *entry = __entry(timer);
+    struct stimer *entry = __tm_entry(timer);
 
     entry->triggers++;
     os_v_system("%s &", entry->command);
@@ -320,9 +303,9 @@ handle_insert(char *args)
         limit,
         command);
     
-    int i_delay     = atoi(delay);
-    int i_interval  = atoi(interval);
-    int i_limit     = atoi(limit);
+    int i_delay     = os_atoi(delay);
+    int i_interval  = os_atoi(interval);
+    int i_limit     = os_atoi(limit);
     
     if (false==is_good_stimer_args(i_delay, i_interval, i_limit)) {
         debug_error("invalid args, delay:%d, interval:%d, limit:%d",
@@ -365,7 +348,7 @@ handle_insert(char *args)
                 os_tm_is_pending(&entry->node.timer)?__true:__false);
     
     err = os_tm_insert(&entry->node.timer, after/__ticks(), stimer_cb, circle);
-    if (err<0) {
+    if (err) {
         return res_error(-ESTIMER_EXIST);
     }
 
@@ -376,14 +359,11 @@ static int
 handle_remove(char *args)
 {
     char *name = args; args = NEXT(args);
-
     if (NULL==name) {
         debug_trace("remove timer without name");
         
         return res_error(-ESTIMER_INVAL3);
     }
-    
-    debug_test("function:%s name:%s", __func__, name);
     
     struct stimer *entry = __get(name);
     if (NULL==entry) {
@@ -416,25 +396,24 @@ static int
 handle_show_status(char *args)
 {
     char *name = args; args = NEXT(args);
-    bool nofound = true;
+    bool empty = true;
+    
+    res_sprintf("#name delay interval limit triggers left command" __crlf);
     
     multi_value_t cb(struct stimer *entry)
     {
-        if (NULL==name) {
-            show(entry);
-        }
-        else if (0==os_stracmp(entry->name, name)) {
+        if (NULL==name || 0==os_stracmp(entry->name, name)) {
             show(entry);
 
-            nofound = false;
+            empty = false;
         }
 
         return mv2_OK;
     }
     
-    res_sprintf("#name delay interval limit triggers left command" __crlf);
     __foreach(cb);
-    if (name && nofound) {
+    
+    if (empty) {
         /*
         * drop head line
         */
@@ -506,18 +485,18 @@ __client(int fd)
     /*
     * todo: use select for timeout
     */
-    err = io_read(fd, buf, sizeof(buf), stimerd.timer.timeout);
+    err = os_io_read(fd, buf, sizeof(buf), stimerd.timer.timeout);
     if (err <0) {
         return err;
     }
     
     err = client_handle(buf);
-    if (err<0) {
+    if (err) {
         /* just log, NOT return */
     }
 
-    err = io_write(fd, (char *)RES, stimer_res_size(RES));
-    if (err<0) {
+    err = os_io_write(fd, (char *)RES, stimer_res_size(RES));
+    if (err) {
         return err;
     }
     
@@ -627,7 +606,7 @@ init_env()
     os_tm_unit_set(__ticks());
 
     err = get_stimer_path_env(&stimerd.server.addr);
-    if (err<0) {
+    if (err) {
         return err;
     }
 
@@ -637,32 +616,14 @@ init_env()
 static int
 init_timerfd(void)
 {
-    struct itimerspec old;
-    struct itimerspec new = {
-        .it_interval = {
-            .tv_sec     = __sec(),
-            .tv_nsec    = __nsec(),
-        },
-    };
-    int fd;
-    
-    fd = timerfd_create(CLOCK_REALTIME, 0);
+    int fd = os_timer_fd(__sec(), __nsec());
     if (fd<0) {
-        return -errno;
-    }
+        return fd;
+    } else {
+        stimerd.timer.fd = fd;
 
-    new.it_value.tv_sec += __sec();
-    new.it_value.tv_nsec += __nsec();
-    if (new.it_value.tv_nsec >= 1000*1000*1000) {
-        new.it_value.tv_nsec = 0;
-        new.it_value.tv_sec++;
+        return 0;
     }
-    
-    timerfd_settime(fd, 0, &new, &old);
-    
-    stimerd.timer.fd = fd;
-
-    return 0;
 }
 
 static int
@@ -680,7 +641,7 @@ init_server(void)
 #if 0
     int opt = 1;
     err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (err<0) {
+    if (err) {
         debug_error("setsockopt error:%d", -errno);
         return -errno;
     }
@@ -689,13 +650,13 @@ init_server(void)
     unlink(stimerd.server.addr.sun_path);
 
     err = bind(fd, (struct sockaddr *)&stimerd.server.addr, sizeof(stimerd.server.addr));
-    if (err<0) {
+    if (err) {
         debug_error("bind error:%d", -errno);
         return -errno;
     }
 
     err = listen(fd, SOMAXCONN);
-    if (err<0) {
+    if (err) {
         debug_error("listen error:%d", -errno);
         return -errno;
     }
@@ -709,34 +670,41 @@ int main(int argc, char *argv[])
 {
     int err;
 
-    err = init_env();
+    err = init_env(); debug_ok_error("init env", err);
     if (err < 0) {
-        debug_error("init env error:%d", err);
         return err;
     }
-    debug_ok("init env ok.");
-    
-    err = init_timerfd();
+
+    err = init_timerfd(); debug_ok_error("init timerfd", err);
     if (err < 0) {
-        debug_error("init timerfd error:%d", err);
         return err;
     }
-    debug_ok("init timerfd ok");
     
-    err = init_server();
+    err = init_server(); debug_ok_error("init server", err);
     if (err < 0) {
-        debug_error("init server error:%d", err);
         return err;
     }
-    debug_ok("init server ok");
     
-    err = server();
+    err = server(); debug_ok_error("run server", err);
     if (err < 0) {
-        debug_error("run server error:%d", err);
         return err;
     }
     
     return 0;
 }
+
+#ifndef STIMERD_HASHSIZE
+#define STIMERD_HASHSIZE    1024
+#endif
+
+static os_constructor void
+__init(void)
+{
+    int err = 0;
+
+    err = mlist_table_init(&stimerd.head.mlist, STIMERD_HASHSIZE);
+    debug_ok_error("__init timerfd", err);
+}
+
 /******************************************************************************/
 AKID_DEBUGER; /* must last os_constructor */

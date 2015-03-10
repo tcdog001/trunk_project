@@ -90,7 +90,7 @@ define Package/autelan-partool
   SECTION:=apps
   CATEGORY:=autelan-app
   TITLE:=Autelan Basic App
-  DEPENDS:=+libubacktrace +libautelan-appkey +libautelan-partool +libubox
+  DEPENDS:=+libubacktrace +libautelan-appkey +libubox
 endef
 
 define Package/autelan-partool/install

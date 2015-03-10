@@ -22,7 +22,24 @@
 
 #define os_println(_fmt, args...)               os_printf(_fmt __crlf, ##args)
 #define os_vprintln(_fmt, args)                 os_vprintf(_fmt __crlf, args)
-#define os_printnewline()                       os_printf(__crlf)
+
+#define os_printab(count, fmt, args...) do{ \
+    int i;                      \
+                                \
+    for (i=0; i<count; i++) {   \
+        os_printf(__tab);       \
+    }                           \
+    os_println(fmt, ##args);    \
+}while(0)
+
+#define os_vprintab(count, fmt, args) do{ \
+    int i;                      \
+                                \
+    for (i=0; i<count; i++) {   \
+        os_printf(__tab);       \
+    }                           \
+    os_vprintln(fmt, args);     \
+}while(0)
 
 #define os_fprintln(_stream, _fmt, args...)     os_fprintf(_stream, _fmt __crlf, ##args)
 #define os_vfprintln(_stream, _fmt, args)       os_vfprintf(_stream, _fmt __crlf, args)

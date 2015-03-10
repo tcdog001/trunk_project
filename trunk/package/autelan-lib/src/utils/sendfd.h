@@ -21,7 +21,7 @@ os_fdtransfer(char *path)
     }
 
     err = fd_bind(fd, (struct sockaddr*)&local, sizeof(local));
-    if (err<0) {
+    if (err) {
         close(fd);
 
         return -errno;

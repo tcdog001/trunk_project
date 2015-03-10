@@ -17,21 +17,48 @@ xxxxH : xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx ; cccccccccccccccc
 xxxxH : xxxxxxxx xxxxxxxx xxxxxx            ; ccccccccccc
 */
 
-#define __RAW_LINE_BYTES        16
-#define __RAW_LINE_BLOCK_BYTES  4
-#define __RAW_LINE_MAX          63 /* "xxxxH : xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx ; cccccccccccccccc" + "\n" */
+#ifndef __RAW_LINE_BLOCK
+#define __RAW_LINE_BLOCK        4
+#endif
 
+#ifndef __RAW_LINE_BLOCK_BYTES
+#define __RAW_LINE_BLOCK_BYTES  4
+#endif
+
+#ifndef __RAW_LINE_LIMIT
+#define __RAW_LINE_LIMIT        80
+#endif
+
+#define __RAW_LINE_BYTES        (__RAW_LINE_BLOCK_BYTES * __RAW_LINE_BLOCK)
+#define __RAW_LINE_MAX       (0 \
+        + 8 /* "xxxxH : " */    \
+        + (2 * __RAW_LINE_BLOCK_BYTES + 1) * __RAW_LINE_BLOCK \
+        + 2 /* "; " */          \
+        + __RAW_LINE_BYTES      \
+        + 1 /* "\n" */          \
+)
+
+#if __RAW_LINE_MAX > __RAW_LINE_LIMIT
+#error "must __RAW_LINE_MAX < __RAW_LINE_LIMIT"
+#endif
+
+#ifndef __RAW_LINE_SEPARATOR
 #define __RAW_LINE_SEPARATOR \
 "=============================================================="
+#endif
 
+#ifndef __RAW_LINE_SEPARATOR_SUB
 #define __RAW_LINE_SEPARATOR_SUB \
 "--------------------------------------------------------------"
+#endif
 
+#ifndef __RAW_LINE_HEADER
 #define __RAW_LINE_HEADER \
 "      :                                     ;"                 __crlf \
 " Line :       Hexadecimal Content           ; Raw Content"     __crlf \
 "      : 0 1 2 3  4 5 6 7  8 9 A B  C D E F  ;"                 __crlf \
 "      :                                     ;"                 __crlf
+#endif
 
 typedef void dump_line_f(char *line);
 

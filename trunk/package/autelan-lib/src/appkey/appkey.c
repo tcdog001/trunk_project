@@ -1,7 +1,7 @@
 /*******************************************************************************
 Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 ********************************************************************************
-    manage app key/sys key
+    manage app key
 *******************************************************************************/
 extern int __AKID_DEBUG;
 static int *__debug_init_pointer = &__AKID_DEBUG;
@@ -412,17 +412,17 @@ load_line(char *filename/* not include path */, char *line, void *__no_used)
     debug_trace("load file(%s) line(%s)", filename, line);
     
     err = load_line_app(&info);
-    if (err<0) {
+    if (err) {
         return mv2_GO(err);
     }
 
     err = load_line_kv(&info);
-    if (err<0) {
+    if (err) {
         return mv2_GO(err);
     }
 
     err = load_line_value(&info);
-    if (err<0) {
+    if (err) {
         return mv2_GO(err);
     }
     

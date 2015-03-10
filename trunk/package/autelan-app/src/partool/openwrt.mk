@@ -2,7 +2,7 @@
 OBJS=partool.o
 __TARGET=partool
 TARGET=$(__TARGET)
-LIBS_DEPEND=-lubacktrace -lautelan-appkey -lautelan-partool
+LIBS_DEPEND=-lubacktrace -lautelan-appkey
 
 .PHONY:all
 all:$(TARGET)

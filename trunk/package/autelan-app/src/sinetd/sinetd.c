@@ -325,7 +325,7 @@ run(void)
     
     int opt = 1;
     err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (err<0) {
+    if (err) {
         err = -errno; goto error;
     }
     
@@ -337,14 +337,14 @@ run(void)
         },
     };
     err = bind(fd, (struct sockaddr *)&addr, sizeof(addr));
-    if (err<0) {
+    if (err) {
         E("bind error:%d", -errno);
         
         err = -errno; goto error;
     }
 
     err = listen(fd, MAX_CLIENTS);
-    if (err<0) {
+    if (err) {
         E("listen error:%d", -errno);
         
         err = -errno; goto error;
@@ -391,7 +391,7 @@ int main(int argc, char *argv[])
     */
     struct stat st;
     err = stat(script, &st);
-    if (err<0) {
+    if (err) {
         println("bad script %s", script);
         
         return -EINVAL;
@@ -418,7 +418,7 @@ int main(int argc, char *argv[])
     }
     C.ip = addr.s_addr;
     
-    int iport = atoi(port);
+    int iport = os_atoi(port);
     if (0==iport) {
         println("bad port:%s", port);
         
@@ -427,7 +427,7 @@ int main(int argc, char *argv[])
     C.port = htons(iport);
     
     err = run();
-    if (err<0) {
+    if (err) {
         return err;
     }
     

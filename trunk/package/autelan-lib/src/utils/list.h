@@ -752,5 +752,200 @@ is_in_list(struct list_head *node)
     return  (node->next && node->prev) && false==list_empty(node);
 }
 
+/*
+* mlist: mixed(list & hash) list
+*/
+struct mlist_node {
+    struct hlist_node hash;
+    struct list_head  list;
+};
+
+struct mlist_table {
+    struct list_head  list;
+    struct hlist_head *hash;
+    uint32_t size;
+    uint32_t count;
+};
+
+static inline int
+__mlist_table_init(struct mlist_table *table, uint32_t size)
+{
+    table->hash = (struct hlist_head *)os_zalloc(size * sizeof(struct hlist_head));
+    if (NULL==table->hash) {
+        return -ENOMEM;
+    }
+    INIT_LIST_HEAD(&table->list);
+    table->size = size;
+    
+    return 0;
+}
+
+static inline int
+mlist_table_init(struct mlist_table *table, uint32_t size)
+{
+    if (NULL==table) {
+        return os_assert_value(-EINVAL1);
+    }
+    else {
+        return __mlist_table_init(table, size);
+    }
+}
+
+static inline struct mlist_node *
+__mlist_find(
+    struct mlist_table *table, 
+    int (*hash)(void),
+    bool (*eq)(struct mlist_node *node)
+)
+{
+    struct mlist_node *node;
+    struct hlist_head *head = &table->hash[(*hash)()];
+
+    hlist_for_each_entry(node, head, hash) {
+        if ((*eq)(node)) {
+            return node;
+        }
+    }
+
+    return NULL;
+}
+
+static inline struct mlist_node *
+__mlist_insert(
+    struct mlist_table *table, 
+    struct mlist_node *node,
+    int (*hash)(struct mlist_node *node)
+)
+{
+    if (NULL==node) {
+        return NULL; /* NOT assert */
+    }
+    else if (is_in_list(&node->list)) {
+        return os_assert_value(NULL);
+    }
+    
+    list_add(&node->list, &table->list);
+    hlist_add_head(&node->hash, &table->hash[(*hash)(node)]);
+    table->count++;
+    
+    return node;
+}
+
+static inline int
+__mlist_remove(struct mlist_table *table, struct mlist_node *node)
+{
+    if (false==is_in_list(&node->list)) {
+        return os_assert_value(-ENOINLIST);
+    }
+    
+    list_del(&node->list);
+    hlist_del(&node->hash);
+    table->count--;
+    
+    return 0;
+}
+
+static inline int
+__mlist_foreach(
+    struct mlist_table *table, 
+    multi_value_t (*cb)(struct mlist_node *node)
+)
+{
+    struct mlist_node *node, *tmp;
+    multi_value_u mv;
+    
+    list_for_each_entry_safe(node, tmp, &table->list, list) {
+        mv.value = (*cb)(node);
+        if (mv2_is_break(mv)) {
+            return mv2_result(mv);
+        }
+    }
+
+    return 0;
+}
+
+static inline struct mlist_node *
+mlist_find(
+    struct mlist_table *table, 
+    int (*hash)(void),
+    bool (*eq)(struct mlist_node *node)
+)
+{
+    if (NULL==table) {
+        return os_assert_value(NULL);
+    }
+    else if (NULL==hash) {
+        return os_assert_value(NULL);
+    }
+    else if (NULL==eq) {
+        return os_assert_value(NULL);
+    }
+    else {
+        return __mlist_find(table, hash, eq);
+    }
+}
+
+static inline struct mlist_node *
+mlist_insert(
+    struct mlist_table *table, 
+    int (*data_hash)(void),
+    int (*node_hash)(struct mlist_node *node),
+    bool (*eq)(struct mlist_node *node),
+    struct mlist_node *(*new)(void)
+)
+{
+    if (NULL==table) {
+        return os_assert_value(NULL);
+    }
+    else if (NULL==data_hash) {
+        return os_assert_value(NULL);
+    }
+    else if (NULL==node_hash) {
+        return os_assert_value(NULL);
+    }
+    else if (NULL==eq) {
+        return os_assert_value(NULL);
+    }
+    else if (NULL==new) {
+        return os_assert_value(NULL);
+    }
+    
+    struct mlist_node *node = __mlist_find(table, data_hash, eq);
+    if (node) {
+        return node;
+    } else {
+        return __mlist_insert(table, (*new)(), node_hash);
+    }
+}
+
+static inline int
+mlist_remove(struct mlist_table *table, struct mlist_node *node)
+{
+    if (NULL==table) {
+        return os_assert_value(-EINVAL1);
+    } if (NULL==node) {
+        return os_assert_value(-EINVAL2);
+    } else {
+        return __mlist_remove(table, node);
+    }
+}
+
+static inline int
+mlist_foreach(
+    struct mlist_table *table, 
+    multi_value_t (*cb)(struct mlist_node *node)
+)
+{
+    if (NULL==table) {
+        return os_assert_value(-EINVAL0);
+    }
+    else if (NULL==cb) {
+        return os_assert_value(-EINVAL1);
+    }
+    else {
+        return __mlist_foreach(table, cb);
+    }
+}
+
 #endif /* __LIST_H_59AC23A3758C993B7E60F02F5C35CFEC__ */
 

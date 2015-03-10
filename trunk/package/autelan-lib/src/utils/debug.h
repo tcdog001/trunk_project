@@ -115,6 +115,14 @@ extern appkey_t __AKID_DEBUG;
 #define __debug_test(fmt, args...)  do{ if (__is_debug_init_test) __debug_without_prefix(fmt, ##args);  }while(0)
 #define __vdebug_test(fmt, args)    do{ if (__is_debug_init_test) __vdebug_without_prefix(fmt, args);   }while(0)
 
+#define debug_ok_error(err, fmt, args...) do{   \
+    if (err) {                                  \
+        debug_error(fmt " error:%d", err, ##args); \
+    } else {                                    \
+        debug_ok(fmt " ok.", ##args);           \
+    }                                           \
+}while(0)
+
 #ifdef __APP__
 static inline int os_timeval_diff(struct timeval *old, struct timeval *new)
 {

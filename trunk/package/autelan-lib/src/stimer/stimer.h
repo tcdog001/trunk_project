@@ -1,6 +1,5 @@
 #ifndef __STIMER_H_03B9C4BFCDC8EF03E5E39A08D5201373__
 #define __STIMER_H_03B9C4BFCDC8EF03E5E39A08D5201373__
-#ifdef __STIMER__
 /******************************************************************************/
 #include "utils.h"
 #include "timer/timer.h"
@@ -83,11 +82,7 @@ stimer_res_size(struct stimer_response *res)
 static inline int
 stimer_res_error(struct stimer_response *res, int err)
 {
-    if (res) {
-        res->err = err;
-    }
-
-    return err;
+    return res?(res->err = err):err;
 }
 
 #define stimer_res_sprintf(_res, _fmt, args...)     ({  \
@@ -132,5 +127,4 @@ get_stimer_timeout_env(void)
     return get_int_env(ENV_STIMER_TIMEOUT_TICKS, STIMER_TIMEOUT_TICKS);
 }
 /******************************************************************************/
-#endif /* __STIMER__ */
 #endif /* __STIMER_H_03B9C4BFCDC8EF03E5E39A08D5201373__ */

@@ -108,92 +108,231 @@
 #define UM_SH_REPORT_DEFT       OS_OFF
 #endif
 
+#define UM_STATE(x)     UM_STATE_##x
 enum {
-    UM_USER_STATE_DISCONNECT = 1,
+    UM_STATE_INVALID,
+    
+    UM_STATE_DISCONNECT,
     
     /*
     * connect wifi
     */
-    UM_USER_STATE_CONNECT,
+    UM_STATE_CONNECT,
     /*
     * get ip by dhcp
     */
-    UM_USER_STATE_BIND,
+    UM_STATE_BIND,
     /*
     * auth by portal
     */
-    UM_USER_STATE_AUTH,
+    UM_STATE_AUTH,
 
-    UM_USER_STATE_END
+    UM_STATE_END
 };
 
-#define UM_USER_STRINGS                         \
-    [0] = "all",                                \
-    [UM_USER_STATE_DISCONNECT]  = "disconnect", \
-    [UM_USER_STATE_CONNECT]     = "connect",    \
-    [UM_USER_STATE_BIND]        = "bind",       \
-    [UM_USER_STATE_AUTH]        = "auth",       \
-    /* end of UM_USER_STRINGS */
+#define UM_STATE_STRINGS                {   \
+    [UM_STATE_INVALID]      = "invalid",    \
+    [UM_STATE_DISCONNECT]   = "disconnect", \
+    [UM_STATE_CONNECT]      = "connect",    \
+    [UM_STATE_BIND]         = "bind",       \
+    [UM_STATE_AUTH]         = "auth",       \
+}   /* end of UM_USER_STRINGS */
 
 static inline bool
-is_good_um_user_state(int statet)
+is_good_um_user_state(int state)
 {
-    return is_good_value(statet, UM_USER_STATE_DISCONNECT, UM_USER_STATE_END);
+    return is_good_value(state, UM_STATE_DISCONNECT, UM_STATE_END);
 }
 
 static inline bool
-is_online_um_user_state(int statet)
+is_online_um_user_state(int state)
 {
-    return is_good_value(statet, UM_USER_STATE_CONNECT, UM_USER_STATE_END);
+    return is_good_value(state, UM_STATE_CONNECT, UM_STATE_END);
+}
+
+static inline char **
+__um_user_state_strings(void)
+{
+    static char *array[UM_STATE_END] = UM_STATE_STRINGS;
+
+    return array;
 }
 
 static inline char *
 um_user_state_string(int state)
 {
-    static char *array[UM_USER_STATE_END] = {UM_USER_STRINGS};
-
+    char **array = __um_user_state_strings(state);
+    
     return is_good_um_user_state(state)?array[state]:__unknow;
 }
 
 static inline int
 um_user_state_idx(char *state)
 {
-    static char *array[UM_USER_STATE_END] = {UM_USER_STRINGS};
-
-    return os_getstringarrayidx(array, state, 
-                UM_USER_STATE_DISCONNECT, 
-                UM_USER_STATE_END);
+    char **array = __um_user_state_strings(state);
+    
+    return os_getstringarrayidx(array, state, UM_STATE_DISCONNECT, UM_STATE_END);
 }
 
 enum {
-    UM_USER_DEAUTH_ONLINETIME,
-    UM_USER_DEAUTH_FLOWLIMIT,
-    UM_USER_DEAUTH_ADMIN,
-    UM_USER_DEAUTH_INITIATIVE,
+    UM_DEAUTH_ONLINETIME,
+    UM_DEAUTH_FLOWLIMIT,
+    UM_DEAUTH_ADMIN,
+    UM_DEAUTH_INITIATIVE,
 
-    UM_USER_DEAUTH_END
+    UM_DEAUTH_END
 };
 
-#define UM_USER_DEAUTH_REASONS                  \
-    [UM_USER_DEAUTH_ONLINETIME] = "onlinetime", \
-    [UM_USER_DEAUTH_FLOWLIMIT]  = "flowlimit",  \
-    [UM_USER_DEAUTH_ADMIN]      = "admin",      \
-    [UM_USER_DEAUTH_INITIATIVE] = "initiative", \
-    /* end of UM_USER_DEAUTH_REASONS */
+#define UM_DEAUTH_REASONS               {   \
+    [UM_DEAUTH_ONLINETIME]  = "onlinetime", \
+    [UM_DEAUTH_FLOWLIMIT]   = "flowlimit",  \
+    [UM_DEAUTH_ADMIN]       = "admin",      \
+    [UM_DEAUTH_INITIATIVE]  = "initiative", \
+}   /* end of UM_DEAUTH_REASONS */
 
 static inline bool
-is_good_um_user_deauth_reason(int statet)
+is_good_um_user_deauth_reason(int reason)
 {
-    return is_good_enum(statet, UM_USER_DEAUTH_END);
+    return is_good_enum(reason, UM_DEAUTH_END);
+}
+
+static inline char **
+__um_user_deauth_reason_strings(void)
+{
+    static char *array[UM_DEAUTH_END] = UM_DEAUTH_REASONS;
+
+    return array;
 }
 
 static inline char *
 um_user_deauth_reason_string(int reason)
 {
-    static char *array[UM_USER_DEAUTH_END] = {UM_USER_DEAUTH_REASONS};
+    char **array = __um_user_deauth_reason_strings();
 
     return is_good_um_user_deauth_reason(reason)?array[reason]:__unknow;
 }
+
+static inline int
+um_user_deauth_reason_idx(char *reason)
+{
+    char **array = __um_user_deauth_reason_strings();
+    
+    return os_getstringarrayidx(array, reason, 0, UM_STATE_END);
+}
+
+enum {
+    UM_CLASS_NORMAL,
+    UM_CLASS_VIP,
+
+    UM_CLASS_END
+};
+
+#define UM_CLASS_STRINGS            {   \
+    [UM_CLASS_NORMAL]   = "normal",     \
+    [UM_CLASS_VIP]      = "vip",        \
+}   /* end of UM_CLASS_STRINGS */
+
+static inline bool
+is_good_um_user_class(int class)
+{
+    return is_good_enum(class, UM_CLASS_END);
+}
+
+static inline char **
+__um_user_class_strings(int class)
+{
+    static char *array[UM_CLASS_END] = UM_CLASS_STRINGS;
+
+    return array;
+}
+
+static inline char *
+um_user_class_string(int class)
+{
+    char **array = __um_user_class_strings();
+
+    return is_good_um_user_class(class)?array[class]:__unknow;
+}
+
+static inline int
+um_user_class_idx(char *class)
+{
+    char **array = __um_user_class_strings();
+
+    return os_getstringarrayidx(array, class, 0, UM_CLASS_END);
+}
+
+enum {
+    UM_LEVEL_NORMAL,
+    UM_LEVEL_LOW,
+
+    UM_LEVEL_END
+};
+
+#define UM_LEVEL_STRINGS        {   \
+    [UM_LEVEL_NORMAL]   = "normal", \
+    [UM_LEVEL_LOW]      = "low",    \
+}   /* end of UM_LEVEL_STRINGS */
+
+static inline bool
+is_good_um_user_level(int level)
+{
+    return is_good_enum(level, UM_LEVEL_END);
+}
+
+static inline char **
+__um_user_level_strings(int level)
+{
+    static char *array[UM_LEVEL_END] = UM_LEVEL_STRINGS;
+
+    return array;
+}
+
+static inline char *
+um_user_level_string(int level)
+{
+    char **array = __um_user_level_strings();
+
+    return is_good_um_user_level(level)?array[level]:__unknow;
+}
+
+static inline int
+um_user_level_idx(int level)
+{
+    char **array = __um_user_level_strings();
+
+    return os_getstringarrayidx(array, level, 0, UM_LEVEL_END);
+}
+
+struct userlimit {
+    uint32_t online;
+    
+    struct {
+        struct {
+            uint64_t max;
+        } flow;
+
+        struct {
+            uint32_t max;
+            uint32_t avg;
+        } rate;
+    } up, down, all;
+};
+
+struct userinfo {
+    uint32_t uptime;
+    
+    struct {
+        struct {
+            uint64_t total;
+            uint64_t cache;
+        } flow;
+
+        struct {
+            uint32_t now;
+        } rate;
+    } up, down, all;
+};
 
 struct apuser {
     int state;
@@ -209,18 +348,17 @@ struct apuser {
     int radioid;
     int wlanid;
     
+    int class;
+    int level;
+    int reason;
+    
     struct {
-        uint32_t uptime;
-        uint32_t onlinelimit;   /* just for auth */
-        int      signal;        /* just for wifi */
-        
-        struct {
-            uint64_t flowtotal;
-            uint64_t flowcache;
-            uint64_t flowlimit; /* just for auth */
-            uint32_t ratelimit;
-        } up, down, all;
-    } wifi, auth;
+        struct userlimit wifi, auth;
+    } limit;
+    
+    struct {
+        struct userinfo wifi, auth;
+    } info;
     
     struct {
         struct hlist_node mac; /* hash node in umc.hash */
@@ -235,7 +373,7 @@ um_user_init(struct apuser *user)
 {
     os_objzero(user);
 
-    user->state = UM_USER_STATE_DISCONNECT;
+    user->state = UM_STATE_DISCONNECT;
     
     INIT_HLIST_NODE(&user->node.mac);
     INIT_HLIST_NODE(&user->node.ip);
@@ -247,9 +385,59 @@ typedef multi_value_t um_get_f(struct apuser *user);
 
 #define UM_POLICY_INITER(_id, _name, _type) \
         [_id] = { .name = _name, .type = BLOBMSG_TYPE_##_type }
+
 #define UM_PARAM_INITER(_policy) \
         { .params = _policy, .n_params = os_count_of(_policy) }
 
+#define __UM_USER_INFO(_a, _b)          UM_USER_INFO_##_a##_##_b
+#define __UM_USER_LIMIT(_a, _b)         UM_USER_LIMIT_##_a##_##_b
+#define UM_USER_INFO(_a, _b, _c, _d)    UM_USER_INFO_##_a##_##_b##_##_c##_##_d
+#define UM_USER_LIMIT(_a, _b, _c, _d)   UM_USER_LIMIT_##_a##_##_b##_##_c##_##_d
+
+#define __UM_USER_LISTS(_obj) \
+    UM_USER_##_obj##_##UPTIME, \
+    UM_USER_INFO(_obj, UPFLOWTOTAL),    \
+    UM_USER_INFO(_obj, up, flow, cache),    \
+    UM_USER_INFO(_obj, down, flow, total),  \
+    UM_USER_INFO(_obj, down, flow, cache),  \
+    UM_USER_INFO(_obj, all, flow, total),   \
+    UM_USER_INFO(_obj, all, flow, cache),   \
+                                            \
+    __UM_USER_LIMIT(_obj, online),          \
+    UM_USER_LIMIT(_obj, up, flow, max),     \
+    UM_USER_LIMIT(_obj, up, rate, max),     \
+    UM_USER_LIMIT(_obj, up, rate, avg),     \
+    UM_USER_LIMIT(_obj, down, flow, max),   \
+    UM_USER_LIMIT(_obj, down, rate, max),   \
+    UM_USER_LIMIT(_obj, down, rate, avg),   \
+    UM_USER_LIMIT(_obj, all, flow, max),    \
+    UM_USER_LIMIT(_obj, all, rate, max),    \
+    UM_USER_LIMIT(_obj, all, rate, avg)     \
+    /* end of __UM_USER_LISTS */
+
+#define UM_USER(_OBJ)          \
+    UM_USER_##_OBJ##_UPTIME,        \
+    UM_USER_##_OBJ##_ONLINE,        \
+    UM_USER_##_OBJ##_UPFLOWTOTAL,   \
+    UM_USER_##_OBJ##_UPFLOWCACHE,   \
+    UM_USER_##_OBJ##_UPFLOWMAX,     \
+    UM_USER_##_OBJ##_UPRATENOW,     \
+    UM_USER_##_OBJ##_UPRATEMAX,     \
+    UM_USER_##_OBJ##_UPRATEAVG,     \
+    UM_USER_##_OBJ##_DOWNFLOWTOTAL, \
+    UM_USER_##_OBJ##_DOWNFLOWCACHE, \
+    UM_USER_##_OBJ##_DOWNFLOWMAX,   \
+    UM_USER_##_OBJ##_DOWNRATENOW,   \
+    UM_USER_##_OBJ##_DOWNRATEMAX,   \
+    UM_USER_##_OBJ##_DOWNRATEAVG,   \
+    UM_USER_##_OBJ##_ALLFLOWTOTAL,  \
+    UM_USER_##_OBJ##_ALLFLOWCACHE,  \
+    UM_USER_##_OBJ##_ALLFLOWMAX,    \
+    UM_USER_##_OBJ##_ALLRATENOW,    \
+    UM_USER_##_OBJ##_ALLRATEMAX,    \
+    UM_USER_##_OBJ##_ALLRATEAVG     \
+    /* end of UM_USER_INFO */
+    
 enum {
 	UM_USER_AP,
 	UM_USER_VAP,
@@ -259,87 +447,55 @@ enum {
 	UM_USER_MAC,
 	UM_USER_IP,
 	UM_USER_STATE,
+	UM_USER_CLASS,
+	UM_USER_LEVEL,
+	UM_USER_REASON,
 	
-	UM_USER_WIFI_UPTIME,
-	UM_USER_WIFI_SIGNAL,
-	UM_USER_WIFI_ONLINELIMIT,
-    UM_USER_WIFI_UPFLOWTOTAL,
-    UM_USER_WIFI_UPFLOWCACHE,
-    UM_USER_WIFI_UPFLOWLIMIT,
-    UM_USER_WIFI_UPRATELIMIT,
-    UM_USER_WIFI_DOWNFLOWTOTAL,
-    UM_USER_WIFI_DOWNFLOWCACHE,
-    UM_USER_WIFI_DOWNFLOWLIMIT,
-    UM_USER_WIFI_DOWNRATELIMIT,
-    UM_USER_WIFI_ALLFLOWTOTAL,
-    UM_USER_WIFI_ALLFLOWCACHE,
-    UM_USER_WIFI_ALLFLOWLIMIT,
-    UM_USER_WIFI_ALLRATELIMIT,
-	
-	UM_USER_AUTH_UPTIME,
-	UM_USER_AUTH_SIGNAL,
-	UM_USER_AUTH_ONLINELIMIT,
-    UM_USER_AUTH_UPFLOWTOTAL,
-    UM_USER_AUTH_UPFLOWCACHE,
-    UM_USER_AUTH_UPFLOWLIMIT,
-    UM_USER_AUTH_UPRATELIMIT,
-    UM_USER_AUTH_DOWNFLOWTOTAL,
-    UM_USER_AUTH_DOWNFLOWCACHE,
-    UM_USER_AUTH_DOWNFLOWLIMIT,
-    UM_USER_AUTH_DOWNRATELIMIT,
-    UM_USER_AUTH_ALLFLOWTOTAL,
-    UM_USER_AUTH_ALLFLOWCACHE,
-    UM_USER_AUTH_ALLFLOWLIMIT,
-    UM_USER_AUTH_ALLRATELIMIT,
-    
-    UM_USER_DEAUTH_REASON,
+    UM_USER(WIFI),
+    UM_USER(AUTH),
     
 	UM_USER_END,
 };
 
+#define __UM_USER_POLICY_INITER(_OBJ, _obj) \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_UPTIME,       #_obj ".uptime",        INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_ONLINE,       #_obj ".online",        INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_UPFLOWTOTAL,  #_obj ".upflowtotal",   INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_UPFLOWCACHE,  #_obj ".upflowcache",   INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_UPFLOWMAX,    #_obj ".upflowmax",     INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_UPRATENOW,    #_obj ".upratenow",     INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_UPRATEMAX,    #_obj ".upratemax",     INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_UPRATEAVG,    #_obj ".uprateavg",     INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_DOWNFLOWTOTAL,#_obj ".downflowtotal", INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_DOWNFLOWCACHE,#_obj ".downflowcache", INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_DOWNFLOWMAX,  #_obj ".downflowmax",   INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_DOWNRATENOW,  #_obj ".downratenow",   INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_DOWNRATEMAX,  #_obj ".downratemax",   INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_DOWNRATEAVG,  #_obj ".downrateavg",   INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_ALLFLOWTOTAL, #_obj ".allflowtotal",  INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_ALLFLOWCACHE, #_obj ".allflowcache",  INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_ALLFLOWMAX,   #_obj ".allflowmax",    INT64), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_ALLRATENOW,   #_obj ".allratenow",    INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_ALLRATEMAX,   #_obj ".allratemax",    INT32), \
+    UM_POLICY_INITER(UM_USER_##_OBJ##_ALLRATEAVG,   #_obj ".allrateavg",    INT32) \
+    /* end of __UM_USER_POLICY_INITER */
+
 #define UM_USER_POLICY_INITER  { \
-    UM_POLICY_INITER(UM_USER_AP,            "ap",           STRING), /* "XX:XX:XX:XX:XX:XX" */ \
-    UM_POLICY_INITER(UM_USER_VAP,           "vap",          STRING), /* "XX:XX:XX:XX:XX:XX" */ \
-    UM_POLICY_INITER(UM_USER_WLANID,        "wlanid",       INT32), \
-    UM_POLICY_INITER(UM_USER_RADIOID,       "radioid",      INT32), \
-    UM_POLICY_INITER(UM_USER_MAC,           "mac",          STRING), /* "XX:XX:XX:XX:XX:XX" */ \
-    UM_POLICY_INITER(UM_USER_IP,            "ip",           STRING), /* "xxx.xxx.xxx.xxx" */ \
-    UM_POLICY_INITER(UM_USER_STATE,         "state",        STRING), \
+    UM_POLICY_INITER(UM_USER_AP,        "ap",       STRING), /* "XX:XX:XX:XX:XX:XX" */  \
+    UM_POLICY_INITER(UM_USER_VAP,       "vap",      STRING), /* "XX:XX:XX:XX:XX:XX" */  \
+    UM_POLICY_INITER(UM_USER_WLANID,    "wlanid",   INT32),     \
+    UM_POLICY_INITER(UM_USER_RADIOID,   "radioid",  INT32),     \
+    UM_POLICY_INITER(UM_USER_IFNAME,    "ifname",   STRING),    \
+    UM_POLICY_INITER(UM_USER_MAC,       "mac",      STRING), /* "XX:XX:XX:XX:XX:XX" */  \
+    UM_POLICY_INITER(UM_USER_IP,        "ip",       STRING), /* "xxx.xxx.xxx.xxx" */    \
+    UM_POLICY_INITER(UM_USER_STATE,     "state",    STRING), \
+    UM_POLICY_INITER(UM_USER_CLASS,     "class",    STRING), \
+    UM_POLICY_INITER(UM_USER_LEVEL,     "level",    STRING), \
+    UM_POLICY_INITER(UM_USER_REASON,    "reason",   STRING), \
     \
-    UM_POLICY_INITER(UM_USER_WIFI_UPTIME,       "wifi.uptime",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_SIGNAL,       "wifi.signal",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_ONLINELIMIT,  "wifi.onlinelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWTOTAL,  "wifi.upflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWCACHE,  "wifi.upflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_UPFLOWLIMIT,  "wifi.upflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_UPRATELIMIT,  "wifi.upratelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWTOTAL,"wifi.downflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWCACHE,"wifi.downflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_DOWNFLOWLIMIT,"wifi.downflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_DOWNRATELIMIT,"wifi.downratelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWTOTAL, "wifi.allflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWCACHE, "wifi.allflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_ALLFLOWLIMIT, "wifi.allflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_WIFI_ALLRATELIMIT, "wifi.allratelimit",  INT32), \
-    \
-    UM_POLICY_INITER(UM_USER_AUTH_UPTIME,       "auth.uptime",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_SIGNAL,       "auth.signal",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_ONLINELIMIT,  "auth.onlinelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWTOTAL,  "auth.upflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWCACHE,  "auth.upflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_UPFLOWLIMIT,  "auth.upflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_UPRATELIMIT,  "auth.upratelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWTOTAL,"auth.downflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWCACHE,"auth.downflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_DOWNFLOWLIMIT,"auth.downflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_DOWNRATELIMIT,"auth.downratelimit",  INT32), \
-    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWTOTAL, "auth.allflowtotal",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWCACHE, "auth.allflowcache",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_ALLFLOWLIMIT, "auth.allflowlimit",  INT64), \
-    UM_POLICY_INITER(UM_USER_AUTH_ALLRATELIMIT, "auth.allratelimit",  INT32), \
-    \
-    UM_POLICY_INITER(UM_USER_DEAUTH_REASON,     "deauth.reason",    STRING), \
-}
+    __UM_USER_POLICY_INITER(WIFI, wifi), \
+    __UM_USER_POLICY_INITER(AUTH, auth), \
+} /* end of UM_USER_POLICY_INITER */
 
 enum {
     UM_GETUSER_STATE,
@@ -360,16 +516,16 @@ enum {
 };
 
 #define UM_GETUSER_POLICY_INITER    { \
-	UM_POLICY_INITER(UM_GETUSER_STATE,  "state",    STRING),    \
-	UM_POLICY_INITER(UM_GETUSER_AP,     "ap",       STRING),    \
-	UM_POLICY_INITER(UM_GETUSER_APMASK, "apmask",   STRING),    \
-	UM_POLICY_INITER(UM_GETUSER_MAC,    "mac",      STRING),    \
-	UM_POLICY_INITER(UM_GETUSER_MACMASK,"macmask",  STRING),    \
-	UM_POLICY_INITER(UM_GETUSER_IP,     "ip",       STRING),    \
-	UM_POLICY_INITER(UM_GETUSER_IPMASK, "ipmask",   STRING),    \
-	UM_POLICY_INITER(UM_GETUSER_RADIO,  "radio",    INT32),     \
-	UM_POLICY_INITER(UM_GETUSER_WLAN,   "wlan",     INT32),     \
-}
+    UM_POLICY_INITER(UM_GETUSER_STATE,    "state",    STRING), \
+    UM_POLICY_INITER(UM_GETUSER_AP,       "ap",       STRING), \
+    UM_POLICY_INITER(UM_GETUSER_APMASK,   "apmask",   STRING), \
+    UM_POLICY_INITER(UM_GETUSER_MAC,      "mac",      STRING), \
+    UM_POLICY_INITER(UM_GETUSER_MACMASK,  "macmask",  STRING), \
+    UM_POLICY_INITER(UM_GETUSER_IP,       "ip",       STRING), \
+    UM_POLICY_INITER(UM_GETUSER_IPMASK,   "ipmask",   STRING), \
+    UM_POLICY_INITER(UM_GETUSER_RADIO,    "radio",    INT32),  \
+    UM_POLICY_INITER(UM_GETUSER_WLAN,     "wlan",     INT32),  \
+} /* end of UM_GETUSER_POLICY_INITER */
 
 #define UM_INTFPOLICY_DISABLE   0
 #define UM_INTFPOLICY_UM        1
@@ -402,25 +558,34 @@ enum {
 
 enum {
     UM_LIMITPOLICY_ONLINE,
-    UM_LIMITPOLICY_UPFLOW,
-    UM_LIMITPOLICY_UPRATE,
-    UM_LIMITPOLICY_DOWNFLOW,
-    UM_LIMITPOLICY_DOWNRATE,
-    UM_LIMITPOLICY_ALLFLOW,
-    UM_LIMITPOLICY_ALLRATE,
+    UM_LIMITPOLICY_UPFLOWMAX,
+    UM_LIMITPOLICY_UPRATEMAX,
+    UM_LIMITPOLICY_UPRATEAVG,
+    UM_LIMITPOLICY_DOWNFLOWMAX,
+    UM_LIMITPOLICY_DOWNRATEMAX,
+    UM_LIMITPOLICY_DOWNRATEAVG,
+    UM_LIMITPOLICY_ALLFLOWMAX,
+    UM_LIMITPOLICY_ALLRATEMAX,
+    UM_LIMITPOLICY_ALLRATEAVG,
 
     UM_LIMITPOLICY_END
 };
 
 #define UM_LIMITPOLICY_INITER    { \
-	UM_POLICY_INITER(UM_LIMITPOLICY_ONLINE,    "onlinelimit",   INT32), \
-	UM_POLICY_INITER(UM_LIMITPOLICY_UPFLOW,    "upflowlimit",   INT64), \
-	UM_POLICY_INITER(UM_LIMITPOLICY_UPRATE,    "upratelimit",   INT32), \
-	UM_POLICY_INITER(UM_LIMITPOLICY_DOWNFLOW,  "downflowlimit", INT64), \
-	UM_POLICY_INITER(UM_LIMITPOLICY_DOWNRATE,  "downratelimit", INT32), \
-	UM_POLICY_INITER(UM_LIMITPOLICY_ALLFLOW,   "allflowlimit",  INT64), \
-	UM_POLICY_INITER(UM_LIMITPOLICY_ALLRATE,   "allratelimit",  INT32), \
-}
+	UM_POLICY_INITER(UM_LIMITPOLICY_ONLINE,     "online",       INT32), \
+	                                                                    \
+	UM_POLICY_INITER(UM_LIMITPOLICY_UPFLOWMAX,  "upflowmax",    INT64), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_UPRATEMAX,  "upratemax",    INT32), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_UPRATEAVG,  "uprateavg",    INT32), \
+	                                                                    \
+	UM_POLICY_INITER(UM_LIMITPOLICY_DOWNFLOWMAX,"downflowmax",  INT64), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_DOWNRATEMAX,"downratemax",  INT32), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_DOWNRATEAVG,"downrateavg",  INT32), \
+	                                                                    \
+	UM_POLICY_INITER(UM_LIMITPOLICY_ALLFLOWMAX, "allflowmax",   INT64), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_ALLRATEMAX, "allratemax",   INT32), \
+	UM_POLICY_INITER(UM_LIMITPOLICY_ALLRATEAVG, "allrateavg",   INT32), \
+} /* end of UM_LIMITPOLICY_INITER */
 
 struct um_timer {
     struct uloop_timeout tm;
@@ -510,17 +675,10 @@ struct um_control {
         struct blobmsg_policy wlan[UM_WLANPOLICY_END];
         struct blobmsg_policy limit[UM_LIMITPOLICY_END];
     } policy;
-    
+
     struct {
-        struct {
-            uint32_t onlinelimit;   /* just for auth */
-            
-            struct {
-                uint64_t flowlimit; /* just for auth */
-                uint32_t ratelimit;
-            } up, down, all;
-        } wifi, auth;
-    } limit;
+        struct userlimit wifi, auth;
+    } limit[UM_CLASS_END][UM_LEVEL_END];
     
     struct {
         struct uci_context *ctx;
@@ -531,7 +689,7 @@ struct um_control {
         
         struct {
             struct um_uci wifi, auth;
-        } limit;
+        } limit[UM_CLASS_END][UM_LEVEL_END];
     } uci;
     
     struct {
@@ -539,8 +697,8 @@ struct um_control {
         struct ubus_object_type type;
         struct ubus_method *methods;
         struct ubus_subscriber subscriber;
-    } obj;
-
+    } ubus;
+    
     struct {
         appkey_t uci;
         appkey_t ubus;
@@ -549,16 +707,6 @@ struct um_control {
         appkey_t flowscan;
     } debug;
 };
-
-#define um_user_limit_update(_user, _var) do{ \
-    (_user)->_var.onlinelimit   = umc.limit._var.onlinelimit;   \
-    (_user)->_var.up.flowlimit  = umc.limit._var.up.flowlimit;  \
-    (_user)->_var.up.ratelimit  = umc.limit._var.up.ratelimit;  \
-    (_user)->_var.down.flowlimit= umc.limit._var.down.flowlimit;\
-    (_user)->_var.down.ratelimit= umc.limit._var.down.ratelimit;\
-    (_user)->_var.all.flowlimit = umc.limit._var.all.flowlimit; \
-    (_user)->_var.all.ratelimit = umc.limit._var.all.ratelimit; \
-}while(0)
 
 struct user_filter {
     int state;
@@ -689,13 +837,7 @@ extern void
 um_ubus_fini(void);
 /******************************************************************************/
 extern void
-__um_user_dump(struct apuser *user, char *action);
-
-#define um_user_dump(user, action)  do{ \
-    if (appkey_get(umc.debug.user, 0)) {   \
-        __um_user_dump(user, action);   \
-    }                                   \
-}while(0)
+um_user_dump(struct apuser *user, char *action);
 
 extern struct apuser *
 user_connect(byte mac[], struct um_intf *intf);
@@ -710,7 +852,7 @@ extern void
 user_unbind(struct apuser *user);
 
 extern struct apuser *
-user_auth(struct apuser *user);
+user_auth(struct apuser *user, int class);
 
 extern void
 user_deauth(struct apuser *user, int reason);
@@ -728,7 +870,7 @@ extern void
 um_user_unbind(byte mac[]);
 
 extern struct apuser *
-um_user_auth(byte mac[]);
+um_user_auth(byte mac[], int class);
 
 extern void
 um_user_deauth(byte mac[], int reason);
@@ -761,10 +903,7 @@ extern int
 um_user_delby(struct user_filter *filter);
 
 extern int 
-um_user_wifi_limit_update(void);
-
-extern int 
-um_user_auth_limit_update(void);
+um_user_update_limit(void);
 /******************************************************************************/
 extern int
 um_user_scan(void);

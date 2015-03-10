@@ -379,7 +379,7 @@ load_wireless(struct uci_package *package)
 }
 
 static void
-load_global(struct um_uci *uci, struct blob_attr *tb[], void *map[])
+load_global(struct um_uci *uci, struct blob_attr *tb[], void *addr[])
 {
     struct blob_attr *p;
     int count = uci->param.n_params;
@@ -391,13 +391,13 @@ load_global(struct um_uci *uci, struct blob_attr *tb[], void *map[])
         switch(uci->param.params->type) {
             case BLOBMSG_TYPE_INT32:
                 if (p) {
-                    *(uint32_t *)map[i] = blobmsg_get_u32(p);
+                    *(uint32_t *)addr[i] = blobmsg_get_u32(p);
                 }
                 
                 break;
             case BLOBMSG_TYPE_INT64:
                 if (p) {
-                    *(uint64_t *)map[i] = blobmsg_get_u64(p);
+                    *(uint64_t *)addr[i] = blobmsg_get_u64(p);
                 }
                 
                 break;
@@ -407,42 +407,38 @@ load_global(struct um_uci *uci, struct blob_attr *tb[], void *map[])
     }
 }
 
-static int
-load_wifi_limit(struct blob_attr *tb[])
-{
-    static void *map[UM_LIMITPOLICY_END] = {
-        [UM_LIMITPOLICY_ONLINE]     = &umc.limit.wifi.onlinelimit,
-        [UM_LIMITPOLICY_UPFLOW]     = &umc.limit.wifi.up.flowlimit,
-        [UM_LIMITPOLICY_UPRATE]     = &umc.limit.wifi.up.ratelimit,
-        [UM_LIMITPOLICY_DOWNFLOW]   = &umc.limit.wifi.down.flowlimit,
-        [UM_LIMITPOLICY_DOWNRATE]   = &umc.limit.wifi.down.flowlimit,
-        [UM_LIMITPOLICY_ALLFLOW]    = &umc.limit.wifi.all.flowlimit,
-        [UM_LIMITPOLICY_ALLRATE]    = &umc.limit.wifi.all.flowlimit,
-    };
+#define UM_LIMITPOLICY_MAP(_obj, _class, _level) { \
+    [UM_LIMITPOLICY_ONLINE]     = &umc.limit[_class][_level]._obj.online,       \
+    [UM_LIMITPOLICY_UPFLOWMAX]  = &umc.limit[_class][_level]._obj.up.flow.max,  \
+    [UM_LIMITPOLICY_UPRATEMAX]  = &umc.limit[_class][_level]._obj.up.rate.max,  \
+    [UM_LIMITPOLICY_UPRATEAVG]  = &umc.limit[_class][_level]._obj.up.rate.avg,  \
+    [UM_LIMITPOLICY_DOWNFLOWMAX]= &umc.limit[_class][_level]._obj.down.flow.max,\
+    [UM_LIMITPOLICY_DOWNRATEMAX]= &umc.limit[_class][_level]._obj.down.rate.max,\
+    [UM_LIMITPOLICY_DOWNRATEAVG]= &umc.limit[_class][_level]._obj.down.rate.avg,\
+    [UM_LIMITPOLICY_ALLFLOWMAX] = &umc.limit[_class][_level]._obj.all.flow.max, \
+    [UM_LIMITPOLICY_ALLRATEMAX] = &umc.limit[_class][_level]._obj.all.rate.max, \
+    [UM_LIMITPOLICY_ALLRATEAVG] = &umc.limit[_class][_level]._obj.all.rate.avg, \
+} /* end of UM_LIMITPOLICY_MAP */
 
-    os_objzero(&umc.limit.wifi);
-    load_global(&umc.uci.limit.wifi, tb, map);
-    um_user_wifi_limit_update();
+#define load_obj_limit(_obj, _class, _level, _tb) do { \
+    void *addr[UM_LIMITPOLICY_END] = UM_LIMITPOLICY_MAP(_obj, _class, _level); \
+                                                        \
+    os_objzero(&umc.limit[_class][_level]._obj);        \
+    load_global(&umc.uci.limit[_class][_level]._obj, _tb, addr); \
+}while(0) /* end of load_obj_limit */
+
+static int
+load_wifi_limit(char *name, int class, int level, struct blob_attr *tb[])
+{
+    load_obj_limit(wifi, class, level, tb);
 
     return 0;
 }
 
 static int
-load_auth_limit(struct blob_attr *tb[])
+load_auth_limit(char *name, int class, int level, struct blob_attr *tb[])
 {
-    static void *map[UM_LIMITPOLICY_END] = {
-        [UM_LIMITPOLICY_ONLINE]     = &umc.limit.auth.onlinelimit,
-        [UM_LIMITPOLICY_UPFLOW]     = &umc.limit.auth.up.flowlimit,
-        [UM_LIMITPOLICY_UPRATE]     = &umc.limit.auth.up.ratelimit,
-        [UM_LIMITPOLICY_DOWNFLOW]   = &umc.limit.auth.down.flowlimit,
-        [UM_LIMITPOLICY_DOWNRATE]   = &umc.limit.auth.down.flowlimit,
-        [UM_LIMITPOLICY_ALLFLOW]    = &umc.limit.auth.all.flowlimit,
-        [UM_LIMITPOLICY_ALLRATE]    = &umc.limit.auth.all.flowlimit,
-    };
-
-    os_objzero(&umc.limit.auth);
-    load_global(&umc.uci.limit.auth, tb, map);
-    um_user_auth_limit_update();
+    load_obj_limit(auth, class, level, tb);
 
     return 0;
 }
@@ -452,19 +448,31 @@ load_limit(
     struct uci_package *package,
     struct um_uci *uci,
     char *name,
-    int (*load)(struct blob_attr *tb[])
+    int class,
+    int level,
+    int (*load)(int class, int level, struct blob_attr *tb[])
 )
 {
     struct uci_element *e = NULL;    
     struct blob_attr *tb[UM_LIMITPOLICY_END] = {NULL};
+    char uci_name[1+OS_LINE_LEN];
+    
+    os_saprintf(uci_name, "%s_%s_%s", 
+        name,
+        um_user_class_string(class),
+        um_user_level_string(level));
     
 	uci_foreach_element(&package->sections, e) {
 		struct uci_section *s = uci_to_section(e);
 		
 		if (0==os_strcmp(s->type, uci->uci_type) &&
-		    0==os_strcmp(s->e.name, name)) {
+		    0==os_strcmp(s->e.name, uci_name)) {
+		    
     		section_to_blob(s, &uci->param, tb, UM_LIMITPOLICY_END);
-    		(*load)(tb);
+
+    		debug_uci_trace("load limit %s", name);
+    		
+    		(*load)(class, level, tb);
 		}
 	}
 }
@@ -472,12 +480,17 @@ load_limit(
 static int
 load_um(struct uci_package *package)
 {
-	load_limit(package, &umc.uci.limit.wifi, "wifi", load_wifi_limit);
-	debug_uci_trace("load wifi limit");
-	
-	load_limit(package, &umc.uci.limit.auth, "auth", load_auth_limit);
-	debug_uci_trace("load auth limit");
+    int i, j;
 
+    for (i=0; i<UM_CLASS_END; i++) {
+        for (j=0; j<UM_LEVEL_END; j++) {
+        	load_limit(package, &umc.uci.limit[i][j].wifi, "wifi", i, j, load_wifi_limit);
+        	load_limit(package, &umc.uci.limit[i][j].auth, "auth", i, j, load_auth_limit);
+    	}
+    }
+    
+    um_user_update_limit();
+    
 	return 0;
 }
 
@@ -505,7 +518,9 @@ um_uci_load(void)
     
     err = uci_init();
     if (err) {
-        return err;
+        debug_uci_error("uci init failed(%d)", err);
+        
+        goto error;
     }
     
     wireless = package_open("wireless");
@@ -517,7 +532,7 @@ um_uci_load(void)
     }
 
     err = load_wireless(wireless);
-    if (err<0) {
+    if (err) {
         debug_uci_error("wireless load failed(%d)", err);
         
         goto error;
@@ -530,16 +545,15 @@ um_uci_load(void)
         
         goto error;
     }
-
+    
     err = load_um(um);
-    if (err<0) {
+    if (err) {
         debug_uci_error("um load failed(%d)", err);
         
         goto error;
     }
 
     debug_uci_ok("uci load");
-
     /* go down */
 error:
     if (wireless) {

@@ -13,6 +13,25 @@ deauth_cb(struct apuser *user, int reason);
 static void 
 unbind_cb(struct apuser *user);
 
+#define __update_limit(_user, _obj)         do{ \
+    int class = (_user)->class;                 \
+    int level = (_user)->level;                 \
+                                                \
+    struct userlimit *dst = &(_user)->limit[class][level]._obj; \
+    struct userlimit *src = &umc.limit[class][level]._obj;      \
+                                                \
+    if (false==os_objeq(dst, src)) {            \
+        os_objdcpy(dst, src);                   \
+    }                                           \
+}while(0)
+
+static void
+update_limit(struct apuser *user)
+{
+    __update_limit(user, wifi);
+    __update_limit(user, auth);
+}
+
 static int
 hashbuf(byte *buf, int len, int mask)
 {
@@ -156,8 +175,7 @@ __remove(struct apuser *user)
         __del_iphash(user);
     }
     umc.head.count--;
-
-    debug_trace("remove user, count(%d)", umc.head.count);
+    
     um_user_dump(user, "remove");
 
     return user;
@@ -184,8 +202,7 @@ __insert(struct apuser *user)
         __add_iphash(user);
     }
     umc.head.count++;
-
-    debug_trace("insert user, count(%d)", umc.head.count);
+    
     um_user_dump(user, "insert");
     
     return user;
@@ -230,9 +247,8 @@ __create(byte mac[], struct um_intf *intf)
     um_user_init(user);
     os_maccpy(user->mac, mac);
     __bindif(user, intf);
-
-    um_user_limit_update(user, wifi);
-    um_user_limit_update(user, auth);
+    
+    update_limit(user);
     
     return __insert(user);
 }
@@ -243,8 +259,7 @@ __update(struct apuser *old, struct apuser *new, void (*cb)(struct apuser *old, 
     if (NULL==old || NULL==new) {
         return NULL;
     }
-
-    if (cb) {
+    else if (cb) {
         (*cb)(old, new);
     }
     
@@ -257,7 +272,7 @@ __update(struct apuser *old, struct apuser *new, void (*cb)(struct apuser *old, 
 static void
 __deauth(struct apuser *user, int reason, void (*cb)(struct apuser *user, int reason))
 {
-    if (NULL==user || UM_USER_STATE_AUTH != user->state) {
+    if (NULL==user || UM_STATE_AUTH != user->state) {
         return;
     }
     else if (cb) {
@@ -267,16 +282,16 @@ __deauth(struct apuser *user, int reason, void (*cb)(struct apuser *user, int re
     /*
     * auth==>bind
     */
-    user->state = UM_USER_STATE_BIND;
+    user->state = UM_STATE_BIND;
     user->auth.uptime = 0;
 }
 
 static void
 __unbind(struct apuser *user, void (*cb)(struct apuser *user))
 {
-    __deauth(user, UM_USER_DEAUTH_INITIATIVE, deauth_cb);
+    __deauth(user, UM_DEAUTH_INITIATIVE, deauth_cb);
     
-    if (NULL==user || UM_USER_STATE_BIND != user->state) {
+    if (NULL==user || UM_STATE_BIND != user->state) {
         return;
     }
     else if (cb) {
@@ -286,7 +301,7 @@ __unbind(struct apuser *user, void (*cb)(struct apuser *user))
     /*
     * bind==>connect
     */
-    user->state = UM_USER_STATE_CONNECT;
+    user->state = UM_STATE_CONNECT;
     
     user->wifi.up.flowcache     = 0;
     user->wifi.down.flowcache   = 0;
@@ -300,7 +315,7 @@ __disconnect(struct apuser *user, void (*cb)(struct apuser *user))
 {
     __unbind(user, NULL);
     
-    if (NULL==user || UM_USER_STATE_CONNECT != user->state) {
+    if (NULL==user || UM_STATE_CONNECT != user->state) {
         return;
     }
     else if (cb) {
@@ -310,7 +325,7 @@ __disconnect(struct apuser *user, void (*cb)(struct apuser *user))
     /*
     * connect==>disconnect
     */
-    user->state = UM_USER_STATE_DISCONNECT;
+    user->state = UM_STATE_DISCONNECT;
     
     user->wifi.uptime   = 0;
     user->wifi.signal   = 0;
@@ -335,7 +350,7 @@ __connect(struct apuser *user, struct um_intf *intf, void (*cb)(struct apuser *u
 
     __bindif(user, intf);
     user->aging = UM_AGING_TIMES;
-    user->state = UM_USER_STATE_CONNECT;
+    user->state = UM_STATE_CONNECT;
     
     if (cb) {
         (*cb)(user);
@@ -373,7 +388,7 @@ __bind(struct apuser *user, uint32_t ip, struct um_intf *intf, void (*cb)(struct
     __reinsert_byip(user, ip);
     
     user->aging = UM_AGING_TIMES;
-    user->state = UM_USER_STATE_BIND;
+    user->state = UM_STATE_BIND;
     
     if (cb) {
         (*cb)(user);
@@ -381,10 +396,10 @@ __bind(struct apuser *user, uint32_t ip, struct um_intf *intf, void (*cb)(struct
 }
 
 static void
-__auth(struct apuser *user, void (*cb)(struct apuser *user))
+__auth(struct apuser *user, int class, void (*cb)(struct apuser *user))
 {
     if (NULL==user ||
-        UM_USER_STATE_BIND != user->state) {
+        UM_STATE_BIND != user->state) {
         return;
     }
     
@@ -395,7 +410,17 @@ __auth(struct apuser *user, void (*cb)(struct apuser *user))
     /*
     * bind==>auth
     */
-    user->state = UM_USER_STATE_AUTH;
+    user->state = UM_STATE_AUTH;
+    
+    /*
+    * init limit
+    */
+    if (class!=user->class) {
+        user->class = class;
+
+        os_objdcpy(&user->limit.wifi, &umc.limit[class][user->level].wifi);
+        os_objdcpy(&user->limit.auth, &umc.limit[class][user->level].auth);
+    }
     
     if (cb) {
         (*cb)(user);
@@ -522,9 +547,9 @@ user_unbind(struct apuser *user)
 }
 
 struct apuser *
-user_auth(struct apuser *user)
+user_auth(struct apuser *user, int class)
 {
-    __auth(user, auth_cb);
+    __auth(user, class, auth_cb);
 
     return user;
 }
@@ -568,9 +593,9 @@ um_user_unbind(byte mac[])
 }
 
 struct apuser *
-um_user_auth(byte mac[])
+um_user_auth(byte mac[], int class)
 {
-    return user_auth(__get(mac));
+    return user_auth(__get(mac), class);
 }
 
 void
@@ -654,59 +679,60 @@ um_user_bindif(struct apuser *user, struct um_intf *intf)
     }
 }
 
+#define __um_user_dump(_fmt, args...)   os_println(__tab _fmt, ##args)
+#define __um_user_dump_objs(_user, _obj) do{ \
+    __um_user_dump(#_obj ".uptime = %u",  _user->info._obj.uptime);                     \
+    __um_user_dump(#_obj ".up.flow.total  = %llu",  _user->info._obj.up.flow.total);    \
+    __um_user_dump(#_obj ".up.flow.cache  = %llu",  _user->info._obj.up.flow.cache);    \
+    __um_user_dump(#_obj ".up.rate.now    = %u",    _user->info._obj.up.rate.now);      \
+    __um_user_dump(#_obj ".down.flow.total= %llu",  _user->info._obj.down.flow.total);  \
+    __um_user_dump(#_obj ".down.flow.cache= %llu",  _user->info._obj.down.flow.cache);  \
+    __um_user_dump(#_obj ".down.rate.now  = %u",    _user->info._obj.down.rate.now);    \
+    __um_user_dump(#_obj ".all.flow.total = %llu",  _user->info._obj.all.flow.total);   \
+    __um_user_dump(#_obj ".all.flow.cache = %llu",  _user->info._obj.all.flow.cache);   \
+    __um_user_dump(#_obj ".all.rate.now   = %u",    _user->info._obj.all.rate.now);     \
+                                                                                        \
+    __um_user_dump(#_obj ".online = %u",  _user->limit._obj.online);                    \
+    __um_user_dump(#_obj ".up.flow.max    = %llu",  _user->limit._obj.up.flow.max);     \
+    __um_user_dump(#_obj ".up.rate.max    = %u",    _user->limit._obj.up.rate.max);     \
+    __um_user_dump(#_obj ".up.rate.avg    = %u",    _user->limit._obj.up.rate.avg);     \
+    __um_user_dump(#_obj ".down.flow.max  = %llu",  _user->limit._obj.down.flow.max);   \
+    __um_user_dump(#_obj ".down.rate.max  = %u",    _user->limit._obj.down.rate.max);   \
+    __um_user_dump(#_obj ".down.rate.avg  = %u",    _user->limit._obj.down.rate.avg);   \
+    __um_user_dump(#_obj ".all.flow.max   = %llu",  _user->limit._obj.all.flow.max);    \
+    __um_user_dump(#_obj ".all.rate.max   = %u",    _user->limit._obj.all.rate.max);    \
+    __um_user_dump(#_obj ".all.rate.avg   = %u",    _user->limit._obj.all.rate.avg);    \
+}while(0)
+
 void
-__um_user_dump(struct apuser *user, char *action)
+um_user_dump(struct apuser *user, char *action)
 {
+    debug_trace("after %s user, count is %d", action, umc.head.count);
+    
+    if (false==appkey_get(umc.debug.user, 0)) {
+        return;
+    }
+    
     os_println("=====%s user begin======", action);
 
-#define __dump(_fmt, args...)   os_println(__tab _fmt, ##args)
-    __dump("ap          = %s",  os_macstring(user->ap));
-    __dump("vap         = %s",  os_macstring(user->vap));
-    __dump("mac         = %s",  os_macstring(user->mac));
-    __dump("ip          = %s",  os_ipstring(user->ip));
-    __dump("state       = %s",  um_user_state_string(user->state));
-    __dump("ifname      = %s",  user->ifname);
-    __dump("radioid     = %d",  user->radioid);
-    __dump("wlanid      = %d",  user->wlanid);
-    
-    __dump("wifi.uptime = %u",  user->wifi.uptime);
-    __dump("wifi.onlinelimie = %u",user->wifi.onlinelimit);
-    __dump("wifi.signal = %u",  user->wifi.signal);
-    __dump("wifi.up.flowtotal = %llu",  user->wifi.up.flowtotal);
-    __dump("wifi.up.flowcache = %llu",  user->wifi.up.flowcache);
-    __dump("wifi.up.flowlimit = %llu",  user->wifi.up.flowlimit);
-    __dump("wifi.up.ratelimit = %u",  user->wifi.up.ratelimit);
-    __dump("wifi.down.flowtotal = %llu",  user->wifi.down.flowtotal);
-    __dump("wifi.down.flowcache = %llu",  user->wifi.down.flowcache);
-    __dump("wifi.down.flowlimit = %llu",  user->wifi.down.flowlimit);
-    __dump("wifi.down.ratelimit = %u",  user->wifi.down.ratelimit);
-    __dump("wifi.all.flowtotal = %llu",  user->wifi.all.flowtotal);
-    __dump("wifi.all.flowcache = %llu",  user->wifi.all.flowcache);
-    __dump("wifi.all.flowlimit = %llu",  user->wifi.all.flowlimit);
-    __dump("wifi.all.ratelimit = %u",  user->wifi.all.ratelimit);
-    
-    __dump("auth.uptime = %u",  user->auth.uptime);
-    __dump("auth.onlinelimie = %u",user->auth.onlinelimit);
-    __dump("auth.up.flowtotal = %llu",  user->auth.up.flowtotal);
-    __dump("auth.up.flowcache = %llu",  user->auth.up.flowcache);
-    __dump("auth.up.flowlimit = %llu",  user->auth.up.flowlimit);
-    __dump("auth.up.ratelimit = %u",  user->auth.up.ratelimit);
-    __dump("auth.down.flowtotal = %llu",  user->auth.down.flowtotal);
-    __dump("auth.down.flowcache = %llu",  user->auth.down.flowcache);
-    __dump("auth.down.flowlimit = %llu",  user->auth.down.flowlimit);
-    __dump("auth.down.ratelimit = %u",  user->auth.down.ratelimit);
-    __dump("auth.all.flowtotal = %llu",  user->auth.all.flowtotal);
-    __dump("auth.all.flowcache = %llu",  user->auth.all.flowcache);
-    __dump("auth.all.flowlimit = %llu",  user->auth.all.flowlimit);
-    __dump("auth.all.ratelimit = %u",  user->auth.all.ratelimit);
-#undef __dump
+    __um_user_dump("ap          = %s",  os_macstring(user->ap));
+    __um_user_dump("vap         = %s",  os_macstring(user->vap));
+    __um_user_dump("mac         = %s",  os_macstring(user->mac));
+    __um_user_dump("ip          = %s",  os_ipstring(user->ip));
+    __um_user_dump("state       = %s",  um_user_state_string(user->state));
+    __um_user_dump("ifname      = %s",  user->ifname);
+    __um_user_dump("radioid     = %d",  user->radioid);
+    __um_user_dump("wlanid      = %d",  user->wlanid);
+
+    __um_user_dump_objs(user, wifi);
+    __um_user_dump_objs(user, auth);
 
     os_println("=====%s user end======", action);
     os_println(__crlf2);
 }
 
 static inline bool
-macmatch(byte umac[], byte fmac[], byte mask[])
+match_mac(byte umac[], byte fmac[], byte mask[])
 {
     if (is_good_mac(fmac)) {
         if (is_zero_mac(mask)) {
@@ -737,7 +763,7 @@ macmatch(byte umac[], byte fmac[], byte mask[])
 
 
 static inline bool
-ipmatch(unsigned int uip, unsigned int fip, unsigned int mask)
+match_ip(unsigned int uip, unsigned int fip, unsigned int mask)
 {
     if (fip) {
         if (0==mask) {
@@ -767,21 +793,21 @@ ipmatch(unsigned int uip, unsigned int fip, unsigned int mask)
 }
 
 static bool
-match(struct apuser *user, struct user_filter *filter)
+match_user(struct apuser *user, struct user_filter *filter)
 {
     if (is_good_um_user_state(filter->state) && filter->state != user->state) {
         return false;
     }
     
-    if (false==macmatch(user->mac, filter->mac, filter->macmask)) {
+    if (false==match_mac(user->mac, filter->mac, filter->macmask)) {
         return false;
     }
     
-    if (false==macmatch(user->ap, filter->ap, filter->apmask)) {
+    if (false==match_mac(user->ap, filter->ap, filter->apmask)) {
         return false;
     }
     
-    if (false==ipmatch(user->ip, filter->ip, filter->ipmask)) {
+    if (false==match_ip(user->ip, filter->ip, filter->ipmask)) {
         return false;
     }
     
@@ -800,59 +826,44 @@ match(struct apuser *user, struct user_filter *filter)
 int
 um_user_delby(struct user_filter *filter)
 {
-    multi_value_t delby_cb(struct apuser *user)
+    multi_value_t cb(struct apuser *user)
     {
-        if (match(user, filter)) {
+        if (match_user(user, filter)) {
             um_user_del(user);
         }
 
         return mv2_OK;
     }
     
-    return um_user_foreach(delby_cb);
+    return um_user_foreach(cb);
 }
 
 int
 um_user_getby(struct user_filter *filter, um_get_f *get)
 {
-    multi_value_t getby_cb(struct apuser *user)
+    multi_value_t cb(struct apuser *user)
     {
-        if (match(user, filter)) {
+        if (match_user(user, filter)) {
             return (*get)(user);
         } else {
             return mv2_OK;
         }
     }
     
-    return um_user_foreach(getby_cb);
-}
-
-static multi_value_t
-wifi_limit_update_cb(struct apuser *user)
-{
-    um_user_limit_update(user, wifi);
-    
-    return mv2_OK;
+    return um_user_foreach(cb);
 }
 
 int 
-um_user_wifi_limit_update(void)
+um_user_update_limit(void)
 {
-    return um_user_foreach(wifi_limit_update_cb);
-}
-
-static multi_value_t
-auth_limit_update_cb(struct apuser *user)
-{
-    um_user_limit_update(user, auth);
+    multi_value_t cb(struct apuser *user)
+    {
+        update_limit(user);
+        
+        return mv2_OK;
+    }
     
-    return mv2_OK;
-}
-
-int 
-um_user_auth_limit_update(void)
-{
-    return um_user_foreach(auth_limit_update_cb);
+    return um_user_foreach(cb);
 }
 
 /******************************************************************************/

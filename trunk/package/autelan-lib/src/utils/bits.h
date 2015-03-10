@@ -63,5 +63,46 @@ os_bufmaskmatch(byte *a, byte *b, byte *mask, int len)
     return true;
 }
 
+#ifndef BITMAPBITS
+#define BITMAPBITS  1024
+#endif
+#define BITMAPSLOT  (sizeof(uint32_t)*8)
+#define BITMAPSIZE  (BITMAPBITS/BITMAPSLOT)
+
+typedef struct {
+    uint32_t map[BITMAPSIZE];
+} os_bitmap_t;
+
+static inline void
+os_bitmap_set(os_bitmap_t *bmp, int bit)
+{
+    if (is_good_enum(bit, BITMAPBITS)) {
+        int __bit = bit%BITMAPSLOT;
+        
+        os_setbit(bmp->map[bit/BITMAPSLOT], __bit);
+    }
+}
+
+static inline void
+os_bitmap_clr(os_bitmap_t *bmp, int bit)
+{
+    if (is_good_enum(bit, BITMAPBITS)) {
+        int __bit = bit%BITMAPSLOT;
+        
+        os_clrbit(bmp->map[bit/BITMAPSLOT], __bit);
+    }
+}
+
+static inline bool
+os_bitmap_isset(os_bitmap_t *bmp, int bit)
+{
+    if (is_good_enum(bit, BITMAPBITS)) {
+        int __bit = bit%BITMAPSLOT;
+        
+        return os_hasbit(bmp->map[bit/BITMAPSLOT], __bit);
+    } else {
+        return false;
+    }
+}
 /******************************************************************************/
 #endif /* __BITS_H_92033DEDA810AF54224FF623B3115513__ */

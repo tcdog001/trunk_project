@@ -61,5 +61,37 @@ os_tm_left(tm_node_t *timer);
 extern int //ticks
 os_tm_expires(tm_node_t *timer);
 
+#ifdef APP
+
+static int
+os_timer_fd(uint32_t sec, uint32_t nsec)
+{
+    struct itimerspec old;
+    struct itimerspec new = {
+        .it_interval = {
+            .tv_sec     = sec,
+            .tv_nsec    = nsec,
+        },
+    };
+    int fd = -1;
+    
+    fd = timerfd_create(CLOCK_REALTIME, 0);
+    if (fd<0) {
+        return -errno;
+    }
+
+    new.it_value.tv_sec += sec;
+    new.it_value.tv_nsec += nsec;
+    if (new.it_value.tv_nsec >= 1000*1000*1000) {
+        new.it_value.tv_nsec = 0;
+        new.it_value.tv_sec++;
+    }
+    
+    timerfd_settime(fd, 0, &new, &old);
+    
+    return fd;
+}
+
+#endif
 /******************************************************************************/
 #endif /* __TIMER_H_7354F2DEF84483568CAD93F29E63C88B__ */

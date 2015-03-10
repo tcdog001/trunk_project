@@ -2,7 +2,7 @@
 #define __MEMORY_H_449CCD8BC1CB461480DB11AD8A1CEB17__
 /******************************************************************************/
 #ifdef __BOOT__
-#define size_t int
+#define size_t unsigned int
 #endif
 
 static inline void *
@@ -30,7 +30,7 @@ os_memset(void *s, int ch, size_t n)
 #endif
 
 static inline int
-os_memcmp(void *a, const void *b, size_t n)
+os_memcmp(const void *a, const void *b, size_t n)
 {
     if (a) {
         if (b) {
@@ -176,13 +176,6 @@ os_memcmp(void *a, const void *b, size_t n)
 
 #ifndef __KERNEL__
 #define os_malloc(_size)            malloc(_size)
-#define os_calloc(_count, _size)    calloc(_count, _size)
-#define os_alloca(_size)            alloca(_size)
-#define os_realloc(_ptr, _size)     realloc(_ptr, _size)
-#define os_free(_ptr) \
-        do{ if (_ptr) { free(_ptr); (_ptr) = NULL; } }while(0)
-#else
-#define os_malloc(_size)            kmalloc(_size, GFP_KERNEL)
 #define os_calloc(_count, _size)            ({  \
         void *p = os_malloc((_count)*(_size));  \
         if (p) {                                \
@@ -190,10 +183,21 @@ os_memcmp(void *a, const void *b, size_t n)
         }                                       \
         p;                                      \
     })
+#define os_realloc(_ptr, _size)     realloc(_ptr, _size)
+#define os_free(_ptr) \
+        do{ if (_ptr) { free(_ptr); (_ptr) = NULL; } }while(0)
+#else
+#define os_malloc(_size)            kmalloc(_size, GFP_KERNEL)
+#define os_calloc(_count, _size)    calloc(_count, _size)
 #define os_realloc(_ptr, _size)     krealloc(_ptr, _size, GFP_KERNEL)
 #define os_free(_ptr) \
         do{ if (_ptr) { kfree(_ptr); (_ptr) = NULL; } }while(0)
 #endif
+
+#ifdef __APP__
+#define os_alloca(_size)            alloca(_size)
+#endif
+
 #define os_zalloc(_size)            os_calloc(1, _size)
 
 /******************************************************************************/
