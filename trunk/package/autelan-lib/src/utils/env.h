@@ -1,6 +1,8 @@
 #ifndef __ENV_H_AE12157DFFE5C6220F9C55AA8D427F7__
 #define __ENV_H_AE12157DFFE5C6220F9C55AA8D427F7__
 /******************************************************************************/
+#define os_getenv(_name)    getenv(_name)
+
 static inline bool
 is_good_env(char *env)
 {
@@ -16,7 +18,7 @@ get_string_env(char *envname, const char *deft)
         return os_assert_value(NULL);
     }
     
-    char *env = getenv(envname);
+    char *env = os_getenv(envname);
     if (false==is_good_env(env)) {
         debug_trace("no-found env:%s", envname);
         
@@ -48,7 +50,7 @@ get_int_env(char *envname, int deft)
         return os_assert_value(-EINVAL9);
     }
     
-    char *env = getenv(envname);
+    char *env = os_getenv(envname);
     if (false==is_good_env(env)) {
         debug_trace("no-found env:%s, use default:%d", envname, deft);
         

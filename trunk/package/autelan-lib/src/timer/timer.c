@@ -9,7 +9,7 @@
 #define TM_BIT          8
 #endif
 
-#if 2!=TM_BIT || 4!=TM_BIT || 8!=TM_BIT || 16!=TM_BIT
+#if !(2==TM_BIT || 4==TM_BIT || 8==TM_BIT || 16==TM_BIT)
 #error "TM_BIT must be 2/4/8/16"
 #endif
 
