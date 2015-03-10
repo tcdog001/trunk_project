@@ -379,8 +379,13 @@ finish:
 #define um_script_akid_init(_var) \
         um_akid_init(umc.sh._var.akid, "script." #_var, umc.sh._var.deft)
 
+#define um_ipc_akid_init(_var)  do{ \
+    um_ubus_akid_init(_var);        \
+    um_script_akid_init(_var);      \
+}while(0)
+    
 static os_constructor void
-__init(void) 
+__uci_init(void) 
 {
     int i, j;
 
@@ -397,7 +402,11 @@ __init(void)
             INIT_LIST_HEAD(&uci->tmp);
         }
     }
-    
+}
+
+static os_constructor void
+__akid_init(void) 
+{
     um_debug_akid_init(uci);
     um_debug_akid_init(ubus);
     um_debug_akid_init(user);
@@ -410,23 +419,14 @@ __init(void)
     um_timer_akid_init(flow);
     um_timer_akid_init(report);
 
-    um_ubus_akid_init(connect);
-    um_ubus_akid_init(disconnect);
-    um_ubus_akid_init(bind);
-    um_ubus_akid_init(unbind);
-    um_ubus_akid_init(auth);
-    um_ubus_akid_init(deauth);
-    um_ubus_akid_init(update);
-    um_ubus_akid_init(report);
-
-    um_script_akid_init(connect);
-    um_script_akid_init(disconnect);
-    um_script_akid_init(bind);
-    um_script_akid_init(unbind);
-    um_script_akid_init(auth);
-    um_script_akid_init(deauth);
-    um_script_akid_init(update);
-    um_script_akid_init(report);
+    um_ipc_akid_init(connect);
+    um_ipc_akid_init(disconnect);
+    um_ipc_akid_init(bind);
+    um_ipc_akid_init(unbind);
+    um_ipc_akid_init(auth);
+    um_ipc_akid_init(deauth);
+    um_ipc_akid_init(update);
+    um_ipc_akid_init(report);
 }
 
 AKID_DEBUGER; /* must last os_constructor */
