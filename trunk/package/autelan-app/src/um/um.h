@@ -297,7 +297,7 @@ um_user_level_string(int level)
 }
 
 static inline int
-um_user_level_idx(int level)
+um_user_level_idx(char *level)
 {
     char **array = __um_user_level_strings();
 

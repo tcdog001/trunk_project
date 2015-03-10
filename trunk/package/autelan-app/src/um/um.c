@@ -101,14 +101,14 @@ agingtimer(struct uloop_timeout *timeout)
 static multi_value_t 
 online_cb(struct apuser *user)
 {
-    if (0==user->auth.online || false==is_online_um_user_state(user->state)) {
+    if (0==user->limit.auth.online || false==is_online_um_user_state(user->state)) {
         return mv2_OK;
     }
     
     time_t now = time(NULL);
-    time_t used = now - user->auth.uptime;
+    time_t used = now - user->info.auth.uptime;
     
-    if (used > user->auth.online) {
+    if (used > user->limit.auth.online) {
         user_deauth(user, UM_DEAUTH_ONLINETIME);
     }
     
@@ -156,16 +156,16 @@ flow_cb(struct apuser *user)
     
     flow_update(user);
     
-    if (user->auth.up.flowlimit &&
-        user->auth.up.flowlimit < user->auth.up.flowtotal) {
+    if (user->limit.auth.up.flow.max &&
+        user->limit.auth.up.flow.max < user->info.auth.up.flow.total) {
         user_deauth(user, UM_DEAUTH_FLOWLIMIT);
     }
-    else if (user->auth.down.flowlimit &&
-        user->auth.down.flowlimit < user->auth.down.flowtotal) {
+    else if (user->limit.auth.down.flow.max &&
+        user->limit.auth.down.flow.max < user->info.auth.down.flow.total) {
         user_deauth(user, UM_DEAUTH_FLOWLIMIT);
     }
-    else if (user->auth.all.flowlimit &&
-        user->auth.all.flowlimit < user->auth.all.flowtotal) {
+    else if (user->limit.auth.all.flow.max &&
+        user->limit.auth.all.flow.max < user->info.auth.all.flow.total) {
         user_deauth(user, UM_DEAUTH_FLOWLIMIT);
     }
     

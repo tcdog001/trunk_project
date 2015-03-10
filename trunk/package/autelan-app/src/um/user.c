@@ -283,7 +283,7 @@ __deauth(struct apuser *user, int reason, void (*cb)(struct apuser *user, int re
     * auth==>bind
     */
     user->state = UM_STATE_BIND;
-    user->auth.uptime = 0;
+    user->info.auth.uptime = 0;
 }
 
 static void
@@ -404,8 +404,8 @@ __auth(struct apuser *user, int class, void (*cb)(struct apuser *user))
     }
     
     user->aging = UM_AGING_TIMES;
-    if (0==user->auth.uptime) {
-        user->auth.uptime = time(NULL);
+    if (0==user->info.auth.uptime) {
+        user->info.auth.uptime = time(NULL);
     }
     /*
     * bind==>auth
