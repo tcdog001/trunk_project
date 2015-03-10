@@ -61,7 +61,7 @@ os_tm_left(tm_node_t *timer);
 extern int //ticks
 os_tm_expires(tm_node_t *timer);
 
-#ifdef APP
+#ifdef __APP__
 
 static inline int
 os_timer_fd(uint32_t sec, uint32_t nsec)

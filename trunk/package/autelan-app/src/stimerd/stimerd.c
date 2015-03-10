@@ -166,7 +166,7 @@ __get(char *name)
         return NULL;
     }
 
-    return __rsh_entry(node);
+    return __mlist_entry(node);
 }
 
 static int
@@ -675,22 +675,22 @@ int main(int argc, char *argv[])
 {
     int err;
 
-    err = init_env(); debug_ok_error("init env", err);
+    err = init_env(); debug_ok_error(err, "init env");
     if (err < 0) {
         return err;
     }
 
-    err = init_timerfd(); debug_ok_error("init timerfd", err);
+    err = init_timerfd(); debug_ok_error(err, "init timerfd");
     if (err < 0) {
         return err;
     }
     
-    err = init_server(); debug_ok_error("init server", err);
+    err = init_server(); debug_ok_error(err, "init server");
     if (err < 0) {
         return err;
     }
     
-    err = server(); debug_ok_error("run server", err);
+    err = server(); debug_ok_error(err, "run server");
     if (err < 0) {
         return err;
     }
@@ -708,7 +708,7 @@ __init(void)
     int err = 0;
 
     err = mlist_table_init(&stimerd.head.mlist, STIMERD_HASHSIZE);
-    debug_ok_error("__init timerfd", err);
+    debug_ok_error(err, "__init timerfd");
 }
 
 /******************************************************************************/

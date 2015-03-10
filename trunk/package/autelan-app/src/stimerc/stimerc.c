@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
     
     os_memzero(RX, os_count_of(RX));
 
-    err = init_env(); debug_ok_error("init env", err);
+    err = init_env(); debug_ok_error(err, "init env");
     if (err < 0) {
         return err;
     }
