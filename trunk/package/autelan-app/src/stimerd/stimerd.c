@@ -161,7 +161,12 @@ __get(char *name)
         return 0==os_stracmp(entry->name, name);
     }
 
-    return mlist_find(&stimerd.head.mlist, hash, eq);
+    struct mlist_node *node = mlist_find(&stimerd.head.mlist, hash, eq);
+    if (NULL==node) {
+        return NULL;
+    }
+
+    return __rsh_entry(node);
 }
 
 static int

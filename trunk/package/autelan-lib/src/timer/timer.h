@@ -63,7 +63,7 @@ os_tm_expires(tm_node_t *timer);
 
 #ifdef APP
 
-static int
+static inline int
 os_timer_fd(uint32_t sec, uint32_t nsec)
 {
     struct itimerspec old;

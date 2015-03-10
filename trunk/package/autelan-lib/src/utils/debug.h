@@ -6,9 +6,9 @@
 #endif
 
 #ifdef __APP__
-#define __syslog(_fmt, args...) syslog(LOG_DEBUG, _fmt, ##args)
+#define __syslog(_fmt, _args...) syslog(LOG_DEBUG, _fmt, ##_args)
 #else
-#define __syslog(_fmt, args...) 0
+#define __syslog(_fmt, _args...) 0
 #define __THIS_FILE             0
 #endif
 
@@ -65,27 +65,27 @@ extern appkey_t __AKID_DEBUG;
         __THIS_FILE, \
         __LINE__
 
-#define __debug_with_prefix(_fmt, args...)      do{ \
-    (void)os_printf(__debug_prefix_fmt_and_args(_fmt), ##args); \
-     (void)__syslog(__debug_prefix_fmt_and_args(_fmt), ##args); \
+#define __debug_with_prefix(_fmt, _args...)      do{ \
+    (void)os_printf(__debug_prefix_fmt_and_args(_fmt), ##_args); \
+     (void)__syslog(__debug_prefix_fmt_and_args(_fmt), ##_args); \
 }while(0)
 
-#define __vdebug_with_prefix(_fmt, args)        do{ \
-    (void)os_vprintf(__debug_prefix_fmt_and_args(_fmt), args); \
-      (void)__syslog(__debug_prefix_fmt_and_args(_fmt), args); \
+#define __vdebug_with_prefix(_fmt, _args)        do{ \
+    (void)os_vprintf(__debug_prefix_fmt_and_args(_fmt), _args); \
+      (void)__syslog(__debug_prefix_fmt_and_args(_fmt), _args); \
 }while(0)
 
-#define __debug_without_prefix(_fmt, args...)   do{ \
-    (void)os_printf(_fmt __crlf2, ##args);          \
-     (void)__syslog(_fmt __crlf2, ##args);          \
+#define __debug_without_prefix(_fmt, _args...)   do{ \
+    (void)os_printf(_fmt __crlf2, ##_args);          \
+     (void)__syslog(_fmt __crlf2, ##_args);          \
 }while(0)
 
-#define __vdebug_without_prefix(_fmt, args)     do{ \
-    (void)os_vprintf(_fmt __crlf2, args);           \
-      (void)__syslog(_fmt __crlf2, args);           \
+#define __vdebug_without_prefix(_fmt, _args)     do{ \
+    (void)os_vprintf(_fmt __crlf2, _args);           \
+      (void)__syslog(_fmt __crlf2, _args);           \
 }while(0)
 
-#define os_error(_err, _fmt, args...)   (__debug_without_prefix(_fmt, ##args), (_err))
+#define os_error(_err, _fmt, _args...)   (__debug_without_prefix(_fmt, ##_args), (_err))
 /*
 * for cmd
 */
@@ -95,31 +95,31 @@ extern appkey_t __AKID_DEBUG;
 */
 #define os_derror(_err)             os_error((_err), "error(%d)", (_err))
 
-#define debug_ok(fmt, args...)      do{ if (__is_debug_init_ok) __debug_with_prefix(fmt, ##args);   }while(0)
-#define vdebug_ok(fmt, args)        do{ if (__is_debug_init_ok) __vdebug_with_prefix(fmt, args);    }while(0)
-#define __debug_ok(fmt, args...)    do{ if (__is_debug_init_ok) __debug_without_prefix(fmt, ##args);}while(0)
-#define __vdebug_ok(fmt, args)      do{ if (__is_debug_init_ok) __vdebug_without_prefix(fmt, args); }while(0)
+#define debug_ok(_fmt, _args...)      do{ if (__is_debug_init_ok) __debug_with_prefix(_fmt, ##_args);   }while(0)
+#define vdebug_ok(_fmt, _args)        do{ if (__is_debug_init_ok) __vdebug_with_prefix(_fmt, _args);    }while(0)
+#define __debug_ok(_fmt, _args...)    do{ if (__is_debug_init_ok) __debug_without_prefix(_fmt, ##_args);}while(0)
+#define __vdebug_ok(_fmt, _args)      do{ if (__is_debug_init_ok) __vdebug_without_prefix(_fmt, _args); }while(0)
 
-#define debug_error(fmt, args...)   do{ if (__is_debug_init_error) __debug_with_prefix(fmt, ##args);    }while(0)
-#define vdebug_error(fmt, args)     do{ if (__is_debug_init_error) __vdebug_with_prefix(fmt, args);     }while(0)
-#define __debug_error(fmt, args...) do{ if (__is_debug_init_error) __debug_without_prefix(fmt, ##args); }while(0)
-#define __vdebug_error(fmt, args)   do{ if (__is_debug_init_error) __vdebug_without_prefix(fmt, args);  }while(0)
+#define debug_error(_fmt, _args...)   do{ if (__is_debug_init_error) __debug_with_prefix(_fmt, ##_args);    }while(0)
+#define vdebug_error(_fmt, _args)     do{ if (__is_debug_init_error) __vdebug_with_prefix(_fmt, _args);     }while(0)
+#define __debug_error(_fmt, _args...) do{ if (__is_debug_init_error) __debug_without_prefix(_fmt, ##_args); }while(0)
+#define __vdebug_error(_fmt, _args)   do{ if (__is_debug_init_error) __vdebug_without_prefix(_fmt, _args);  }while(0)
 
-#define debug_trace(fmt, args...)   do{ if (__is_debug_init_trace) __debug_with_prefix(fmt, ##args);    }while(0)
-#define vdebug_trace(fmt, args)     do{ if (__is_debug_init_trace) __vdebug_with_prefix(fmt, args);     }while(0)
-#define __debug_trace(fmt, args...) do{ if (__is_debug_init_trace) __debug_without_prefix(fmt, ##args); }while(0)
-#define __vdebug_trace(fmt, args)   do{ if (__is_debug_init_trace) __vdebug_without_prefix(fmt, args);  }while(0)
+#define debug_trace(_fmt, _args...)   do{ if (__is_debug_init_trace) __debug_with_prefix(_fmt, ##_args);    }while(0)
+#define vdebug_trace(_fmt, _args)     do{ if (__is_debug_init_trace) __vdebug_with_prefix(_fmt, _args);     }while(0)
+#define __debug_trace(_fmt, _args...) do{ if (__is_debug_init_trace) __debug_without_prefix(_fmt, ##_args); }while(0)
+#define __vdebug_trace(_fmt, _args)   do{ if (__is_debug_init_trace) __vdebug_without_prefix(_fmt, _args);  }while(0)
 
-#define debug_test(fmt, args...)    do{ if (__is_debug_init_test) __debug_with_prefix(fmt, ##args);     }while(0)
-#define vdebug_test(fmt, args)      do{ if (__is_debug_init_test) __vdebug_with_prefix(fmt, args);      }while(0)
-#define __debug_test(fmt, args...)  do{ if (__is_debug_init_test) __debug_without_prefix(fmt, ##args);  }while(0)
-#define __vdebug_test(fmt, args)    do{ if (__is_debug_init_test) __vdebug_without_prefix(fmt, args);   }while(0)
+#define debug_test(_fmt, _args...)    do{ if (__is_debug_init_test) __debug_with_prefix(_fmt, ##_args);     }while(0)
+#define vdebug_test(_fmt, _args)      do{ if (__is_debug_init_test) __vdebug_with_prefix(_fmt, _args);      }while(0)
+#define __debug_test(_fmt, _args...)  do{ if (__is_debug_init_test) __debug_without_prefix(_fmt, ##_args);  }while(0)
+#define __vdebug_test(_fmt, _args)    do{ if (__is_debug_init_test) __vdebug_without_prefix(_fmt, _args);   }while(0)
 
-#define debug_ok_error(err, fmt, args...) do{   \
-    if (err) {                                  \
-        debug_error(fmt " error:%d", err, ##args); \
+#define debug_ok_error(_err, _fmt, _args...) do{   \
+    if (_err) {                                  \
+        debug_error(_fmt " error:%d", _err, ##_args); \
     } else {                                    \
-        debug_ok(fmt " ok.", ##args);           \
+        debug_ok(_fmt " ok.", ##_args);           \
     }                                           \
 }while(0)
 
@@ -170,10 +170,10 @@ static inline int os_timeval_diff(struct timeval *old, struct timeval *new)
         }
 */
 
-#define debug_consume(fmt, args...)     do{ if (__is_debug_init_consume) __debug_with_prefix(fmt, ##args);  }while(0)
-#define vdebug_consume(fmt, args)       do{ if (__is_debug_init_consume) __vdebug_with_prefix(fmt, args);   }while(0)
-#define __debug_consume(fmt, args...)   do{ if (__is_debug_init_consume) __debug_without_prefix(fmt, ##args);}while(0)
-#define __vdebug_consume(fmt, args)     do{ if (__is_debug_init_consume) __vdebug_without_prefix(fmt, args);}while(0)
+#define debug_consume(_fmt, _args...)     do{ if (__is_debug_init_consume) __debug_with_prefix(_fmt, ##_args);  }while(0)
+#define vdebug_consume(_fmt, _args)       do{ if (__is_debug_init_consume) __vdebug_with_prefix(_fmt, _args);   }while(0)
+#define __debug_consume(_fmt, _args...)   do{ if (__is_debug_init_consume) __debug_without_prefix(_fmt, ##_args);}while(0)
+#define __vdebug_consume(_fmt, _args)     do{ if (__is_debug_init_consume) __vdebug_without_prefix(_fmt, _args);}while(0)
 
 #define function_consume_declare    \
         struct timeval __function_consume_timeval_begin; \
