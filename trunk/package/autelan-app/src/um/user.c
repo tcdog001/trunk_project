@@ -14,11 +14,8 @@ static void
 unbind_cb(struct apuser *user);
 
 #define __update_limit(_user, _obj)         do{ \
-    int class = (_user)->class;                 \
-    int level = (_user)->level;                 \
-                                                \
-    struct userlimit *dst = &(_user)->limit[class][level]._obj; \
-    struct userlimit *src = &umc.limit[class][level]._obj;      \
+    struct userlimit *dst = &(_user)->limit._obj; \
+    struct userlimit *src = &umc.limit[(_user)->class][(_user)->level]._obj; \
                                                 \
     if (false==os_objeq(dst, src)) {            \
         os_objdcpy(dst, src);                   \
