@@ -161,7 +161,7 @@ __um_user_state_strings(void)
 static inline char *
 um_user_state_string(int state)
 {
-    char **array = __um_user_state_strings(state);
+    char **array = __um_user_state_strings();
     
     return is_good_um_user_state(state)?array[state]:__unknow;
 }
@@ -169,7 +169,7 @@ um_user_state_string(int state)
 static inline int
 um_user_state_idx(char *state)
 {
-    char **array = __um_user_state_strings(state);
+    char **array = __um_user_state_strings();
     
     return os_getstringarrayidx(array, state, UM_STATE_DISCONNECT, UM_STATE_END);
 }
@@ -239,7 +239,7 @@ is_good_um_user_class(int class)
 }
 
 static inline char **
-__um_user_class_strings(int class)
+__um_user_class_strings(void)
 {
     static char *array[UM_CLASS_END] = UM_CLASS_STRINGS;
 
@@ -281,7 +281,7 @@ is_good_um_user_level(int level)
 }
 
 static inline char **
-__um_user_level_strings(int level)
+__um_user_level_strings(void)
 {
     static char *array[UM_LEVEL_END] = UM_LEVEL_STRINGS;
 
