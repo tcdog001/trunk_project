@@ -104,8 +104,8 @@ __bindif(struct apuser *user, struct um_intf *intf)
         user->intf      = intf;
         user->radioid   = intf->radioid;
         user->wlanid    = intf->wlanid;
-        if (0==user->wifi.uptime) {
-            user->wifi.uptime = __uptime(user);
+        if (0==user->info.wifi.uptime) {
+            user->info.wifi.uptime = __uptime(user);
         }
     }
 }
@@ -300,9 +300,9 @@ __unbind(struct apuser *user, void (*cb)(struct apuser *user))
     */
     user->state = UM_STATE_CONNECT;
     
-    user->wifi.up.flowcache     = 0;
-    user->wifi.down.flowcache   = 0;
-    user->wifi.all.flowcache    = 0;
+    user->info.wifi.up.flow.cache   = 0;
+    user->info.wifi.down.flow.cache = 0;
+    user->info.wifi.all.flow.cache  = 0;
 
     __reinsert_byip(user, 0);
 }
@@ -324,8 +324,7 @@ __disconnect(struct apuser *user, void (*cb)(struct apuser *user))
     */
     user->state = UM_STATE_DISCONNECT;
     
-    user->wifi.uptime   = 0;
-    user->wifi.signal   = 0;
+    user->info.wifi.uptime  = 0;
     
     user->radioid       = 0;
     user->wlanid        = 0;
