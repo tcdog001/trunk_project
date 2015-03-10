@@ -428,7 +428,7 @@ load_global(struct um_uci *uci, struct blob_attr *tb[], void *addr[])
 }while(0) /* end of load_obj_limit */
 
 static int
-load_wifi_limit(char *name, int class, int level, struct blob_attr *tb[])
+load_wifi_limit(int class, int level, struct blob_attr *tb[])
 {
     load_obj_limit(wifi, class, level, tb);
 
@@ -436,7 +436,7 @@ load_wifi_limit(char *name, int class, int level, struct blob_attr *tb[])
 }
 
 static int
-load_auth_limit(char *name, int class, int level, struct blob_attr *tb[])
+load_auth_limit(int class, int level, struct blob_attr *tb[])
 {
     load_obj_limit(auth, class, level, tb);
 
@@ -470,7 +470,7 @@ load_limit(
 		    
     		section_to_blob(s, &uci->param, tb, UM_LIMITPOLICY_END);
 
-    		debug_uci_trace("load limit %s", name);
+    		debug_uci_trace("load limit %s", uci_name);
     		
     		(*load)(class, level, tb);
 		}

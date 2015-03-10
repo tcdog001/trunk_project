@@ -10,26 +10,27 @@ notify(char *event)
 }
 
 #define um_user_add_objs(_user, _OBJ, _obj) do{ \
-    um_user_add_u32(UM_USER_##_OBJ##_UPTIME,        _user->_obj.uptime);        \
-    um_user_add_u32(UM_USER_##_OBJ##_ONLINE,        _user->_obj.online);        \
-    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWTOTAL,   _user->_obj.up.flow.total); \
-    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWCACHE,   _user->_obj.up.flow.cache); \
-    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWMAX,     _user->_obj.up.flow.max);   \
-    um_user_add_u32(UM_USER_##_OBJ##_UPRATENOW,     _user->_obj.up.rate.now);   \
-    um_user_add_u32(UM_USER_##_OBJ##_UPRATEMAX,     _user->_obj.up.rate.max);   \
-    um_user_add_u32(UM_USER_##_OBJ##_UPRATEAVG,     _user->_obj.up.rate.avg);   \
-    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWTOTAL, _user->_obj.down.flow.total); \
-    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWCACHE, _user->_obj.down.flow.cache); \
-    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWMAX,   _user->_obj.down.flow.max); \
-    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATENOW,   _user->_obj.down.rate.now); \
-    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATEMAX,   _user->_obj.down.rate.max); \
-    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATEAVG,   _user->_obj.down.rate.avg); \
-    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWTOTAL,  _user->_obj.all.flow.total);\
-    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWCACHE,  _user->_obj.all.flow.cache);\
-    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWMAX,    _user->_obj.all.flow.max);  \
-    um_user_add_u32(UM_USER_##_OBJ##_ALLRATENOW,    _user->_obj.all.rate.now);  \
-    um_user_add_u32(UM_USER_##_OBJ##_ALLRATEMAX,    _user->_obj.all.rate.max);  \
-    um_user_add_u32(UM_USER_##_OBJ##_ALLRATEAVG,    _user->_obj.all.rate.avg);  \
+    um_user_add_u32(UM_USER_##_OBJ##_UPTIME,        _user->info._obj.uptime);           \
+    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWTOTAL,   _user->info._obj.up.flow.total);    \
+    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWCACHE,   _user->info._obj.up.flow.cache);    \
+    um_user_add_u32(UM_USER_##_OBJ##_UPRATENOW,     _user->info._obj.up.rate.now);      \
+    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWTOTAL, _user->info._obj.down.flow.total);  \
+    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWCACHE, _user->info._obj.down.flow.cache);  \
+    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATENOW,   _user->info._obj.down.rate.now);    \
+    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWTOTAL,  _user->info._obj.all.flow.total);   \
+    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWCACHE,  _user->info._obj.all.flow.cache);   \
+    um_user_add_u32(UM_USER_##_OBJ##_ALLRATENOW,    _user->info._obj.all.rate.now);     \
+                                                                                        \
+    um_user_add_u32(UM_USER_##_OBJ##_ONLINE,        _user->limit._obj.online);          \
+    um_user_add_u64(UM_USER_##_OBJ##_UPFLOWMAX,     _user->limit._obj.up.flow.max);     \
+    um_user_add_u32(UM_USER_##_OBJ##_UPRATEMAX,     _user->limit._obj.up.rate.max);     \
+    um_user_add_u32(UM_USER_##_OBJ##_UPRATEAVG,     _user->limit._obj.up.rate.avg);     \
+    um_user_add_u64(UM_USER_##_OBJ##_DOWNFLOWMAX,   _user->limit._obj.down.flow.max);   \
+    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATEMAX,   _user->limit._obj.down.rate.max);   \
+    um_user_add_u32(UM_USER_##_OBJ##_DOWNRATEAVG,   _user->limit._obj.down.rate.avg);   \
+    um_user_add_u64(UM_USER_##_OBJ##_ALLFLOWMAX,    _user->limit._obj.all.flow.max);    \
+    um_user_add_u32(UM_USER_##_OBJ##_ALLRATEMAX,    _user->limit._obj.all.rate.max);    \
+    um_user_add_u32(UM_USER_##_OBJ##_ALLRATEAVG,    _user->limit._obj.all.rate.avg);    \
 }while(0)
 
 static void
