@@ -362,7 +362,6 @@ finish:
 	return err;
 }
 
-
 #define um_akid_init(_akid, _name, _deft) do{ \
     _akid = appkey_getbyname(_name); \
     debug_trace("%s=%d", _name, appkey_get(_akid, _deft)); \
@@ -380,8 +379,8 @@ finish:
 #define um_script_akid_init(_var) \
         um_akid_init(umc.sh._var.akid, "script." #_var, umc.sh._var.deft)
 
-static os_constructor void 
-__init(void)
+static os_constructor void
+__init(void) 
 {
     int i, j;
 
@@ -429,7 +428,6 @@ __init(void)
     um_script_akid_init(update);
     um_script_akid_init(report);
 }
-
 
 AKID_DEBUGER; /* must last os_constructor */
 /******************************************************************************/
