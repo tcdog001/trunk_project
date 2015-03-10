@@ -47,7 +47,7 @@ os_digitchar2int(int ch)
 #define os_atoll(string)    simple_strtoull(string)
 #elif defined(__KERNEL__)
 #error "need to define atoi/atol/atoll"
-#elif defined(__APP___)
+#elif defined(__APP__)
 #define os_atoi(string)     atoi(string)
 #define os_atol(string)     atol(string)
 #define os_atoll(string)    atoll(string)
