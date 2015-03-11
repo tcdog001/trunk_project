@@ -1,4 +1,6 @@
 #!/bin/bash
+. /etc/utils/utils.in
+
 USR_TC_LOG_PATH="/tmp/usr"
 ONLINE_UER_LIST="${USR_TC_LOG_PATH}/usr_online.log"
 CURRENT_USR_LIST="${USR_TC_LOG_PATH}/current_usr.log"
@@ -180,7 +182,7 @@ main() {
 	
 	mv ${CURRENT_MAC_LIST} ${OLD_USR_LIST}
 	
-	/usr/bin/tftp -pl ${UV_TIME_FLOW} -r /opt/log/flow/user/uv_time_flow.log 1.0.0.2 2>/dev/null
+	/usr/bin/tftp -pl ${UV_TIME_FLOW} -r /opt/log/flow/user/uv_time_flow-"$(getnow)" 1.0.0.2 2>/dev/null
 	
 	sleep 300
 	done
