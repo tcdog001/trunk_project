@@ -141,7 +141,7 @@ get_usr_time() {
 	
 	cat ${file_mac_2} | grep ${usr_mac}; local usr_state=$?
 	if [ ${usr_state} -ne 0 ]; then 
-		local time_current=$(date '+%F-%H-%M-%S')
+		local time_current=$(getnow)
 		${get_time_function} "${usr_mac}" "${time_current}" 
 		
 	fi
