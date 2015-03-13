@@ -49,7 +49,7 @@ is_good_at_fsm(int fsm)
 static inline bool
 is_canused_at_fsm(int fsm)
 {
-    return is_good_enum(fsm, AT_FSM_FAIL, AT_FSM_END);
+    return is_good_value(fsm, AT_FSM_UNKNOW, AT_FSM_END);
 }
 
 static inline char **
@@ -275,10 +275,10 @@ typedef struct {
     at_info_t info[0];
 } at_osinfo_t;
 
-#define AT_DEFT_OSINFO(count, current) { \
-    .current = current, \
-    .info = { \
-        [0 ... (count-1)] = AT_DEFT_INFO, \
+#define AT_DEFT_OSINFO(_count, _current)  { \
+    .current = _current,                    \
+    .info = {                               \
+        [0 ... (_count-1)] = AT_DEFT_INFO,  \
     }, \
 } /* end of AT_DEFT_OSINFO */
 
@@ -354,14 +354,6 @@ struct struct_at_ops {
 typedef struct {
     char *value;
 } at_ops_cache_t;
-
-static inline void *
-__at_ops_address(at_ops_t *ops)
-{
-    return (unsigned char *)__at_env + ops->offset;
-}
-
-#define at_ops_address(_type, _ops)     ((_type *)__at_ops_address(_ops))
 
 static inline int
 at_ops_check(at_ops_t *ops, char *value)
@@ -454,6 +446,7 @@ extern at_control_t at_control;
 #define at_ops_idx(_ops)            ((at_ops_t *)(_ops) - __at_ops)
 #define at_ops_cache(_ops)          (&__at_ops_cache[at_ops_idx(_ops)])
 #define at_ops_cache_value(_ops)    at_ops_cache(_ops)->value
+#define at_ops_address(_type, _ops) ((_type *)((char *)__at_env + (_ops)->offset))
 
 static inline void
 at_init(void)
@@ -479,7 +472,7 @@ at_init(void)
 * 4. other, fail < unknow < ok
 * 5. self, fail < unknow < ok
 */
-static inline bool
+static inline int
 at_rootfs_cmp(at_info_t *a, at_info_t *b)
 {
     int ret;
@@ -489,7 +482,7 @@ at_rootfs_cmp(at_info_t *a, at_info_t *b)
         return ret;
     }
 
-    ret = at_version_cmp(a->version, b->version);
+    ret = at_version_cmp(&a->version, &b->version);
     if (ret) {
         return ret;
     }
@@ -1206,8 +1199,8 @@ at_usage(void)
 {
     char *self = at_control.argv[0];
     
-    println("%s name ==> show env by name", self);
-    println("%s name1=value1 name2=value2 ... ==> set env by name and value", self);
+    os_println("%s name ==> show env by name", self);
+    os_println("%s name1=value1 name2=value2 ... ==> set env by name and value", self);
 
     return -EHELP;
 }
@@ -1277,8 +1270,6 @@ at_analysis_args(char *path, char *value, bool isall)
 static inline int
 __at_check(char *args)
 {
-    int err;
-
     bool isall = __at_asterisk(args)?true:false;
     
     char *eq = os_strchr(args, '=');
@@ -1347,7 +1338,7 @@ at_check_rw(int argc, char *argv[])
         */
         at_control.isset = false;
     }
-    else (argc==count) {
+    else if (argc==count) {
         /*
         * all is set
         */

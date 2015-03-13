@@ -3,8 +3,8 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
 #include <mmc.h>
 
-static struct at_ops __ops[]= AT_DEFT_OPS;
-static struct at_ops_cache __ops_cache[os_count_of(__ops)];
+static at_ops_t __ops[]= AT_DEFT_OPS;
+static at_ops_cache_t __ops_cache[os_count_of(__ops)];
 at_control_t at_control     = AT_CONTROL_DEFT(NULL, __ops, __ops_cache);
 
 static int 
@@ -14,14 +14,14 @@ read_emmc(unsigned int begin, void *buf, int size)
     int ret;
 
     if (!mmc) {
-        println("init mmc error");
+        os_println("init mmc error");
         return -1;
     }
 
     ret = mmc->block_dev.block_read(0, begin >> 9,
         size >> 9, buf);
     if (ret != (size >> 9)){
-        println("read emmc error, begin:0x%x, size:0x%x", begin, size);
+        os_println("read emmc error, begin:0x%x, size:0x%x", begin, size);
         return -1;
     }
 
@@ -35,14 +35,14 @@ write_emmc(unsigned int begin, void *buf, int size)
     int ret;
 
     if (!mmc) {
-        println("init mmc error");
+        os_println("init mmc error");
         return -1;
     }
 
     ret = mmc->block_dev.block_write(0, begin >> 9,
         size >> 9, buf);
     if (ret != (size >> 9)) {
-        println("write emmc error, begin:0x%x, size:0x%x", begin, size);
+        os_println("write emmc error, begin:0x%x, size:0x%x", begin, size);
         return -1;
     }
     
@@ -60,7 +60,7 @@ get_first_env(void)
 
         return first;
     } else {
-        println("no found first env");
+        os_println("no found first env");
         
         return NULL;
     }
@@ -96,7 +96,7 @@ get_env_byname(char *name)
         env = get_next_env(env);
     }
 
-    println("no found env:%s", name);
+    os_println("no found env:%s", name);
     
     return NULL;    
 }
@@ -119,7 +119,7 @@ __change_bootenv(char *tag, char *name, char *find, int idx, int new)
     
     value = key + strlen(find);
     if (*value != new) {
-        println("%s changed from %c to %c", tag, *value, idx);
+        os_println("%s changed from %c to %c", tag, *value, idx);
         *value = new;
     }
 
@@ -167,7 +167,7 @@ firmware_init(void)
     __at_show_byprefix("vendor");
 
     if (false==os_objeq(&deft, __at_vendor)) {
-        println("autelan env first init...");
+        os_println("autelan env first init...");
 
         at_obj_deft(__at_env, AT_DEFT_ENV);
         
