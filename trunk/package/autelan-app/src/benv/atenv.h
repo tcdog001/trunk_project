@@ -435,8 +435,9 @@ extern at_control_t at_control;
 #define __at_rootfs             (&__at_firmware->rootfs)
 #define __at_key                (&__at_env->key)
 #define __at_var                (&__at_env->var)
+#define __at_info(_obj)         __at_##_obj->info
 
-#define at_info(_obj, _idx)     (&__at_##_obj->info[_idx])
+#define at_info(_obj, _idx)     (__at_info(_obj) + (_idx))
 #define at_kernel(_idx)         at_info(kernel, _idx)
 #define at_rootfs(_idx)         at_info(rootfs, _idx)
 #define at_key(_idx)            __at_key->key[_idx]
@@ -715,7 +716,7 @@ at_set_string(at_ops_t *ops, char *value)
 }
 
 
-static inline bool 
+static inline int 
 at_check_firmware_version(at_ops_t *ops, char *value)
 {
     at_version_t version = AT_INVALID_VERSION;
@@ -724,9 +725,9 @@ at_check_firmware_version(at_ops_t *ops, char *value)
         /*
         * when set version, must input value
         */
-        return false;
+        return -EFORMAT;
     } else {
-        return is_good_at_version(&version);
+        return is_good_at_version(&version)?0:-EFORMAT;
     }
 }
 
@@ -752,16 +753,16 @@ at_set_firmware_version(at_ops_t *ops, char *value)
     }
 }
 
-static inline bool 
+static inline int 
 at_check_firmware_fsm(at_ops_t *ops, char *value)
 {
     if (value[0]) {
-        return is_good_at_fsm(at_fsm_idx(value));
+        return is_good_at_fsm(at_fsm_idx(value))?0:-EFORMAT;
     } else {
         /*
         * when set self/other/upgrade, must input value
         */
-        return false;
+        return -EFORMAT;
     }
 }
 
@@ -789,7 +790,7 @@ at_set_firmware_fsm(at_ops_t *ops, char *value)
     *at_ops_address(unsigned int, ops) = fsm;
 }
 
-static inline bool 
+static inline int 
 at_check_kernel_current(at_ops_t *ops, char *value)
 {
     if (value[0]) {
@@ -800,22 +801,22 @@ at_check_kernel_current(at_ops_t *ops, char *value)
         /*
         * when set kernel current, must input value
         */
-        return false;
+        return -EFORMAT;
     }
 }
 
-static inline bool 
+static inline int 
 at_check_rootfs_current(at_ops_t *ops, char *value)
 {
     if (value[0]) {
         int v = os_atoi(value);
 
-        return is_good_enum(v, AT_ROOTFS_COUNT);
+        return is_good_enum(v, AT_ROOTFS_COUNT)?0:-EFORMAT;
     } else {
         /*
         * when set rootfs current, must input value
         */
-        return false;
+        return -EFORMAT;
     }
 }
 
@@ -823,12 +824,12 @@ static inline bool
 at_check_var_string(at_ops_t *ops, char *value)
 {
     if (value[0]) {
-        return os_strlen(value) < AT_VAR_SIZE;
+        return (os_strlen(value) < AT_VAR_SIZE)?0:-EFORMAT;
     } else {
         /*
         * when set var string, may NOT input value
         */
-        return true;
+        return 0;
     }
 }
 
