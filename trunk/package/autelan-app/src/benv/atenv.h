@@ -820,7 +820,7 @@ at_check_rootfs_current(at_ops_t *ops, char *value)
     }
 }
 
-static inline bool 
+static inline int 
 at_check_var_string(at_ops_t *ops, char *value)
 {
     if (value[0]) {
