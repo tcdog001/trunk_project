@@ -437,7 +437,7 @@ extern at_control_t at_control;
 #define __at_var                (&__at_env->var)
 #define __at_info(_obj)         __at_##_obj->info
 
-#define at_info(_obj, _idx)     (__at_info(_obj) + (_idx))
+#define at_info(_obj, _idx)     (&__at_info(_obj)[_idx])
 #define at_kernel(_idx)         at_info(kernel, _idx)
 #define at_rootfs(_idx)         at_info(rootfs, _idx)
 #define at_key(_idx)            __at_key->key[_idx]
