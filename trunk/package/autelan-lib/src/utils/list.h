@@ -3,7 +3,7 @@
 /* 
 * copy/modify from linux-3.7.1 
 */
-#if defined(__BOOT__) || defined(__APP__)
+#if defined(__BOOT__) && defined(__APP__)
 
 #ifdef __OPENWRT__
 #include <libubox/list.h>
@@ -335,6 +335,29 @@ static inline void list_splice_tail_init(struct list_head *list,
 		INIT_LIST_HEAD(list);
 	}
 }
+
+#undef list_entry
+#undef list_first_entry
+#undef list_last_entry
+#undef list_first_entry_or_null
+#undef list_next_entry
+#undef list_prev_entry
+#undef list_for_each
+#undef list_for_each_prev
+#undef list_for_each_safe
+#undef list_for_each_prev_safe
+#undef list_for_each_entry
+#undef list_for_each_entry_reverse
+#undef list_prepare_entry
+#undef list_for_each_entry_continue
+#undef list_for_each_entry_continue_reverse
+#undef list_for_each_entry_from
+#undef list_for_each_entry_safe
+#undef list_for_each_entry_safe_continue
+#undef list_for_each_entry_safe_from
+#undef list_for_each_entry_safe_reverse
+#undef list_safe_reset_next
+
 
 /**
  * list_entry - get the struct for this entry
@@ -688,6 +711,15 @@ static inline void hlist_move_list(struct hlist_head *old,
 		new->first->pprev = &new->first;
 	old->first = NULL;
 }
+
+#undef hlist_entry
+#undef hlist_for_each
+#undef hlist_for_each_safe
+#undef hlist_entry_safe
+#undef hlist_for_each_entry
+#undef hlist_for_each_entry_continue
+#undef hlist_for_each_entry_from
+#undef hlist_for_each_entry_safe
 
 #define hlist_entry(ptr, type, member) container_of(ptr,type,member)
 

@@ -270,10 +270,12 @@ firmware_save(void)
     saveenv();
 }
 
+extern env_t *env_ptr;
+
 static void
 at_select(void)
 {
-    at_control.env = &env_ptr->env;
+    at_control.env = (at_env_t *)(env_ptr->env);
     
     at_init();
     

@@ -435,11 +435,9 @@ extern at_control_t at_control;
 #define __at_rootfs             (&__at_firmware->rootfs)
 #define __at_key                (&__at_env->key)
 #define __at_var                (&__at_env->var)
-#define __at_info(_obj)         __at_##_obj->info
 
-#define at_info(_obj, _idx)     (&__at_info(_obj)[_idx])
-#define at_kernel(_idx)         at_info(kernel, _idx)
-#define at_rootfs(_idx)         at_info(rootfs, _idx)
+#define at_kernel(_idx)         (&__at_kernel->info[_idx])
+#define at_rootfs(_idx)         (&__at_rootfs->info[_idx])
 #define at_key(_idx)            __at_key->key[_idx]
 #define at_var(_idx)            __at_var->var[_idx]
 
@@ -834,9 +832,11 @@ at_check_var_string(at_ops_t *ops, char *value)
 }
 
 #define AT_OPS_OFFSET(_addr)    (unsigned int)((char *)_addr - (char *)__at_env)
-#define AT_OPS(_path, _addr, _check, _set, _show) { \
+#define at_offsetof(_member)    offsetof(at_env_t, _member)
+
+#define AT_OPS(_path, _member, _check, _set, _show) { \
     .path   = _path,    \
-    .offset = AT_OPS_OFFSET(_addr), \
+    .offset = at_offsetof(_member), \
     .check  = _check,   \
     .set    = _set,     \
     .show   = _show,    \
@@ -846,31 +846,40 @@ at_check_var_string(at_ops_t *ops, char *value)
     AT_OPS(_path, _addr, NULL, NULL, _show)
 
 #define AT_VENDOR_OPS \
-    __AT_VENDOR_OPS("vendor/cookie",    &__at_vendor->cookie,   at_show_uint),  \
-    __AT_VENDOR_OPS("vendor/oid",       &__at_vendor->oid,      at_show_uint),  \
-    __AT_VENDOR_OPS("vendor/name",      __at_vendor->name,      at_show_string),\
-    __AT_VENDOR_OPS("vendor/copyright", __at_vendor->copyright, at_show_string) \
+    __AT_VENDOR_OPS("vendor/cookie",        \
+        vendor.cookie,   at_show_uint),     \
+    __AT_VENDOR_OPS("vendor/oid",           \
+        vendor.oid,      at_show_uint),     \
+    __AT_VENDOR_OPS("vendor/name",          \
+        vendor.name,      at_show_string),  \
+    __AT_VENDOR_OPS("vendor/copyright",     \
+        vendor.copyright, at_show_string)   \
     /* end of AT_VENDOR_OPS */
 
-#define __AT_FIRMWARE_OPS(_obj, _idx) \
-    AT_OPS(#_obj "/" #_idx "/self", &at_info(_obj, _idx)->self, \
+#define __AT_FIRMWARE_OPS(_obj, _idx)       \
+    AT_OPS(#_obj "/" #_idx "/self",         \
+        firmware._obj.info[_idx].self,      \
         at_check_firmware_fsm, at_set_firmware_fsm, at_show_firmware_fsm), \
-    AT_OPS(#_obj "/" #_idx "/other", &at_info(_obj, _idx)->other, \
+    AT_OPS(#_obj "/" #_idx "/other",        \
+        firmware._obj.info[_idx].other,     \
         at_check_firmware_fsm, at_set_firmware_fsm, at_show_firmware_fsm), \
-    AT_OPS(#_obj "/" #_idx "/upgrade", &at_info(_obj, _idx)->upgrade, \
+    AT_OPS(#_obj "/" #_idx "/upgrade",      \
+        firmware._obj.info[_idx].upgrade,   \
         at_check_firmware_fsm, at_set_firmware_fsm, at_show_firmware_fsm), \
-    AT_OPS(#_obj "/" #_idx "/error", &at_info(_obj, _idx)->error, \
-        NULL, at_set_uint, at_show_uint), \
-    AT_OPS(#_obj "/" #_idx "/version", &at_info(_obj, _idx)->version, \
+    AT_OPS(#_obj "/" #_idx "/error",        \
+        firmware._obj.info[_idx].error,     \
+        NULL, at_set_uint, at_show_uint),   \
+    AT_OPS(#_obj "/" #_idx "/version",      \
+        firmware._obj.info[_idx].version,   \
         at_check_firmware_version, at_set_firmware_version, at_show_firmware_version) \
     /* end of __AT_FIRMWARE_OPS */
 
 #define AT_FIRMWARE_OPS \
-    AT_OPS("kernel/current", &__at_kernel->current, \
+    AT_OPS("kernel/current", firmware.kernel.current, \
         at_check_kernel_current, at_set_uint, at_show_uint), \
     __AT_FIRMWARE_OPS(kernel, 0), \
     __AT_FIRMWARE_OPS(kernel, 1), \
-    AT_OPS("rootfs/current", &__at_rootfs->current, \
+    AT_OPS("rootfs/current", firmware.rootfs.current, \
         at_check_rootfs_current, at_set_uint, at_show_uint), \
     __AT_FIRMWARE_OPS(rootfs, 0), \
     __AT_FIRMWARE_OPS(rootfs, 1), \
@@ -882,7 +891,7 @@ at_check_var_string(at_ops_t *ops, char *value)
     /* end of AT_FIRMWARE_OPS */
 
 #define __AT_KEY_OPS(_path, _idx, _check) \
-    AT_OPS("key/" _path, &at_key(_idx), _check, at_set_uint, at_show_uint)
+    AT_OPS("key/" _path, key.key[_idx], _check, at_set_uint, at_show_uint)
 
 #define AT_KEY_OPS_NAMES_COMMON \
     __AT_KEY_OPS("boot/debug", 0, NULL)
@@ -1040,7 +1049,7 @@ at_check_var_string(at_ops_t *ops, char *value)
 #endif
 
 #define __AT_VAR_OPS(_path, _idx) \
-    AT_OPS("var/" _path, at_var(_idx), at_check_var_string, at_set_string, at_show_string)
+    AT_OPS("var/" _path, var.var[_idx], at_check_var_string, at_set_string, at_show_string)
 
 #define AT_VAR_OPS_NAMES_COMMON     \
     __AT_VAR_OPS("ptest",       0), \

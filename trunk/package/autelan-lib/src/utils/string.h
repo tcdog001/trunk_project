@@ -174,14 +174,39 @@ os_strlcpy(char *dst, const char *src, uint32_t size)
         for ((_sub)=os_strtok(_s, _delim);(_sub);(_sub)=os_strtok(NULL, _delim))
 #endif
 
+#ifdef __BOOT__
+#ifndef os_strtol
+#define os_strtol(_nptr, _endptr, _base)    simple_strtol(_nptr, _endptr, _base)
+#endif
+
+#ifndef os_strtoll
+#define os_strtoll(_nptr, _endptr, _base)   simple_strtoll(_nptr, _endptr, _base)
+#endif
+
+#ifndef os_strtoul
+#define os_strtoul(_nptr, _endptr, _base)   simple_strtoul(_nptr, _endptr, _base)
+#endif
+
+#ifndef os_strtoull
+#define os_strtoull(_nptr, _endptr, _base)  simple_strtoull(_nptr, _endptr, _base)
+#endif
+#else
 #ifndef os_strtol
 #define os_strtol(_nptr, _endptr, _base)    strtol(_nptr, _endptr, _base)
+#endif
+
+#ifndef os_strtoll
+#define os_strtoll(_nptr, _endptr, _base)   strtoll(_nptr, _endptr, _base)
 #endif
 
 #ifndef os_strtoul
 #define os_strtoul(_nptr, _endptr, _base)   strtoul(_nptr, _endptr, _base)
 #endif
 
+#ifndef os_strtoull
+#define os_strtoull(_nptr, _endptr, _base)  strtoull(_nptr, _endptr, _base)
+#endif
+#endif
 
 #ifndef __os_strlast
 #define __os_strlast(_str)  ({  \
