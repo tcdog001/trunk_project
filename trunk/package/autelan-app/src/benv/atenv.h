@@ -834,7 +834,6 @@ at_check_var_string(at_ops_t *ops, char *value)
 
 #define AT_OPS(_path, _addr, _check, _set, _show) { \
     .path   = _path,    \
-    .value  = NULL,     \
     .offset = (char *)_addr - (char *)__at_env,  \
     .check  = _check,   \
     .set    = _set,     \
