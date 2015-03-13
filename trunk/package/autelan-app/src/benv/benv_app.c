@@ -38,40 +38,38 @@ __save(int idx/* block */)
 static int
 save(void)
 {
-    int i;
+    int i, err;
 
     for (i=0; i<AT_BLOCK_COUNT; i++) {
         if (at_control.dirty[i]) {
-            __save(i);
+            err = __save(i);
+            if (err) {
+                /* todo: log */
+            }
+            
+            at_control.dirty[i] = false;
         }
     }
+
+    return 0;
 }
 
 int main(int argc, char *argv[])
 {
     int err;
     
-    err = load();
-    if (err) {
-        return err;
-    }
-    
     err = at_main(argc, argv);
-    if (err) {
-        return err;
-    }
-    
-    err = save();
-    if (err) {
-        return err;
-    }
 
-    return 0;
+    save();
+
+    return err;
 }
 
 static os_destructor void
 __fini(void)
 {
+    save();
+    
     if (at_control.f) {
         fclose(at_control.f);
     }
@@ -81,5 +79,7 @@ static os_constructor void
 __init(void)
 {
     at_control.f = fopen(BENV_DEV, "r+");
+
+    load();
 }
 /******************************************************************************/

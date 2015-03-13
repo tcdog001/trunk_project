@@ -881,7 +881,7 @@ at_check_var_string(at_ops_t *ops, char *value)
     /* end of AT_FIRMWARE_OPS */
 
 #define __AT_KEY_OPS(_path, _idx, _check) \
-    AT_OPS("key/" #_path, &at_key(_idx), _check, at_set_uint, at_show_uint)
+    AT_OPS("key/" _path, &at_key(_idx), _check, at_set_uint, at_show_uint)
 
 #define AT_KEY_OPS_NAMES_COMMON \
     __AT_KEY_OPS("boot/debug", 0, NULL)
@@ -1039,7 +1039,7 @@ at_check_var_string(at_ops_t *ops, char *value)
 #endif
 
 #define __AT_VAR_OPS(_path, _idx) \
-    AT_OPS("var/" #_path, at_var(_idx), at_check_var_string, at_set_string, at_show_string)
+    AT_OPS("var/" _path, at_var(_idx), at_check_var_string, at_set_string, at_show_string)
 
 #define AT_VAR_OPS_NAMES_COMMON     \
     __AT_VAR_OPS("ptest",       0), \
