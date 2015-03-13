@@ -176,8 +176,10 @@ __commond_do_help_one(struct command_item *cmd)
     */
     os_printf(__tab);
     
-    for (i=0; i<cmd->count && cmd->list[i]; i++) {
-        os_printf( "%s ", cmd->list[i]);
+    for (i=0; i<cmd->count; i++) {
+        if (cmd->list[i]) {
+            os_printf( "%s ", cmd->list[i]);
+        }
     }
     
     /* 
@@ -241,18 +243,16 @@ __command_match(int argc, char *argv[], struct command_ctrl *ctrl, int idx)
         return false;
     }
     
-    for (i=0; i<cmd->count && cmd->list[i]; i++) {
-        if ('-' != cmd->list[i][0]) {
+    for (i=0; i<cmd->count; i++) {
+        if (cmd->list[i]
             /* 
-            * not begin with '-', need not compare 
+            * begin with '-', need compare 
             */
-            continue;
-        }
-        
-        if (0 != os_strcmp(argv[i+1], cmd->list[i])) {
+            && '-' == cmd->list[i][0]
             /* 
             * main's argv != cmd's arg
             */
+            && 0 != os_strcmp(argv[i+1], cmd->list[i])) {
             return false;
         }
     }

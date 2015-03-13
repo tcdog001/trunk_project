@@ -199,6 +199,33 @@ define Package/autelan-stimerc/compile
 		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 ####################################################################
+define Package/autelan-benv
+  SECTION:=apps
+  CATEGORY:=autelan-app
+  TITLE:=Autelan Basic App
+  DEPENDS:=+libubacktrace +libautelan-appkey
+endef
+
+define Package/autelan-benv/install
+	$(Package/autelan-app/install/common)
+	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/benv/
+
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/benv/benv $(1)/usr/bin
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/benv/benv.key $(1)/$(APPKEY_PATH)/
+endef
+
+define Package/autelan-benv/compile
+	$(MAKE) -C $(PKG_BUILD_DIR)/benv \
+		CC="$(TARGET_CC)" \
+		CFLAGS=" \
+			$(TARGET_CFLAGS) \
+			$(TARGET_CPPFLAGS) \
+			-D__THIS_NAME=\\\"benv\\\" \
+			-D__AKID_DEBUG=__benv_debug \
+			" \
+		LDFLAGS="$(TARGET_LDFLAGS)"
+endef
+####################################################################
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(CP) ./src/* $(PKG_BUILD_DIR)
@@ -216,6 +243,7 @@ define Build/Compile
 	$(Package/autelan-um/compile)
 	$(Package/autelan-stimerd/compile)
 	$(Package/autelan-stimerc/compile)
+	$(Package/autelan-benv/compile)
 endef
 ####################################################################
 $(eval $(call BuildPackage,autelan-btt))
@@ -224,4 +252,5 @@ $(eval $(call BuildPackage,autelan-partool))
 $(eval $(call BuildPackage,autelan-um))
 $(eval $(call BuildPackage,autelan-stimerd))
 $(eval $(call BuildPackage,autelan-stimerc))
+$(eval $(call BuildPackage,autelan-benv))
 

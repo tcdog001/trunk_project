@@ -57,16 +57,6 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 #define NAME_GOOD       NAME_OSENV "|" NAME_PRODUCT
 #define NAME_HELP       "partname must be " NAME_GOOD
 
-struct part_var {
-    int len;
-    char *var;
-};
-
-struct part_cursor {
-    struct part_var k;
-    struct part_var v;
-};
-
 enum {
     /*
     * normal read(flash==>block)
@@ -150,7 +140,7 @@ part_mode_string(int mode)
 struct part_item {
     struct list_head node;
     
-    struct part_cursor c;
+    struct string_kv c;
 };
 
 struct part_block {
@@ -459,7 +449,7 @@ part_read_line(char *begin, char *end, char *line, int line_size)
 }
 
 static char *
-part_write_line(char *begin, char *end, struct part_cursor *c)
+part_write_line(char *begin, char *end, struct string_kv *c)
 {
     int len, left;
     char *name, *separator, *value, *crlf;
@@ -490,7 +480,7 @@ part_write_line(char *begin, char *end, struct part_cursor *c)
 static void
 part_cursor_free(struct part_item *item)
 {
-    struct part_cursor *c = &item->c;
+    struct string_kv *c = &item->c;
     
     if (c->k.var) {
         os_free(c->k.var);
@@ -503,7 +493,7 @@ part_cursor_free(struct part_item *item)
 static int
 part_cursor_init(struct part_item *item, char *name, char *value)
 {
-    struct part_cursor *c = &item->c;
+    struct string_kv *c = &item->c;
     
     part_cursor_free(item);
     
@@ -615,7 +605,7 @@ part_item_clean(struct part_block *block)
 }
 
 static inline struct part_item *
-part_item_getbycursor(struct part_cursor *c)
+part_item_getbycursor(struct string_kv *c)
 {
     return container_of(c, struct part_item, c);
 }
@@ -1208,7 +1198,7 @@ part_block_crc_get(struct part_block *block, unsigned int *crc_part, unsigned in
 /*
 * @c : kv cursor, readonly!!!
 */
-typedef multi_value_t part_var_foreach_f(struct part_block *block, struct part_cursor *c, void *data);
+typedef multi_value_t part_var_foreach_f(struct part_block *block, struct string_kv *c, void *data);
 
 int
 part_var_foreach(struct part_block *block, part_var_foreach_f *foreach, void *data)
@@ -1235,7 +1225,7 @@ part_var_foreach(struct part_block *block, part_var_foreach_f *foreach, void *da
 
 #ifndef __BOOT__
 static multi_value_t 
-kv_foreach_byname_prefix_cb(struct part_block *block, struct part_cursor *c, void *data)
+kv_foreach_byname_prefix_cb(struct part_block *block, struct string_kv *c, void *data)
 {
     void **param = (void **)data;
     char *DATA = param[0];
@@ -1287,7 +1277,7 @@ __part_var_find(struct part_block *block, char *name)
 * find k/v from block list
 */
 int
-part_var_find(struct part_block *block, char *name, struct part_cursor *c)
+part_var_find(struct part_block *block, char *name, struct string_kv *c)
 {
     struct part_item *item;
     
@@ -1408,7 +1398,7 @@ part_var_delete(struct part_block *block, char *name)
 
 #ifndef __BOOT__
 static multi_value_t 
-part_var_delete_byname_prefix_cb(struct part_block *block, struct part_cursor *c, void *data)
+part_var_delete_byname_prefix_cb(struct part_block *block, struct string_kv *c, void *data)
 {
     int err;
     
@@ -1810,7 +1800,7 @@ partool_clean(void)
 }
 
 static inline void
-show_cursor(struct part_cursor *c, bool simple)
+show_cursor(struct string_kv *c, bool simple)
 {
     if (simple) {
         os_println("%s", c->v.var);
@@ -1864,7 +1854,7 @@ cmd_empty(int argc, char *argv[])
 }
 
 static multi_value_t 
-show_cb(struct part_block *block, struct part_cursor *c, void *data)
+show_cb(struct part_block *block, struct string_kv *c, void *data)
 {
     show_cursor(c, false);
     
@@ -1897,7 +1887,7 @@ cmd_show_all(int argc, char *argv[])
 static int 
 cmd_show_byname(int argc, char *argv[])
 {
-    struct part_cursor c;
+    struct string_kv c;
     char *name = argv[4];
     int err = 0;
     
@@ -2173,7 +2163,7 @@ boot_partool_clean(void)
 int
 boot_partool_show_byname(int argc, char *argv[],void *buf)
 {
-    struct part_cursor c;
+    struct string_kv c;
     char *name = argv[4];
     int err = 0;
     int len;

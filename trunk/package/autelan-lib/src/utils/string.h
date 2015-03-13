@@ -94,9 +94,10 @@
 #ifndef os_strmcpy
 #define os_strmcpy(_dst, _src, _len/* src len */) ({ \
     char *dst = (_dst);             \
+    int len = (_len);               \
                                     \
-    os_memcpy(dst, _src, _len);     \
-    dst[_len] = 0;                  \
+    os_memcpy(dst, _src, len);      \
+    dst[len] = 0;                   \
                                     \
     dst;                            \
 })
@@ -171,6 +172,35 @@ os_strlcpy(char *dst, const char *src, uint32_t size)
 #ifndef os_strtok_foreach
 #define os_strtok_foreach(_sub, _s, _delim) \
         for ((_sub)=os_strtok(_s, _delim);(_sub);(_sub)=os_strtok(NULL, _delim))
+#endif
+
+#ifndef os_strtol
+#define os_strtol(_nptr, _endptr, _base)    strtol(_nptr, _endptr, _base)
+#endif
+
+#ifndef os_strtoul
+#define os_strtoul(_nptr, _endptr, _base)   strtoul(_nptr, _endptr, _base)
+#endif
+
+
+#ifndef __os_strlast
+#define __os_strlast(_str)  ({  \
+    char *str = (_str);         \
+                                \
+    str + os_strlen(str) - 1;   \
+})
+#endif
+
+#ifndef os_strlast
+#define os_strlast(_str, _ch)   ({  \
+    char *last = __os_strlast(_str);\
+                                    \
+    if (*last != (_ch)) {           \
+        last = NULL;                \
+    }                               \
+                                    \
+    last;                           \
+})
 #endif
 
 #ifndef os_getstringarrayidx
@@ -859,5 +889,57 @@ symbol_foreach(symbol_table_t *table, multi_value_t (*cb)(symbol_t *sym))
     
     return mlist_foreach(table, node_cb);
 }
+
+struct string_cursor {
+    char *var;
+    int len;
+};
+
+static inline int
+string_cursor_end(struct string_cursor *cursor, int ch)
+{
+    int value = cursor->var[cursor->len];
+
+    cursor->var[cursor->len] = ch;
+
+    return value;
+}
+
+#define string_cursor_save(_cursor, _ch)    _ch = string_cursor_end(_cursor, 0)
+#define string_cursor_restore(_cursor, _ch) string_cursor_end(_cursor, _ch)
+
+#define string_cursor_string_call(_cursor, _call) do{ \
+    int ch;                                         \
+                                                    \
+    string_cursor_save(_cursor, ch);                \
+    _call, (void)0;                                 \
+    string_cursor_restore(_cursor, ch);             \
+}while(0)
+
+static inline bool
+string_cursor_eq(struct string_cursor *cursor, char *string)
+{
+    return 0==string[cursor->len] 
+        && 0==os_memcmp(string, cursor->var, cursor->len);
+}
+
+#define __STRING_CURSOR(_var, _len) {   \
+    .var = _var,                        \
+    .len = _len,                        \
+} /* end of __STRING_CURSOR */
+
+#define STRING_CURSOR   __STRING_CURSOR(NULL, 0)
+
+struct string_kv {
+    struct string_cursor k, v;
+};
+
+#define __STRING_KV(_k, _klen, _v, _vlen) { \
+    .k = __STRING_CURSOR(_k, _klen),        \
+    .v = __STRING_CURSOR(_v, _vlen),        \
+} /* end of __STRING_KV */
+
+#define STRING_KV   __STRING_KV(NULL, 0, NULL, 0)
+
 /******************************************************************************/
 #endif /* __STRING_H_EBBADBD33FD514F013D3D84007A20302__ */

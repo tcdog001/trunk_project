@@ -71,6 +71,45 @@
     ret;                        \
 })
 
+/*
+* bad < good
+* bad == bad
+* all is good, use _object_cmp
+*/
+#define os_object_cmp(_a, _b, _is_good, _object_cmp) ({ \
+    int ret;                                \
+    typeof(_a)  a = (_a);                   \
+    typeof(_b)  b = (_b);                   \
+                                            \
+    if (_is_good(a)) {                      \
+        if (_is_good(b)) {                  \
+            /*                              \
+            * a is good, b is good          \
+            */                              \
+            ret = _object_cmp(a, b);        \
+        } else {                            \
+            /*                              \
+            * a is good, b is bad           \
+            */                              \
+            ret = 1;                        \
+        }                                   \
+    } else {                                \
+        if (_is_good(b)) {                  \
+            /*                              \
+            * a is bad, b is good           \
+            */                              \
+            ret = -1;                       \
+        } else {                            \
+            /*                              \
+            * a is bad, b is bad            \
+            */                              \
+            ret = 0;                        \
+        }                                   \
+    }                                       \
+                                            \
+    ret;                                    \
+}) /* end of os_obj_cmp */
+
 #define os_swap_value(_a, _b)  do {    \
     typeof(_a) _tmp = (_a);     \
     (_a) = (_b);                \

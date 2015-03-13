@@ -11,7 +11,7 @@ include $(DIR_ROOT)/mk/define.mk
 #
 #changed me, append sub-system
 #
-SUB_SYSTEM=partool appkey sinetd stimerc stimerd
+SUB_SYSTEM=partool appkey sinetd stimerc stimerd benv
 
 #
 #don't change it

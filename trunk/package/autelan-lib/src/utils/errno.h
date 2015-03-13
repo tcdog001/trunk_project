@@ -66,6 +66,7 @@ enum {
     EINLIST,    /* 25 */
     ETIMEOUT,   /* 26 */
     EEMPTY,     /* 27 */
+    EHELP,      /* 28 */
 };
 
 
