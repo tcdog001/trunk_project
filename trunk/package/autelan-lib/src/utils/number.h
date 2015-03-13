@@ -49,7 +49,7 @@ os_digitchar2int(int ch)
 #define os_atoi(string)     atoi(string)
 #define os_atol(string)     atol(string)
 #define os_atoll(string)    atoll(string)
-#elif
+#else
 #error "need to define atoi/atol/atoll"
 #endif
 /******************************************************************************/
