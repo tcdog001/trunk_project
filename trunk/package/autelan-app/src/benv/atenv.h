@@ -832,9 +832,10 @@ at_check_var_string(at_ops_t *ops, char *value)
     }
 }
 
+#define AT_OPS_OFFSET(_addr)    (unsigned int)((char *)_addr - (char *)__at_env)
 #define AT_OPS(_path, _addr, _check, _set, _show) { \
     .path   = _path,    \
-    .offset = (char *)_addr - (char *)__at_env,  \
+    .offset = AT_OPS_OFFSET(_addr), \
     .check  = _check,   \
     .set    = _set,     \
     .show   = _show,    \
@@ -846,8 +847,8 @@ at_check_var_string(at_ops_t *ops, char *value)
 #define AT_VENDOR_OPS \
     __AT_VENDOR_OPS("vendor/cookie",    &__at_vendor->cookie,   at_show_uint),  \
     __AT_VENDOR_OPS("vendor/oid",       &__at_vendor->oid,      at_show_uint),  \
-    __AT_VENDOR_OPS("vendor/name",      &__at_vendor->name,     at_show_string),\
-    __AT_VENDOR_OPS("vendor/copyright", &__at_vendor->copyright,at_show_string) \
+    __AT_VENDOR_OPS("vendor/name",      __at_vendor->name,      at_show_string),\
+    __AT_VENDOR_OPS("vendor/copyright", __at_vendor->copyright, at_show_string) \
     /* end of AT_VENDOR_OPS */
 
 #define __AT_FIRMWARE_OPS(_obj, _idx) \

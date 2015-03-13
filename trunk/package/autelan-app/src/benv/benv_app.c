@@ -13,7 +13,7 @@ at_control_t at_control     = AT_CONTROL_DEFT(&__env, __ops, __ops_cache);
 static int
 load(void)
 {
-    if (1 != fread(__env, AT_ENV_SIZE, 1, at_control.f)) {
+    if (1 != fread(__at_env, AT_ENV_SIZE, 1, at_control.f)) {
         return ferror(at_control.f);
     } else {
         return 0;
@@ -24,12 +24,11 @@ static int
 __save(int idx/* block */)
 {
     int offset  = AT_BLOCK_SIZE * idx;
-    void *obj = (char *)__env + offset;
+    void *obj   = (char *)__at_env + offset;
     
     if (fseek(at_control.f, offset, 0)) {
         return ferror(at_control.f);
-    }
-    else if (1 != fwrite(obj, AT_BLOCK_SIZE, 1, at_control.f)) {
+    } else if (1 != fwrite(obj, AT_BLOCK_SIZE, 1, at_control.f)) {
         return ferror(at_control.f);
     } else {
         return 0;

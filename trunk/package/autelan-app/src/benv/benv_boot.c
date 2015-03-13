@@ -3,7 +3,7 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
 #include <mmc.h>
 
-static at_ops_t     __ops[] = AT_DEFT_OPS;
+static at_ops_t __ops[]     = AT_DEFT_OPS;
 static at_ops_cache_t __ops_cache[os_count_of(__ops)];
 at_control_t at_control     = AT_CONTROL_DEFT(NULL, __ops, __ops_cache);
 
