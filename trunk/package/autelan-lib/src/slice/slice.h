@@ -459,7 +459,7 @@ extern int
 slice_sprintf(struct slice *slice, int flag, const char *fmt, ...)
     __attribute__((format(printf, 3, 4)));
 
-#ifndef __KERNEL__
+#ifdef __APP__
 
 static inline void 
 __slice_to_msg

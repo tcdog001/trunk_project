@@ -1,7 +1,7 @@
 #ifndef __PRINTF_H_6115A6C5DFF707CC6D8400E2B7190543__
 #define __PRINTF_H_6115A6C5DFF707CC6D8400E2B7190543__
 /******************************************************************************/
-#ifndef __KERNEL__
+#if defined(__BOOT__) || defined(__APP__)
 #define os_printf(_fmt, args...)                printf(_fmt, ##args)
 #define os_vprintf(_fmt, args)                  vprintf(_fmt, args)
 #else

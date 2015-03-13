@@ -174,7 +174,7 @@ os_memcmp(const void *a, const void *b, size_t n)
 #endif
 
 
-#ifndef __KERNEL__
+#if defined(__BOOT__) || defined(__APP__)
 #define os_malloc(_size)            malloc(_size)
 #define os_calloc(_count, _size)            ({  \
         void *p = os_malloc((_count)*(_size));  \

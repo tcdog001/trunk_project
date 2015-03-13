@@ -1,7 +1,7 @@
 #ifndef __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__
 #define __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__
 /******************************************************************************/
-#ifndef __KERNEL__
+#if defined(__BOOT__) || defined(__APP__)
 /* Force a compilation error if condition is true */
 #define BUILD_BUG_ON(condition)     ((void)BUILD_BUG_ON_ZERO(condition))
 /* Force a compilation error if condition is true, but also produce a
@@ -12,7 +12,7 @@
 #define BUILD_BUG_ON_NULL(e)        ((void *)sizeof(struct { int:-!!(e); }))
 
 #ifndef offsetof
-#define offsetof(TYPE, MEMBER)  __builtin_offsetof(TYPE,MEMBER)
+#define offsetof(TYPE, MEMBER)      __builtin_offsetof(TYPE,MEMBER)
 #endif
 
 #ifndef container_of
@@ -163,8 +163,7 @@ static inline bool is_good_common_id(int id)
 /*
 * 忘了min/max在哪个头文件定义了，先放这里
 */
-#ifndef __KERNEL__
-    
+#if 1
 #define os_min(x,y)    ({  \
         typeof(x) _x = (x);     \
         typeof(y) _y = (y);     \
@@ -178,7 +177,6 @@ static inline bool is_good_common_id(int id)
         (void) (&_x == &_y);    \
         _x > _y ? _x : _y;      \
     })
-
 #endif
 
 #define OS_IOVEC_INITER(_base, _len) { \

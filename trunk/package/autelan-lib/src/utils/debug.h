@@ -33,17 +33,17 @@
 #define __debug_init_all        0xffffffff
 #define __debug_init_default    __debug_init_error
 
-#if defined(__KERNEL__) || defined(__APPKEY__)
+#ifdef __BOOT__
+extern int __AKID_DEBUG;
+
+#define __debug_init    __AKID_DEBUG
+#elif defined(__KERNEL__) || defined(__APPKEY__)
 /*
 * in boot/kernel/libappkey, should define __debug_init_pointer as below
 *   int xxx;
 *   static int *__debug_init_pointer = &xxx;
 */
 #define __debug_init    (*__debug_init_pointer)
-#elif defined(__BOOT__)
-extern int __AKID_DEBUG;
-
-#define __debug_init    __AKID_DEBUG
 #else
 /*
 * for all app/lib(defined __THIS_NAME)

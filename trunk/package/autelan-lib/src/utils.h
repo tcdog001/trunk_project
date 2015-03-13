@@ -6,13 +6,10 @@
 #endif
 
 #ifdef __BOOT__
-#   undef __KERNEL__
 #   define __AKID_DEBUG __boot_akid
 #   include <malloc.h>
 #   include <command.h>
-#   ifndef __FASTBOOT__
-#       include <common.h>
-#   endif
+#   include <common.h>
 #   include <linux/ctype.h>
 #   include <linux/string.h>
 #elif defined(__KERNEL__)

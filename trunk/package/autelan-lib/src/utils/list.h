@@ -3,7 +3,7 @@
 /* 
 * copy/modify from linux-3.7.1 
 */
-#ifndef __KERNEL__
+#if defined(__BOOT__) || defined(__APP__)
 
 #ifdef __OPENWRT__
 #include <libubox/list.h>
@@ -744,7 +744,7 @@ static inline void hlist_move_list(struct hlist_head *old,
 	for (pos = hlist_entry_safe((head)->first, typeof(*pos), member);\
 	     pos && ({ n = pos->member.next; 1; });			\
 	     pos = hlist_entry_safe(n, typeof(*pos), member))
-#endif /* __KERNEL__ */
+#endif /* __BOOT__ || __APP__ */
 
 static inline bool
 is_in_list(struct list_head *node)
