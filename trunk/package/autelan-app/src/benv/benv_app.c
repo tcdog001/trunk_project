@@ -6,8 +6,8 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 #endif
 
 static at_env_t __env       = AT_DEFT_ENV;
-static struct at_ops __ops[]= AT_DEFT_OPS;
-static struct at_ops_cache __ops_cache[os_count_of(__ops)];
+static at_ops_t __ops[]     = AT_DEFT_OPS;
+static at_ops_cache_t __ops_cache[os_count_of(__ops)];
 at_control_t at_control     = AT_CONTROL_DEFT(&__env, __ops, __ops_cache);
 
 static int
