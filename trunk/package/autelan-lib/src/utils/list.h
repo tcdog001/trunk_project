@@ -3,7 +3,7 @@
 /* 
 * copy/modify from linux-3.7.1 
 */
-#if defined(__BOOT__) && defined(__APP__)
+#if defined(__BOOT__) || defined(__APP__)
 
 #ifdef __OPENWRT__
 #include <libubox/list.h>
