@@ -17,7 +17,9 @@ TARGET_CFLAGS += -Wall \
 		-I$(AUTELAN_LIBS) \
 		-D__OPENWRT__ \
 		-DOS_TYPE=openwrt \
-		-D__TAB_AS_SPACE=4
+		-D__DEBUG_INIT \
+		-D__TAB_AS_SPACE=4 \
+		-std=gnu99
 		
 #TARGET_LDFLAGS+= -L$(STAGING_DIR)/lib -Wl,-rpath,$(STAGING_DIR)/lib
 TARGET_LDFLAGS+= -L$(STAGING_DIR)/lib
@@ -149,7 +151,7 @@ define Package/autelan-stimerd
   SECTION:=apps
   CATEGORY:=autelan-app
   TITLE:=Autelan Basic App
-  DEPENDS:=+libubacktrace +libautelan-appkey +libautelan-timer
+  DEPENDS:=+libubacktrace +libautelan-appkey
 endef
 
 define Package/autelan-stimerd/install
@@ -168,6 +170,8 @@ define Package/autelan-stimerd/compile
 			$(TARGET_CPPFLAGS) \
 			-D__THIS_NAME=\\\"stimerd\\\" \
 			-D__AKID_DEBUG=__stimerd_debug \
+			-DSTIMER_TICKS=1000 \
+			-DSTIMER_TIMEOUT_TICKS=5000 \
 			" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
@@ -176,7 +180,7 @@ define Package/autelan-stimerc
   SECTION:=apps
   CATEGORY:=autelan-app
   TITLE:=Autelan Basic App
-  DEPENDS:=+libubacktrace +libautelan-appkey +libautelan-timer
+  DEPENDS:=+libubacktrace +libautelan-appkey
 endef
 
 define Package/autelan-stimerc/install
@@ -195,33 +199,9 @@ define Package/autelan-stimerc/compile
 			$(TARGET_CPPFLAGS) \
 			-D__THIS_NAME=\\\"stimerc\\\" \
 			-D__AKID_DEBUG=__stimerc_debug \
-			" \
-		LDFLAGS="$(TARGET_LDFLAGS)"
-endef
-####################################################################
-define Package/autelan-benv
-  SECTION:=apps
-  CATEGORY:=autelan-app
-  TITLE:=Autelan Basic App
-  DEPENDS:=+libubacktrace +libautelan-appkey
-endef
-
-define Package/autelan-benv/install
-	$(Package/autelan-app/install/common)
-	$(INSTALL_DIR) $(1)/$(BACKTRACE_PATH)/benv/
-
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/benv/benv $(1)/usr/bin
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/benv/benv.key $(1)/$(APPKEY_PATH)/
-endef
-
-define Package/autelan-benv/compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/benv \
-		CC="$(TARGET_CC)" \
-		CFLAGS=" \
-			$(TARGET_CFLAGS) \
-			$(TARGET_CPPFLAGS) \
-			-D__THIS_NAME=\\\"benv\\\" \
-			-D__AKID_DEBUG=__benv_debug \
+			-D__USE_INLINE_TIMER \
+			-DSTIMER_TICKS=1000 \
+			-DSTIMER_TIMEOUT_TICKS=10000
 			" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
@@ -243,7 +223,6 @@ define Build/Compile
 	$(Package/autelan-um/compile)
 	$(Package/autelan-stimerd/compile)
 	$(Package/autelan-stimerc/compile)
-	$(Package/autelan-benv/compile)
 endef
 ####################################################################
 $(eval $(call BuildPackage,autelan-btt))
@@ -252,5 +231,3 @@ $(eval $(call BuildPackage,autelan-partool))
 $(eval $(call BuildPackage,autelan-um))
 $(eval $(call BuildPackage,autelan-stimerd))
 $(eval $(call BuildPackage,autelan-stimerc))
-$(eval $(call BuildPackage,autelan-benv))
-

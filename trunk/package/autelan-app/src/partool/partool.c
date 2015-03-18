@@ -6,8 +6,6 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 #include <command.h>
 #endif
 #include "utils.h"
-#include "utils/list.h"
-#include "utils/cmd.h"
 
 #ifndef PART_BLOCK_CACHE_SIZE
 #define PART_BLOCK_CACHE_SIZE   (64*1024)
@@ -184,7 +182,7 @@ struct part_block {
 #ifdef __BOOT__
 int __AKID_DEBUG = 0;
 
-static byte boot_block[PART_BLOCK_SIZE(PART_BLOCK_CACHE_SIZE)];
+static unsigned char boot_block[PART_BLOCK_SIZE(PART_BLOCK_CACHE_SIZE)];
 
 static inline struct part_block *
 part_zalloc(int block_size)
@@ -1473,7 +1471,7 @@ part_begin(char *partition)
 
 #ifdef __BOOT__
 
-static byte part_tmp[PART_BLOCK_CACHE_SIZE];
+static unsigned char part_tmp[PART_BLOCK_CACHE_SIZE];
 
 static inline void
 __partool_clean(void)
@@ -1497,14 +1495,14 @@ static inline int
 __partool_read(char *partition)
 {
     unsigned long begin = part_begin(partition);
-    byte *tmp;
+    unsigned char *tmp;
     int i;
 
     if (ADDR_BAD==begin) {
         return -EINVAL7;
     }
     
-    for(i=0, tmp=(byte *)begin; i<partool_size; i++, tmp++) {
+    for(i=0, tmp=(unsigned char *)begin; i<partool_size; i++, tmp++) {
 	    part_tmp[i] = *tmp;
 	}
 
@@ -1516,7 +1514,7 @@ __partool_write(char *partition)
 {
     unsigned long begin = part_begin(partition);
     unsigned long end   = begin + partool_size - 1;
-    byte *tmp;
+    unsigned char *tmp;
     int err;
     
     if (ADDR_BAD==begin) {
@@ -1553,7 +1551,7 @@ __partool_write(char *partition)
 static char partool_tmpfile[1+OS_FILENAME_LEN];
 static char partool_mtdfile[1+OS_FILENAME_LEN];
 static char *partool_humfile;
-static byte *part_tmp;
+static unsigned char *part_tmp;
 
 static inline void
 init_tmp_filename(char *mtd)
@@ -1628,7 +1626,7 @@ mtd_2_tmp(char *mtd)
         return -EINVAL;
     }
 
-    part_tmp = (byte *)os_zalloc(partool_size);
+    part_tmp = (unsigned char *)os_zalloc(partool_size);
     if (NULL==part_tmp) {
         return -ENOMEM;
     }

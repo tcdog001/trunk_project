@@ -28,29 +28,31 @@ os_digitchar2int(int ch)
     }
 }
 
-#define os_digitstring2number(digitstring, len, base, type) ({ \
-    type n = 0;                                 \
-    char *str = (char *)digitstring;            \
-    int i;                                      \
+#define os_digitstring2number(_digitstring, _len, _base, _type) ({ \
+    _type n = 0;                                \
+    char *str = (char *)_digitstring;           \
+    int k;                                      \
                                                 \
-    for (i=0; i<len; i++)  {                    \
-        n *= (type)base;                        \
-        n += (type)os_digitchar2int(str[i]);    \
+    for (k=0; k<_len; k++)  {                   \
+        n *= (_type)_base;                      \
+        n += (_type)os_digitchar2int(str[k]);   \
     }                                           \
                                                 \
     n;                                          \
 })
 
 #ifdef __BOOT__
-#define os_atoi(string)     simple_strtol(string, NULL, 0)
-#define os_atol(string)     simple_strtol(string, NULL, 0)
-#define os_atoll(string)    simple_strtoull(string, NULL, 0)
-#elif defined(__APP__)
-#define os_atoi(string)     atoi(string)
-#define os_atol(string)     atol(string)
-#define os_atoll(string)    atoll(string)
+#define os_atoi(_string)    simple_strtol(_string, NULL, 0)
+#define os_atol(_string)    simple_strtol(_string, NULL, 0)
+#define os_atoll(_string)   simple_strtoull(_string, NULL, 0)
+#elif defined(__BUSYBOX__) || defined(__APP__)
+#define os_atoi(_string)    atoi(_string)
+#define os_atol(_string)    atol(_string)
+#define os_atoll(_string)   atoll(_string)
 #else
 #error "need to define atoi/atol/atoll"
 #endif
+
+#define os_isprint(_x)      isprint(_x)
 /******************************************************************************/
 #endif /* __NUMBER_H_D1912A84AB1249D4A3313CDD1D2C0B44__ */

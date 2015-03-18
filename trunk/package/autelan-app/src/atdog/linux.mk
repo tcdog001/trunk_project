@@ -16,12 +16,12 @@ include $(DIR_ROOT)/mk/define.mk
 #
 #changed me, append obj
 #
-OBJS=$(DIR_SELF)/benv.o
-TARGET_NAME=benv
+OBJS=$(DIR_SELF)/atdog.o
+TARGET_NAME=atdog
 TARGET=$(TARGET_NAME)
 TARGET_TYPE=exe
 LIB_DEPEND=c appkey
-CFLAGS+=-D__TEST__ -DPART_RW_CP
+CFLAGS+=
 
 #
 #don't change it

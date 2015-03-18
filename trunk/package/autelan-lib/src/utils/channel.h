@@ -1,8 +1,6 @@
 #ifndef __CHANNEL_H_18AEA12667A8CB993E7009393B52CF95__
 #define __CHANNEL_H_18AEA12667A8CB993E7009393B52CF95__
 /******************************************************************************/
-#include "utils.h"
-
 enum channel_type {
     CHANNEL_OBJECT,
     CHANNEL_POINTER,
@@ -21,7 +19,7 @@ typedef struct {
     int reader;
     int writer;
 
-    byte buf[0];
+    unsigned char buf[0];
 } channel_t;
 
 static inline int
@@ -37,18 +35,18 @@ __ch_align(channel_t *ch, int number)
         return __ch_align(ch, number - ch->limit);
     }
 }
-#define __ch_data(ch, type)     ((type *)((ch)->buf))
+#define __ch_data(_ch, _type)   ((_type *)((_ch)->buf))
 
-#define __ch_GET(ch, type, idx, obj)        do{ \
-    *(type *)obj = __ch_data(ch, type)[idx];    \
-    __ch_data(ch, type)[idx] = (type)0;         \
+#define __ch_GET(_ch, _type, _idx, _obj)        do{ \
+    *(_type *)_obj = __ch_data(_ch, _type)[_idx];   \
+    __ch_data(_ch, _type)[_idx] = (_type)0;         \
 }while(0)
 
-#define __ch_SET(ch, type, idx, obj)        do{ \
-    __ch_data(ch, type)[idx] = *(type *)obj;    \
+#define __ch_SET(_ch, _type, _idx, _obj)        do{ \
+    __ch_data(_ch, _type)[_idx] = *(_type *)_obj;   \
 }while(0)
 
-static inline byte *
+static inline unsigned char *
 __ch_buffer(channel_t *ch, int idx)
 {
     return ch->buf + ch->size * idx;
@@ -57,7 +55,7 @@ __ch_buffer(channel_t *ch, int idx)
 static inline bool
 __ch_count(channel_t *ch)
 {
-    return __ch_align(ch, ch->limit + ch->wirter - ch->reader);
+    return __ch_align(ch, ch->limit + ch->writer - ch->reader);
 }
 
 static inline bool
@@ -82,7 +80,7 @@ static inline bool
 __ch_is_writeable(channel_t *ch, int idx)
 {
     int reader = ch->reader;
-    int writer = ch->wirter;
+    int writer = ch->writer;
     
     idx = __ch_align(ch, idx);
 
@@ -95,7 +93,7 @@ __ch_is_writeable(channel_t *ch, int idx)
     else if (reader < writer) {
         return idx >= writer || idx < reader;
     }
-    else { /* reader > wirter */
+    else { /* reader > writer */
         return idx >= writer && idx < reader;
     }
 }
@@ -121,7 +119,7 @@ __ch_SIZE(int type, int size)
             
             break;
         case CHANNEL_U8:
-            size = sizeof(byte);
+            size = sizeof(unsigned char);
             
             break;
         case CHANNEL_U16:
@@ -171,7 +169,7 @@ __ch_get(channel_t *ch, int idx, void *obj)
     
     switch(ch->type) {
         case CHANNEL_OBJECT: {
-            byte *buffer = __ch_buffer(ch, idx);
+            unsigned char *buffer = __ch_buffer(ch, idx);
             
             os_memcpy(obj, buffer, ch->size);
             os_memzero(buffer, ch->size);
@@ -356,11 +354,11 @@ os_ch_new(int type, int limit, int size)
     if (limit<=0) {
         return os_assert_value(NULL);
     } else {
-        return __ch_new(type, limit, __ch_SIZE(type, size),);
+        return __ch_new(type, limit, __ch_SIZE(type, size));
     }
 }
 
-#define os_ch_free(ch)    os_free(ch)
+#define os_ch_free(_ch)     os_free(_ch)
 
 static inline int
 os_ch_get(channel_t *ch, int idx, void *obj)
@@ -410,13 +408,13 @@ os_ch_write(channel_t *ch, void *obj)
     }
 }
 /******************************************************************************/
-#define os_och_new(limit, size)     os_ch_new(CHANNEL_OBJECT, limit, size)
-#define os_och_get(ch, idx, obj)    os_ch_get(ch, idx, obj)
-#define os_och_set(ch, idx, obj)    os_ch_set(ch, idx, obj)
-#define os_och_read(ch, obj)        os_ch_read(ch, obj)
-#define os_och_write(ch, obj)       os_ch_write(ch, obj)
+#define os_och_new(_limit, _size)       os_ch_new(CHANNEL_OBJECT, _limit, _size)
+#define os_och_get(_ch, _idx, _obj)     os_ch_get(_ch, _idx, _obj)
+#define os_och_set(_ch, _idx, _obj)     os_ch_set(_ch, _idx, _obj)
+#define os_och_read(_ch, _obj)          os_ch_read(_ch, _obj)
+#define os_och_write(_ch, _obj)         os_ch_write(_ch, _obj)
 /******************************************************************************/
-#define os_8ch_new(limit)           os_ch_new(CHANNEL_U8, limit, 0)
+#define os_8ch_new(_limit)          os_ch_new(CHANNEL_U8, _limit, 0)
 
 static inline int
 os_8ch_get(channel_t *ch, int idx, uint8_t *pv)
@@ -442,7 +440,7 @@ os_8ch_write(channel_t *ch, uint8_t v)
     return os_ch_write(ch, &v);
 }
 /******************************************************************************/
-#define os_16ch_new(limit)          os_ch_new(CHANNEL_U16, limit, 0)
+#define os_16ch_new(_limit)         os_ch_new(CHANNEL_U16, _limit, 0)
 
 static inline int
 os_16ch_get(channel_t *ch, int idx, uint16_t *pv)
@@ -468,7 +466,7 @@ os_16ch_write(channel_t *ch, uint16_t v)
     return os_ch_write(ch, &v);
 }
 /******************************************************************************/
-#define os_32ch_new(limit)          os_ch_new(CHANNEL_U32, limit, 0)
+#define os_32ch_new(_limit)         os_ch_new(CHANNEL_U32, _limit, 0)
 
 static inline int
 os_32ch_get(channel_t *ch, int idx, uint32_t *pv)
@@ -494,7 +492,7 @@ os_32ch_write(channel_t *ch, uint32_t v)
     return os_ch_write(ch, &v);
 }
 /******************************************************************************/
-#define os_64ch_new(limit)          os_ch_new(CHANNEL_U64, limit, 0)
+#define os_64ch_new(_limit)         os_ch_new(CHANNEL_U64, _limit, 0)
 
 static inline int
 os_64ch_get(channel_t *ch, int idx, uint64_t *pv)
@@ -520,7 +518,7 @@ os_64ch_write(channel_t *ch, uint64_t v)
     return os_ch_write(ch, &v);
 }
 /******************************************************************************/
-#define os_pch_new(limit)           os_ch_new(CHANNEL_POINTER, limit, 0)
+#define os_pch_new(_limit)          os_ch_new(CHANNEL_POINTER, _limit, 0)
 
 static inline int
 os_pch_get(channel_t *ch, int idx, void **pointer)

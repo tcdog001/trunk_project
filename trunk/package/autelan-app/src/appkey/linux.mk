@@ -21,7 +21,7 @@ TARGET_NAME=appkey
 TARGET=$(TARGET_NAME)
 TARGET_TYPE=exe
 LIB_DEPEND=c appkey
-CFLAGS+=-D__TEST__
+CFLAGS+=
 
 #
 #don't change it

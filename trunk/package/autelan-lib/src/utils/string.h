@@ -80,11 +80,11 @@
 #endif
 
 #ifndef os_safestring
-#define os_safestring(s)            ((s)?(s):__nil)
+#define os_safestring(_s)           ((_s)?(_s):__nil)
 #endif
 
 #ifndef os_strlen
-#define os_strlen(s)                strlen(s)
+#define os_strlen(_s)               strlen(_s)
 #endif
 
 #ifndef os_strcpy
@@ -453,7 +453,6 @@ __is_notes_line_deft(char *line)
     return __is_notes_line(line, __notes);
 }
 
-
 static inline char *
 __string_next(char *string, char_is_something_f *IS)
 {
@@ -542,7 +541,7 @@ __string_bkdr(const char *string)
 }
 
 static inline uint32_t
-__binary_bkdr(const byte *binary, uint32_t len)
+__binary_bkdr(const unsigned char *binary, uint32_t len)
 {
     uint32_t hash = 0;
 
@@ -578,7 +577,7 @@ __string_new(
         return os_assert_value(NULL);
     }
 
-    byte *p = (byte *)os_zalloc(resv + 1 + len + sizeof(string_t));
+    unsigned char *p = (unsigned char *)os_zalloc(resv + 1 + len + sizeof(string_t));
     if (NULL==p) {
         return os_assert_value(NULL);
     }
@@ -951,7 +950,7 @@ string_cursor_eq(struct string_cursor *cursor, char *string)
 #define __STRING_CURSOR(_var, _len) {   \
     .var = _var,                        \
     .len = _len,                        \
-} /* end of __STRING_CURSOR */
+}   /* end */
 
 #define STRING_CURSOR   __STRING_CURSOR(NULL, 0)
 
@@ -962,7 +961,7 @@ struct string_kv {
 #define __STRING_KV(_k, _klen, _v, _vlen) { \
     .k = __STRING_CURSOR(_k, _klen),        \
     .v = __STRING_CURSOR(_v, _vlen),        \
-} /* end of __STRING_KV */
+}   /* end */
 
 #define STRING_KV   __STRING_KV(NULL, 0, NULL, 0)
 

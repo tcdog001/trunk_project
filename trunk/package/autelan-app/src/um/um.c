@@ -1,6 +1,8 @@
 #include "utils.h"
 #include "um.h"
 
+USE_INLINE_TIMER;
+
 static inline unsigned int
 timerms(struct um_timer *utm)
 {
@@ -334,34 +336,6 @@ um_timer_init(void)
     }
 }
 
-int main(int argc, char **argv)
-{
-    char *path = NULL;
-    int err = 0;
-        
-	setup_signals();
-	
-	err = um_uci_load();
-    if (err) {
-		goto finish;
-	}
-
-    err = um_ubus_init(path);
-    if (err) {
-		goto finish;
-	}
-    
-    um_timer_init();
-    
-	uloop_run();
-	
-    err = 0;
-finish:
-	um_ubus_fini();
-	
-	return err;
-}
-
 #define um_akid_init(_akid, _name, _deft) do{ \
     _akid = appkey_getbyname(_name); \
     debug_trace("%s=%d", _name, appkey_get(_akid, _deft)); \
@@ -384,8 +358,14 @@ finish:
     um_script_akid_init(_var);      \
 }while(0)
     
-static os_constructor void
-__uci_init(void) 
+static int
+fini(void)
+{
+    return 0;
+}
+
+static int
+init(void) 
 {
     int i, j;
 
@@ -402,11 +382,7 @@ __uci_init(void)
             INIT_LIST_HEAD(&uci->tmp);
         }
     }
-}
-
-static os_constructor void
-__akid_init(void) 
-{
+    
     um_debug_akid_init(uci);
     um_debug_akid_init(ubus);
     um_debug_akid_init(user);
@@ -427,7 +403,46 @@ __akid_init(void)
     um_ipc_akid_init(deauth);
     um_ipc_akid_init(update);
     um_ipc_akid_init(report);
+
+    return 0;
 }
 
-AKID_DEBUGER; /* must last os_constructor */
+static int
+__main(int argc, char **argv)
+{
+    char *path = NULL;
+    int err = 0;
+    
+	setup_signals();
+	
+	err = um_uci_load();
+    if (err) {
+		goto finish;
+	}
+
+    err = um_ubus_init(path);
+    if (err) {
+		goto finish;
+	}
+    
+    um_timer_init();
+    
+	uloop_run();
+	
+finish:
+	um_ubus_fini();
+	
+	return err;
+}
+
+#ifndef __BUSYBOX__
+#define um_main  main
+#endif
+
+int um_main(int argc, char **argv)
+{
+    return os_call(init, fini, __main, argc, argv);
+}
 /******************************************************************************/
+AKID_DEBUGER; /* must last os_constructor */
+

@@ -1,6 +1,6 @@
 #ifndef __CMD_H_F3687584F159827DAA20B322924194D1__
 #define __CMD_H_F3687584F159827DAA20B322924194D1__
-#ifdef __APP__
+#if defined(__BUSYBOX__) || defined(__APP__)
 /******************************************************************************/
 #ifndef __COMMAND_COUNT
 #define __COMMAND_COUNT         (2*32)
@@ -361,6 +361,40 @@ os_cmd_argv_cb(struct cmd_table *table, int argc, char *argv[])
             __func__, i, _argv[i]);             \
     }                                           \
 }while(0)
+/******************************************************************************/
+struct simpile_cmd {
+    int argc;
+    char **argv;
+    
+    int (*handle)(int argc, char *argv[]);
+};
+
+static int
+__simpile_cmd_handle(int count, struct simpile_cmd cmd[], int argc, char *argv[], int (*usage)(void))
+{
+    int i, j;
+
+    for (i=0; i<count; i++) {
+        if (argc != cmd[i].argc) {
+            continue;
+        }
+        
+        for (j=0; j<argc; j++) {
+            char *args = cmd[i].argv[j];
+            
+            if (args && os_strcmp(argv[j], args)) {
+                continue;
+            }
+
+            return (*cmd[i].handle)(argc-1, argv+1);
+        }
+    }
+
+    return (*usage)();
+}
+
+#define simpile_cmd_handle(_cmd, _argc, _argv, _usage) \
+    __simpile_cmd_handle(os_count_of(_cmd), _cmd, _argc, _argv, _usage)
 /******************************************************************************/
 #endif
 #endif /* __CMD_H_F3687584F159827DAA20B322924194D1__ */

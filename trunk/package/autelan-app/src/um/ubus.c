@@ -245,7 +245,7 @@ setfilter_mac(struct user_filter *filter, struct blob_attr *attr[])
 	    struct blob_attr *onlymac[UM_GETUSER_END] = {
 	        [UM_GETUSER_MAC] = p,
         };
-	    byte mac[OS_MACSIZE];
+	    unsigned char mac[OS_MACSIZE];
 	    
 	    os_getmac_bystring(mac, blobmsg_get_string(p));
 	    if (os_objeq(&onlymac, attr)) { // get user by only mac
@@ -359,7 +359,7 @@ push_ok:
 	return 0;
 }
 
-static byte *
+static unsigned char *
 getmac(struct blob_attr *msg)
 {
     struct blob_attr *attr[UM_USER_END] = {NULL};
@@ -401,7 +401,7 @@ um_ubus_handle_disconnect(
     struct blob_attr *msg
 )
 {
-    byte *mac = getmac(msg);
+    unsigned char *mac = getmac(msg);
     if (NULL==mac) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
@@ -444,7 +444,7 @@ um_ubus_handle_unbind(
     struct blob_attr *msg
 )
 {
-    byte *mac = getmac(msg);
+    unsigned char *mac = getmac(msg);
     if (NULL==mac) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
@@ -471,7 +471,7 @@ um_ubus_handle_auth(
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
     
-    byte *mac = os_getmac(blobmsg_get_string(attr[UM_USER_MAC]));
+    unsigned char *mac = os_getmac(blobmsg_get_string(attr[UM_USER_MAC]));
     if (NULL==mac) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }
@@ -495,7 +495,7 @@ um_ubus_handle_deauth(
     struct blob_attr *msg
 )
 {
-    byte *mac = getmac(msg);
+    unsigned char *mac = getmac(msg);
     if (NULL==mac) {
         return UBUS_STATUS_INVALID_ARGUMENT;
     }

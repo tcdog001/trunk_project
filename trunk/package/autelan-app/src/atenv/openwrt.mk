@@ -1,6 +1,6 @@
 
-OBJS=benv.o
-__TARGET=benv
+OBJS=atenv.o
+__TARGET=atenv
 TARGET=$(__TARGET)
 LIBS_DEPEND=-lubacktrace -lautelan-appkey
 

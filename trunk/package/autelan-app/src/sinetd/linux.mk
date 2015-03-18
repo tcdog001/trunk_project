@@ -20,8 +20,8 @@ OBJS=$(DIR_SELF)/sinetd.o
 TARGET_NAME=sinetd
 TARGET=$(TARGET_NAME)
 TARGET_TYPE=exe
-LIB_DEPEND=c
-CFLAGS+=-D__TEST__
+LIB_DEPEND=c appkey
+CFLAGS+=
 
 #
 #don't change it

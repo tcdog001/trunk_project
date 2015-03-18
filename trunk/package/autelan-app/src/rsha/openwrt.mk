@@ -1,12 +1,13 @@
 
-OBJS=slice.o
-__TARGET=libautelan-slice
-TARGET=$(__TARGET).so
-LIBS_DEPEND=
+OBJS=rsha.o
+__TARGET=rsha
+TARGET=$(__TARGET)
+LIBS_DEPEND=-lubacktrace -lautelan-appkey
+CFLAGS+=
 
 .PHONY:all
 all:$(TARGET)
-	
+
 .PHONY: clean
 clean:
 	rm -f $(OBJS) $(TARGET)

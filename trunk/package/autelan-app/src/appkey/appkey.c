@@ -28,4 +28,3 @@ int main(int argc, char *argv[])
 
 /******************************************************************************/
 AKID_DEBUGER; /* must last os_constructor */
-

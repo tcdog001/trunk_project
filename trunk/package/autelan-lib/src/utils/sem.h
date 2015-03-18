@@ -1,6 +1,6 @@
 #ifndef __SEM_H_EF321BBA18F9C8C9E4977949EC03D97E__
 #define __SEM_H_EF321BBA18F9C8C9E4977949EC03D97E__
-#ifdef __APP__
+#if defined(__BUSYBOX__) || defined(__APP__)
 /******************************************************************************/
 typedef struct {
     int id;

@@ -2,8 +2,8 @@
 OBJS=stimerc.o
 __TARGET=stimerc
 TARGET=$(__TARGET)
-LIBS_DEPEND=-lubacktrace -lautelan-appkey -lautelan-timer
-CFLAGS+=-DSTIMER_TICKS=1000 -DSTIMER_TIMEOUT_TICKS=10000
+LIBS_DEPEND=-lubacktrace -lautelan-appkey
+CFLAGS+=
 
 .PHONY:all
 all:$(TARGET)

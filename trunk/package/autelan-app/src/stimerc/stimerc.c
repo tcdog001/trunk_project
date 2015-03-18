@@ -80,12 +80,12 @@ __client(char *buf)
     }
 
     len = os_strlen(buf);
-    err = os_io_write(fd, buf, len);
+    err = io_write(fd, buf, len);
     if (err) {
         return err;
     }
 
-    err = os_io_read(fd, RX, sizeof(RX), stimerc.timeout);
+    err = io_read(fd, RX, sizeof(RX), stimerc.timeout);
     if (err) {
         return err;
     }
@@ -98,11 +98,11 @@ __client(char *buf)
     return shell_error(RES->err);
 }
 
-#define client(fmt, args...)        ({ \
+#define client(_fmt, _args...)      ({  \
     char buf[1+STIMER_REQSIZE] = {0};   \
     int err = 0;                        \
                                         \
-    os_saprintf(buf, fmt, ##args);      \
+    os_saprintf(buf, _fmt, ##_args);    \
     err = __client(buf);                \
                                         \
     err;                                \
@@ -232,7 +232,11 @@ init_env()
     return get_stimer_path_env(&stimerc.server);
 }
 
-int main(int argc, char *argv[])
+#ifndef __BUSYBOX__
+#define stimerc_main  main
+#endif
+
+int stimerc_main(int argc, char *argv[])
 {
     int err;
 

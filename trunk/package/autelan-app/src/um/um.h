@@ -136,7 +136,7 @@ enum {
     [UM_STATE_CONNECT]      = "connect",    \
     [UM_STATE_BIND]         = "bind",       \
     [UM_STATE_AUTH]         = "auth",       \
-}   /* end of UM_USER_STRINGS */
+}   /* end */
 
 static inline bool
 is_good_um_user_state(int state)
@@ -188,7 +188,7 @@ enum {
     [UM_DEAUTH_FLOWLIMIT]   = "flowlimit",  \
     [UM_DEAUTH_ADMIN]       = "admin",      \
     [UM_DEAUTH_INITIATIVE]  = "initiative", \
-}   /* end of UM_DEAUTH_REASONS */
+}   /* end */
 
 static inline bool
 is_good_um_user_deauth_reason(int reason)
@@ -230,7 +230,7 @@ enum {
 #define UM_CLASS_STRINGS            {   \
     [UM_CLASS_NORMAL]   = "normal",     \
     [UM_CLASS_VIP]      = "vip",        \
-}   /* end of UM_CLASS_STRINGS */
+}   /* end */
 
 static inline bool
 is_good_um_user_class(int class)
@@ -272,7 +272,7 @@ enum {
 #define UM_LEVEL_STRINGS        {   \
     [UM_LEVEL_NORMAL]   = "normal", \
     [UM_LEVEL_LOW]      = "low",    \
-}   /* end of UM_LEVEL_STRINGS */
+}   /* end */
 
 static inline bool
 is_good_um_user_level(int level)
@@ -339,9 +339,9 @@ struct apuser {
     int aging;
     uint32_t ip;
     
-    byte mac[OS_MACSIZE];
-    byte ap[OS_MACSIZE];
-    byte vap[OS_MACSIZE];
+    unsigned char mac[OS_MACSIZE];
+    unsigned char ap[OS_MACSIZE];
+    unsigned char vap[OS_MACSIZE];
     
     char ifname[1+OS_IFNAMELEN]; /* wlan ifname */
     struct um_intf *intf;
@@ -413,7 +413,7 @@ typedef multi_value_t um_get_f(struct apuser *user);
     UM_USER_LIMIT(_obj, all, flow, max),    \
     UM_USER_LIMIT(_obj, all, rate, max),    \
     UM_USER_LIMIT(_obj, all, rate, avg)     \
-    /* end of __UM_USER_LISTS */
+    /* end */
 
 #define UM_USER(_OBJ)          \
     UM_USER_##_OBJ##_UPTIME,        \
@@ -436,7 +436,7 @@ typedef multi_value_t um_get_f(struct apuser *user);
     UM_USER_##_OBJ##_ALLRATENOW,    \
     UM_USER_##_OBJ##_ALLRATEMAX,    \
     UM_USER_##_OBJ##_ALLRATEAVG     \
-    /* end of UM_USER_INFO */
+    /* end */
     
 enum {
 	UM_USER_AP,
@@ -478,7 +478,7 @@ enum {
     UM_POLICY_INITER(UM_USER_##_OBJ##_ALLRATENOW,   #_obj ".allratenow",    INT32), \
     UM_POLICY_INITER(UM_USER_##_OBJ##_ALLRATEMAX,   #_obj ".allratemax",    INT32), \
     UM_POLICY_INITER(UM_USER_##_OBJ##_ALLRATEAVG,   #_obj ".allrateavg",    INT32) \
-    /* end of __UM_USER_POLICY_INITER */
+    /* end */
 
 #define UM_USER_POLICY_INITER  { \
     UM_POLICY_INITER(UM_USER_AP,        "ap",       STRING), /* "XX:XX:XX:XX:XX:XX" */  \
@@ -495,7 +495,7 @@ enum {
     \
     __UM_USER_POLICY_INITER(WIFI, wifi), \
     __UM_USER_POLICY_INITER(AUTH, auth), \
-} /* end of UM_USER_POLICY_INITER */
+}   /* end */
 
 enum {
     UM_GETUSER_STATE,
@@ -525,7 +525,7 @@ enum {
     UM_POLICY_INITER(UM_GETUSER_IPMASK,   "ipmask",   STRING), \
     UM_POLICY_INITER(UM_GETUSER_RADIO,    "radio",    INT32),  \
     UM_POLICY_INITER(UM_GETUSER_WLAN,     "wlan",     INT32),  \
-} /* end of UM_GETUSER_POLICY_INITER */
+}   /* end */
 
 #define UM_INTFPOLICY_DISABLE   0
 #define UM_INTFPOLICY_UM        1
@@ -585,7 +585,7 @@ enum {
 	UM_POLICY_INITER(UM_LIMITPOLICY_ALLFLOWMAX, "allflowmax",   INT64), \
 	UM_POLICY_INITER(UM_LIMITPOLICY_ALLRATEMAX, "allratemax",   INT32), \
 	UM_POLICY_INITER(UM_LIMITPOLICY_ALLRATEAVG, "allrateavg",   INT32), \
-} /* end of UM_LIMITPOLICY_INITER */
+}   /* end */
 
 struct um_timer {
     struct uloop_timeout tm;
@@ -598,7 +598,7 @@ struct um_timer {
         .cb = _cb,                  \
     },                              \
     .deft = _deft,                  \
-}
+}   /* end */
 
 enum {
     UM_INTF_RADIO,
@@ -617,7 +617,7 @@ struct um_intf {
     */
     int type;
     char ifname[1+OS_IFNAMELEN];
-    byte mac[OS_MACSIZE];
+    unsigned char mac[OS_MACSIZE];
     int radioid;
     int wlanid;
     
@@ -632,7 +632,7 @@ struct um_uci {
 };
 
 struct um_control {
-    byte basemac[OS_MACSIZE]; /* local ap's base mac */
+    unsigned char basemac[OS_MACSIZE]; /* local ap's base mac */
 
     struct {
         struct hlist_head mac[UM_HASHSIZE];
@@ -711,11 +711,11 @@ struct um_control {
 struct user_filter {
     int state;
     
-    byte ap[OS_MACSIZE];
-    byte apmask[OS_MACSIZE];  /* zero, not use ap as filter */
+    unsigned char ap[OS_MACSIZE];
+    unsigned char apmask[OS_MACSIZE];  /* zero, not use ap as filter */
     
-    byte mac[OS_MACSIZE];
-    byte macmask[OS_MACSIZE]; /* zero, not use mac as filter */
+    unsigned char mac[OS_MACSIZE];
+    unsigned char macmask[OS_MACSIZE]; /* zero, not use mac as filter */
     
     uint32_t ip;
     uint32_t ipmask;/* zero, not use ip as filter */
@@ -724,10 +724,10 @@ struct user_filter {
     int wlanid;     /* <0, not use wlanid as filter */
 };
 
-#define USER_FILTER_INITER  { \
-    .radioid= -1,       \
-    .wlanid = -1,       \
-}
+#define USER_FILTER_INITER  {   \
+    .radioid= -1,               \
+    .wlanid = -1,               \
+}   /* end */
 /******************************************************************************/
 extern struct um_intf *
 um_intf_get(char *ifname);
@@ -840,7 +840,7 @@ extern void
 um_user_dump(struct apuser *user, char *action);
 
 extern struct apuser *
-user_connect(byte mac[], struct um_intf *intf);
+user_connect(unsigned char mac[], struct um_intf *intf);
 
 extern void
 user_disconnect(struct apuser *user);
@@ -858,22 +858,22 @@ extern void
 user_deauth(struct apuser *user, int reason);
 
 extern struct apuser *
-um_user_connect(byte mac[], char *ifname);
+um_user_connect(unsigned char mac[], char *ifname);
 
 extern void
-um_user_disconnect(byte mac[]);
+um_user_disconnect(unsigned char mac[]);
 
 extern struct apuser *
-um_user_bind(byte mac[], uint32_t ip, char *ifname);
+um_user_bind(unsigned char mac[], uint32_t ip, char *ifname);
 
 extern void
-um_user_unbind(byte mac[]);
+um_user_unbind(unsigned char mac[]);
 
 extern struct apuser *
-um_user_auth(byte mac[], int class);
+um_user_auth(unsigned char mac[], int class);
 
 extern void
-um_user_deauth(byte mac[], int reason);
+um_user_deauth(unsigned char mac[], int reason);
 
 extern struct apuser *
 um_user_update(struct apuser *old, struct apuser *new);
@@ -882,7 +882,7 @@ extern int
 um_user_foreach(um_foreach_f *foreach);
 
 extern struct apuser *
-um_user_getbymac(byte mac[]);
+um_user_getbymac(unsigned char mac[]);
 
 extern struct apuser *
 um_user_getbyip(uint32_t ip);
@@ -894,7 +894,7 @@ extern int
 um_user_del(struct apuser *user);
 
 extern int
-um_user_delbymac(byte mac[]);
+um_user_delbymac(unsigned char mac[]);
 
 extern int
 um_user_delbyip(uint32_t ip);
@@ -919,80 +919,80 @@ um_blob_buf_init(void)
 
 #define um_is_ev_enable(_var)       appkey_get(umc.ev._var.akid, umc.ev._var.deft)
 #define um_is_sh_enable(_var)       appkey_get(umc.sh._var.akid, umc.sh._var.deft)
-#define um_user_policy_name(id)     umc.policy.user[id].name
+#define um_user_policy_name(_id)    umc.policy.user[_id].name
 
-#define um_open_table(name)         blobmsg_open_table(&b, name)
-#define um_open_array(name)         blobmsg_open_array(&b, name)
-#define um_close_table(handle)      blobmsg_close_table(&b, handle)
-#define um_close_array(handle)      blobmsg_close_array(&b, handle)
+#define um_open_table(_name)        blobmsg_open_table(&b, _name)
+#define um_open_array(_name)        blobmsg_open_array(&b, _name)
+#define um_close_table(_handle)     blobmsg_close_table(&b, _handle)
+#define um_close_array(_handle)     blobmsg_close_array(&b, _handle)
 
-#define um_add_bool(name, val)      blobmsg_add_u8(&b, name, val)
-#define um_add_string(name, val)    blobmsg_add_string(&b, name, val)
-#define um_add_u32(name, val)       blobmsg_add_u32(&b, name, val)
-#define um_add_u64(name, val)       blobmsg_add_u64(&b, name, val)
+#define um_add_bool(_name, _val)    blobmsg_add_u8(&b, _name, _val)
+#define um_add_string(_name, _val)  blobmsg_add_string(&b, _name, _val)
+#define um_add_u32(_name, _val)     blobmsg_add_u32(&b, _name, _val)
+#define um_add_u64(_name, _val)     blobmsg_add_u64(&b, _name, _val)
 
-#define um_user_add_bool(id, val)   um_add_bool(um_user_policy_name(id), val)
-#define um_user_add_string(id, val) um_add_string(um_user_policy_name(id), val)
-#define um_user_add_u32(id, val)    um_add_u32(um_user_policy_name(id), val)
-#define um_user_add_u64(id, val)    um_add_u64(um_user_policy_name(id), val)
-#define um_user_add_macstring(id, mac)  um_user_add_string(id, os_macstring(mac))
+#define um_user_add_bool(_id, _val)         um_add_bool(um_user_policy_name(_id), _val)
+#define um_user_add_string(_id, _val)       um_add_string(um_user_policy_name(_id), _val)
+#define um_user_add_u32(_id, _val)          um_add_u32(um_user_policy_name(_id), _val)
+#define um_user_add_u64(_id, _val)          um_add_u64(um_user_policy_name(_id), _val)
+#define um_user_add_macstring(_id, _mac)    um_user_add_string(_id, os_macstring(mac))
 
-#define um_ubus_send_reply(ctx, req)    ubus_send_reply(ctx, req, b.head)
+#define um_ubus_send_reply(_ctx, _req)      ubus_send_reply(_ctx, _req, b.head)
 
 /******************************************************************************/
-#define um_debug(var, fmt, args...)     do{ \
+#define um_debug(var, _fmt, _args...)   do{ \
     if (appkey_get(umc.debug.var, 0)) {     \
-        __debug_with_prefix(fmt, ##args);   \
+        __debug_with_prefix(_fmt, ##_args); \
     }                                       \
 }while(0)
 
-#define um_debug_ok(var, fmt, args...)      do{ \
-    if (appkey_get(umc.debug.var, 0)) {         \
-        debug_ok(fmt, ##args);                  \
-    }                                           \
+#define um_debug_ok(var, _fmt, _args...) do{\
+    if (appkey_get(umc.debug.var, 0)) {     \
+        debug_ok(_fmt, ##_args);            \
+    }                                       \
 }while(0)
 
-#define um_debug_error(var, fmt, args...)   do{ \
-    if (appkey_get(umc.debug.var, 0)) {         \
-        debug_error(fmt, ##args);               \
-    }                                           \
+#define um_debug_error(var, _fmt, _args...) do{ \
+    if (appkey_get(umc.debug.var, 0)) { \
+        debug_error(_fmt, ##_args);     \
+    }                                   \
 }while(0)
 
-#define um_debug_trace(var, fmt, args...)   do{ \
-    if (appkey_get(umc.debug.var, 0)) {         \
-        debug_trace(fmt, ##args);               \
-    }                                           \
+#define um_debug_trace(var, _fmt, _args...)   do{ \
+    if (appkey_get(umc.debug.var, 0)) { \
+        debug_trace(_fmt, ##_args);     \
+    }                                   \
 }while(0)
 
-#define um_debug_test(var, fmt, args...)    do{ \
-    if (appkey_get(umc.debug.var, 0)) {         \
-        debug_test(fmt, ##args);                \
-    }                                           \
+#define um_debug_test(var, _fmt, _args...)    do{ \
+    if (appkey_get(umc.debug.var, 0)) { \
+        debug_test(_fmt, ##_args);      \
+    }                                   \
 }while(0)
 
-#define debug_uci_ok(fmt, args...)          um_debug_ok(uci, fmt, ##args)
-#define debug_uci_error(fmt, args...)       um_debug_error(uci, fmt, ##args)
-#define debug_uci_trace(fmt, args...)       um_debug_trace(uci, fmt, ##args)
-#define debug_uci_test(fmt, args...)        um_debug_test(uci, fmt, ##args)
+#define debug_uci_ok(_fmt, _args...)        um_debug_ok(uci, _fmt, ##_args)
+#define debug_uci_error(_fmt, _args...)     um_debug_error(uci, _fmt, ##_args)
+#define debug_uci_trace(_fmt, _args...)     um_debug_trace(uci, _fmt, ##_args)
+#define debug_uci_test(_fmt, _args...)      um_debug_test(uci, _fmt, ##_args)
 
-#define debug_ubus_ok(fmt, args...)         um_debug_ok(ubus, fmt, ##args)
-#define debug_ubus_error(fmt, args...)      um_debug_error(ubus, fmt, ##args)
-#define debug_ubus_trace(fmt, args...)      um_debug_trace(ubus, fmt, ##args)
-#define debug_ubus_test(fmt, args...)       um_debug_test(ubus, fmt, ##args)
+#define debug_ubus_ok(_fmt, _args...)       um_debug_ok(ubus, _fmt, ##_args)
+#define debug_ubus_error(_fmt, _args...)    um_debug_error(ubus, _fmt, ##_args)
+#define debug_ubus_trace(_fmt, _args...)    um_debug_trace(ubus, _fmt, ##_args)
+#define debug_ubus_test(_fmt, _args...)     um_debug_test(ubus, _fmt, ##_args)
 
-#define debug_user_ok(fmt, args...)         um_debug_ok(user, fmt, ##args)
-#define debug_user_error(fmt, args...)      um_debug_error(user, fmt, ##args)
-#define debug_user_trace(fmt, args...)      um_debug_trace(user, fmt, ##args)
-#define debug_user_test(fmt, args...)       um_debug_test(user, fmt, ##args)
+#define debug_user_ok(_fmt, _args...)       um_debug_ok(user, _fmt, ##_args)
+#define debug_user_error(_fmt, _args...)    um_debug_error(user, _fmt, ##_args)
+#define debug_user_trace(_fmt, _args...)    um_debug_trace(user, _fmt, ##_args)
+#define debug_user_test(_fmt, _args...)     um_debug_test(user, _fmt, ##_args)
 
-#define debug_userscan_ok(fmt, args...)     um_debug_ok(userscan, fmt, ##args)
-#define debug_userscan_error(fmt, args...)  um_debug_error(userscan, fmt, ##args)
-#define debug_userscan_trace(fmt, args...)  um_debug_trace(userscan, fmt, ##args)
-#define debug_userscan_test(fmt, args...)   um_debug_test(userscan, fmt, ##args)
+#define debug_userscan_ok(_fmt, _args...)       um_debug_ok(userscan, _fmt, ##_args)
+#define debug_userscan_error(_fmt, _args...)    um_debug_error(userscan, _fmt, ##_args)
+#define debug_userscan_trace(_fmt, _args...)    um_debug_trace(userscan, _fmt, ##_args)
+#define debug_userscan_test(_fmt, _args...)     um_debug_test(userscan, _fmt, ##_args)
 
-#define debug_flowscan_ok(fmt, args...)     um_debug_ok(flowscan, fmt, ##args)
-#define debug_flowscan_error(fmt, args...)  um_debug_error(flowscan, fmt, ##args)
-#define debug_flowscan_trace(fmt, args...)  um_debug_trace(flowscan, fmt, ##args)
-#define debug_flowscan_test(fmt, args...)   um_debug_test(flowscan, fmt, ##args)
+#define debug_flowscan_ok(_fmt, _args...)       um_debug_ok(flowscan, _fmt, ##_args)
+#define debug_flowscan_error(_fmt, _args...)    um_debug_error(flowscan, _fmt, ##_args)
+#define debug_flowscan_trace(_fmt, _args...)    um_debug_trace(flowscan, _fmt, ##_args)
+#define debug_flowscan_test(_fmt, _args...)     um_debug_test(flowscan, _fmt, ##_args)
 /******************************************************************************/
 #endif /* __UM_H_CC431B9A6A7A07C3356E10656BDA3BDD__ */

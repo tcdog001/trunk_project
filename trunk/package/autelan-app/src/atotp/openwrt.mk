@@ -1,8 +1,8 @@
 
-OBJS=timer.o
-__TARGET=libautelan-timer
-TARGET=$(__TARGET).so
-LIBS_DEPEND=
+OBJS=atotp.o
+__TARGET=atotp
+TARGET=$(__TARGET)
+LIBS_DEPEND=-lubacktrace -lautelan-appkey
 
 .PHONY:all
 all:$(TARGET)

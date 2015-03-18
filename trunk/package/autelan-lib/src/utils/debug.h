@@ -5,11 +5,46 @@
 #define __THIS_NAME     "boot"
 #endif
 
-#ifdef __APP__
-#define __syslog(_fmt, _args...) syslog(LOG_DEBUG, _fmt, ##_args)
+#if defined(__BUSYBOX__) || defined(__APP__)
+#   define __syslog(_fmt, _args...)     syslog(LOG_DEBUG, _fmt, ##_args)
 #else
-#define __syslog(_fmt, _args...) 0
-#define __THIS_FILE             0
+#   define __syslog(_fmt, _args...)     os_do_nothing
+#endif
+
+#define __debug_init_ok         (1<<0)  /* ³É¹¦ */
+#define __debug_init_error      (1<<1)  /* ´íÎó */
+#define __debug_init_trace      (1<<2)  /* ¸ú×Ù */
+#define __debug_init_test       (1<<3)  /* ²âÊÔ */
+#define __debug_init_consume    (1<<4)  /* ¼ÆËãcpuÏûºÄ */
+
+#define __debug_init_all        0xffffffff
+
+#ifndef __debug_init_default
+#define __debug_init_default    __debug_init_error
+#endif
+
+#ifdef __BOOT__
+    extern int __AKID_DEBUG;
+#   define __debug_init         __AKID_DEBUG
+#   define __THIS_FILE          0
+#elif defined(__BUSYBOX__)
+    extern int __AKID_DEBUG;
+#   define __debug_init         __debug_init_default
+#   define __THIS_NAME          "busybox"
+#   define __THIS_FILE          0
+#elif defined(__KERNEL__) || defined(__APPKEY__)
+    /*
+    * in boot/kernel/libappkey, should define __debug_init_pointer as below
+    *   int xxx;
+    *   static int *__debug_init_pointer = &xxx;
+    */
+#   define __debug_init         (*__debug_init_pointer)
+#elif defined(__APP__)
+    /*
+    * for all app/lib(defined __THIS_NAME)
+    */
+    extern appkey_t __AKID_DEBUG;
+#   define __debug_init         appkey_get(__AKID_DEBUG, __debug_init_default)
 #endif
 
 #ifndef __THIS_NAME
@@ -22,35 +57,6 @@
 
 #ifndef __AKID_DEBUG
 #error "no defined __AKID_DEBUG in makefile!!!"
-#endif
-
-#define __debug_init_ok         (1<<0)  /* ³É¹¦ */
-#define __debug_init_error      (1<<1)  /* ´íÎó */
-#define __debug_init_trace      (1<<2)  /* ¸ú×Ù */
-#define __debug_init_test       (1<<3)  /* ²âÊÔ */
-#define __debug_init_consume    (1<<4)  /* ¼ÆËãcpuÏûºÄ */
-
-#define __debug_init_all        0xffffffff
-#define __debug_init_default    __debug_init_error
-
-#ifdef __BOOT__
-extern int __AKID_DEBUG;
-
-#define __debug_init    __AKID_DEBUG
-#elif defined(__KERNEL__) || defined(__APPKEY__)
-/*
-* in boot/kernel/libappkey, should define __debug_init_pointer as below
-*   int xxx;
-*   static int *__debug_init_pointer = &xxx;
-*/
-#define __debug_init    (*__debug_init_pointer)
-#else
-/*
-* for all app/lib(defined __THIS_NAME)
-*/
-extern appkey_t __AKID_DEBUG;
-
-#define __debug_init    appkey_get(__AKID_DEBUG, __debug_init_default)
 #endif
 
 #define __is_debug_init(_mask)      (!!(__debug_init & (_mask)))
@@ -67,22 +73,22 @@ extern appkey_t __AKID_DEBUG;
 
 #define __debug_with_prefix(_fmt, _args...)      do{ \
     (void)os_printf(__debug_prefix_fmt_and_args(_fmt), ##_args); \
-     (void)__syslog(__debug_prefix_fmt_and_args(_fmt), ##_args); \
+           __syslog(__debug_prefix_fmt_and_args(_fmt), ##_args); \
 }while(0)
 
 #define __vdebug_with_prefix(_fmt, _args)        do{ \
     (void)os_vprintf(__debug_prefix_fmt_and_args(_fmt), _args); \
-      (void)__syslog(__debug_prefix_fmt_and_args(_fmt), _args); \
+            __syslog(__debug_prefix_fmt_and_args(_fmt), _args); \
 }while(0)
 
 #define __debug_without_prefix(_fmt, _args...)   do{ \
     (void)os_printf(_fmt __crlf2, ##_args);          \
-     (void)__syslog(_fmt __crlf2, ##_args);          \
+           __syslog(_fmt __crlf2, ##_args);          \
 }while(0)
 
 #define __vdebug_without_prefix(_fmt, _args)     do{ \
     (void)os_vprintf(_fmt __crlf2, _args);           \
-      (void)__syslog(_fmt __crlf2, _args);           \
+            __syslog(_fmt __crlf2, _args);           \
 }while(0)
 
 #define os_error(_err, _fmt, _args...)   (__debug_without_prefix(_fmt, ##_args), (_err))
@@ -175,34 +181,38 @@ static inline int os_timeval_diff(struct timeval *old, struct timeval *new)
 #define __debug_consume(_fmt, _args...)   do{ if (__is_debug_init_consume) __debug_without_prefix(_fmt, ##_args);}while(0)
 #define __vdebug_consume(_fmt, _args)     do{ if (__is_debug_init_consume) __vdebug_without_prefix(_fmt, _args);}while(0)
 
-#define function_consume_declare    \
-        struct timeval __function_consume_timeval_begin; \
-        struct timeval __function_consume_timeval_end; \
-        gettimeofday(&__function_consume_timeval_begin, NULL)
-        
-#define function_consume_calculate_begin  \
-        gettimeofday(&__function_consume_timeval_begin, NULL)
-        
-#define function_consume_calculate_end  \
-        gettimeofday(&__function_consume_timeval_end, NULL); \
-        debug_consume("%s consume %dus", __func__, os_timeval_diff(&__function_consume_timeval_begin, &__function_consume_timeval_end))
+#define function_consume_declare                            \
+    struct timeval __function_consume_timeval_begin;        \
+    struct timeval __function_consume_timeval_end;          \
+    gettimeofday(&__function_consume_timeval_begin, NULL)   \
+    /* end */
 
-#define function_consume_calculate      function_consume_calculate_end
+#define function_consume_calculate_begin  \
+    gettimeofday(&__function_consume_timeval_begin, NULL)
+
+#define function_consume_calculate_end                      \
+    gettimeofday(&__function_consume_timeval_end, NULL);    \
+    debug_consume("%s consume %dus",                        \
+        __func__,                                           \
+        os_timeval_diff(&__function_consume_timeval_begin,  \
+            &__function_consume_timeval_end))               \
+    /* end */
+
+#define function_consume_calculate          function_consume_calculate_end
 #else
-#define function_consume_declare            extern int __noused__function_consume_declare
+#define function_consume_declare            os_do_nothing
 #define function_consume_calculate_begin    os_do_nothing
 #define function_consume_calculate_end      os_do_nothing
 #define function_consume_calculate          os_do_nothing
 #endif
 /******************************************************************************/
 #ifdef __APP__
-
 #define BACKTRACE_by_none               0
 #define BACKTRACE_by_libc_backtrace     1
 #define BACKTRACE_by_libunwind          2
 
 #ifndef BACKTRACE_TYPE
-#define BACKTRACE_TYPE      BACKTRACE_by_libc_backtrace
+#   define BACKTRACE_TYPE      BACKTRACE_by_libc_backtrace
 #endif
 
 #define BACKTRACE_DESTROY_STACK_FOREVER(_up) do{   \
@@ -355,7 +365,11 @@ os_sighandle_callstack(int sig)
     exit(sig);
 }
 #else
-static inline void os_sighandle_callstack(int sig){}
+static inline void
+os_sighandle_callstack(int sig)
+{
+    os_do_nothing;
+}
 #endif /* BACKTRACE_TYPE */
 
 static inline void 
@@ -402,8 +416,6 @@ os_sigaction_default(void)
     os_sigaction_exit();
     os_sigaction_callstack();
 }
-
-#endif
-
+#endif /* __APP__ */
 /******************************************************************************/
 #endif /* __DEBUG_H_E3D558ADAC195223DC447321A03A7DEC__ */

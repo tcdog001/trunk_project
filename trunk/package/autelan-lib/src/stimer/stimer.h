@@ -2,7 +2,6 @@
 #define __STIMER_H_03B9C4BFCDC8EF03E5E39A08D5201373__
 /******************************************************************************/
 #include "utils.h"
-#include "timer/timer.h"
 /******************************************************************************/
 #ifndef ENV_STIMER_PATH
 #define ENV_STIMER_PATH             "__STIMER_PATH__"

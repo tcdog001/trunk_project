@@ -2,55 +2,55 @@
 #define __BITS_H_92033DEDA810AF54224FF623B3115513__
 /******************************************************************************/
 #ifndef __os_align
-#define __os_align(x, align)        ((((x)+(align)-1)/(align))*(align))
+#define __os_align(_x, _align)      ((((_x)+(_align)-1)/(_align))*(_align))
 #endif
 
 #ifndef os_align
-#define os_align(x, align)          (((x)+(align)-1) & ~((align)-1))
+#define os_align(_x, _align)        (((_x)+(_align)-1) & ~((_align)-1))
 #endif
 
 #ifndef os_align_down
-#define os_align_down(x, align)     ((x) & ~((align)-1))
+#define os_align_down(_x, _align)   ((_x) & ~((_align)-1))
 #endif
 
 #ifndef os_setflag
-#define os_setflag(value, flag)     do{(value) |= (flag);}while(0)
+#define os_setflag(_value, _flag)   do{(_value) |= (_flag);}while(0)
 #endif
 
 #ifndef os_clrflag
-#define os_clrflag(value, flag)     do{(value) &= ~(flag);}while(0)
+#define os_clrflag(_value, _flag)   do{(_value) &= ~(_flag);}while(0)
 #endif
 
 #ifndef os_hasflag
-#define os_hasflag(value, flag)     ((flag) == ((value) & (flag)))
+#define os_hasflag(_value, _flag)   ((_flag) == ((_value) & (_flag)))
 #endif
 
 #ifndef os_bit
-#define os_bit(bit)                 (1<<(bit))
+#define os_bit(_bit)                (1<<(_bit))
 #endif
 
 #ifndef os_mask
-#define os_mask(bit)                (os_bit(bit) - 1)
+#define os_mask(_bit)               (os_bit(_bit) - 1)
 #endif
 
 #ifndef os_maskmatch
-#define os_maskmatch(a, b, mask)    (((a) & (mask))!=((b) & (mask)))
+#define os_maskmatch(_a, _b, _mask) (((_a) & (_mask))!=((_b) & (_mask)))
 #endif
 
 #ifndef os_setbit
-#define os_setbit(value, bit)       os_setflag(value, os_bit(bit))
+#define os_setbit(_value, _bit)     os_setflag(_value, os_bit(_bit))
 #endif
 
 #ifndef os_clrbit
-#define os_clrbit(value, bit)       os_clrflag(value, os_bit(bit))
+#define os_clrbit(_value, _bit)     os_clrflag(_value, os_bit(_bit))
 #endif
 
 #ifndef os_hasbit
-#define os_hasbit(value, bit)       os_hasflag(value, os_bit(bit))
+#define os_hasbit(_value, _bit)     os_hasflag(_value, os_bit(_bit))
 #endif
 
 static inline bool
-os_bufmaskmatch(byte *a, byte *b, byte *mask, int len)
+os_bufmaskmatch(unsigned char *a, unsigned char *b, unsigned char *mask, int len)
 {
     int i;
 

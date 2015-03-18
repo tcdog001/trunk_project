@@ -1,18 +1,29 @@
+#
+#don't change it
+#
+DIR_SELF=$(shell pwd)
 
-OBJS=um.o user.o uci.o ubus.o
-__TARGET=um
-TARGET=$(__TARGET)
-LIBS_DEPEND=-lubacktrace -lautelan-appkey -luci -lubus -lubox -lblobmsg_json
+#
+#changed DIR_ROOT
+#
+DIR_ROOT=$(DIR_SELF)/../..
 
-.PHONY:all
-all:$(TARGET)
+#
+#don't change it
+#
+include $(DIR_ROOT)/mk/define.mk
 
-.PHONY: clean
-clean:
-	rm -f $(OBJS) $(TARGET)
+#
+#changed me, append obj
+#
+OBJS=$(DIR_SELF)/stimerd.o
+TARGET_NAME=um
+TARGET=$(TARGET_NAME)
+TARGET_TYPE=exe
+LIB_DEPEND=c appkey
+CFLAGS+=-D__USE_INLINE_TIMER -DSTIMER_TICKS=1000 -DSTIMER_TIMEOUT_TICKS=5000
 
-$(TARGET):$(OBJS)
-	${CC} ${CFLAGS} ${LDFLAGS} $(LIBS_DEPEND) -o $(TARGET) $(OBJS)
-	echo $(OBJS) > $(FILENO_PATH)/$(__TARGET).fileno
-%.o:%.c
-	${CC} -c ${CFLAGS} -D__THIS_FILE=$(shell $(FILENO_BIN) $@ $(OBJS)) $< -o $@
+#
+#don't change it
+#
+include $(DIR_ROOT)/mk/common.mk

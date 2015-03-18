@@ -11,7 +11,7 @@ include $(DIR_ROOT)/mk/define.mk
 #
 #changed me, append sub-system
 #
-SUB_SYSTEM=appkey slice timer coroutine fd blob
+SUB_SYSTEM=appkey
 
 #
 #don't change it

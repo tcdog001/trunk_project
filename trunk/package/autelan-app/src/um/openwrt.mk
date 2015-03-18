@@ -3,6 +3,7 @@ OBJS=um.o user.o uci.o ubus.o
 __TARGET=um
 TARGET=$(__TARGET)
 LIBS_DEPEND=-lubacktrace -lautelan-appkey -luci -lubus -lubox -lblobmsg_json
+CFLAGS+=
 
 .PHONY:all
 all:$(TARGET)

@@ -6,7 +6,6 @@
 #endif
 
 #ifdef __BOOT__
-#   define __AKID_DEBUG __boot_akid
 #   include <malloc.h>
 #   include <command.h>
 #   include <common.h>
@@ -29,7 +28,11 @@
 #   include <linux/list.h>
 #   include <net/sock.h>
 #else /* __APP__ */
-#   define __APP__
+#   ifdef __BUSYBOX__
+#       include "libbb.h"
+#   else
+#       define __APP__
+#   endif
 #   include <stdint.h>
 #   include <stdarg.h>
 #   include <stdlib.h>
@@ -91,5 +94,12 @@
 #include "utils/ip.h"
 #include "utils/io.h"
 #include "utils/kv.h"
+#include "utils/slice.h"
+#include "utils/blob.h"
+#include "utils/timer.h"
+#include "utils/autoarray.h"
+#include "utils/channel.h"
+#include "utils/coroutine.h"
+#include "utils/fd.h"
 /******************************************************************************/
 #endif /* __UTILS_H_F5F47009AF9E5B811C77BFEA13C326CB__ */

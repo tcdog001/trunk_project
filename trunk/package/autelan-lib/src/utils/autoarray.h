@@ -1,10 +1,8 @@
 #ifndef __AUTOARRAY_H_D8422899B40DF42D4E9371468AD4BE8A__
 #define __AUTOARRAY_H_D8422899B40DF42D4E9371468AD4BE8A__
 /******************************************************************************/
-#include "utils.h"
-
-struct atuoarray {
-    byte *base; /* array memory */
+typedef struct {
+    unsigned char *base; /* array memory */
     int size;   /* item size */
     int count;  /* item total count */
     int limit;  /* item total limit */
@@ -12,10 +10,10 @@ struct atuoarray {
     
     void (*init)(void *item);
     void (*clean)(void *item);
-};
+} autoarray_t;
 
 static inline void *
-__os_aa_item(struct atuoarray *aa, int idx)
+__os_aa_item(autoarray_t *aa, int idx)
 {
     if (idx < aa->count) {
         return (void *)(aa->base + idx * aa->size);
@@ -25,7 +23,7 @@ __os_aa_item(struct atuoarray *aa, int idx)
 }
 
 static inline int
-__os_aa_grow_to(struct atuoarray *aa, int count)
+__os_aa_grow_to(autoarray_t *aa, int count)
 {
     int old  = aa->count;
     int grow = count - old;
@@ -38,7 +36,7 @@ __os_aa_grow_to(struct atuoarray *aa, int count)
         return -ESPIPE;
     }
     
-    aa->base = (byte *)os_realloc(aa->base, aa->size * count);
+    aa->base = (unsigned char *)os_realloc(aa->base, aa->size * count);
     if (NULL==aa->base) {
         return -ENOMEM;
     }
@@ -58,7 +56,7 @@ __os_aa_grow_to(struct atuoarray *aa, int count)
 }
 
 static inline int
-__os_aa_grow(struct atuoarray *aa)
+__os_aa_grow(autoarray_t *aa)
 {
     int count;
     
@@ -81,7 +79,7 @@ __os_aa_grow(struct atuoarray *aa)
 }
 
 static inline void
-os_aa_clean(struct atuoarray *aa)
+os_aa_clean(autoarray_t *aa)
 {
     if (aa) {
         if (aa->clean) {
@@ -100,7 +98,7 @@ os_aa_clean(struct atuoarray *aa)
 
 static inline int
 os_aa_init(
-    struct atuoarray *aa, 
+    autoarray_t *aa, 
     int size, 
     int count,
     int limit, 
@@ -135,7 +133,7 @@ os_aa_init(
     aa->init    = init;
     aa->clean   = clean;
     
-    aa->base = (byte *)os_calloc(aa->count, aa->size);
+    aa->base = (unsigned char *)os_calloc(aa->count, aa->size);
     if (NULL==aa->base) {
         return -ENOMEM;
     }
@@ -152,7 +150,7 @@ os_aa_init(
 }
 
 static inline void *
-os_aa_get(struct atuoarray *aa, int idx, bool grow)
+os_aa_get(autoarray_t *aa, int idx, bool grow)
 {
     void *value;
     
@@ -177,7 +175,7 @@ os_aa_get(struct atuoarray *aa, int idx, bool grow)
 }
 
 static inline int
-os_aa_count(struct atuoarray *aa)
+os_aa_count(autoarray_t *aa)
 {
     if (aa) {
         return aa->count;
@@ -185,6 +183,5 @@ os_aa_count(struct atuoarray *aa)
         return os_assert_value(0);
     }
 }
-
 /******************************************************************************/
 #endif /* __AUTOARRAY_H_D8422899B40DF42D4E9371468AD4BE8A__ */

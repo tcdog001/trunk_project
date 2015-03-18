@@ -3,13 +3,13 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
 #include "utils.h"
 
-#define println(fmt, args...)   printf(fmt "\n", ##args)
-#define LOG(level, fmt, args...) do { 	\
-	syslog(level, fmt, ##args);	\
-	println(fmt, ##args);		\
-} while(0)
-#define D(fmt, args...)         LOG(LOG_DEBUG, fmt, ##args)
-#define E(fmt, args...)         LOG(LOG_ERR, fmt, ##args)
+#define __log(_level, _fmt, _args...) do{ \
+    syslog(_level, _fmt, ##_args);  \
+    os_println(_fmt, ##_args);      \
+}while(0)
+
+#define log_debug(_fmt, _args...)   __log(LOG_DEBUG, _fmt, ##_args)
+#define log_error(_fmt, _args...)   __log(LOG_ERR, _fmt, ##_args)
 
 #ifndef MAX_SCRIPT
 #define MAX_SCRIPT      127
@@ -65,7 +65,7 @@ app_new(int pid)
 {
     struct app *app = (struct app *)malloc(sizeof(*app));
     if (NULL==app) {
-        E("app_new no memory");
+        log_error("app_new no memory");
         
         return NULL;
     }
@@ -183,7 +183,7 @@ app_timeout(void)
     multi_value_t cb(struct app *app)
     {
         if ((now - app->create) > MAX_RUNTIME) {
-            D("app pid:%d timeout", app->pid);
+            log_debug("app pid:%d timeout", app->pid);
             
             kill(app->pid, SIGKILL);
             
@@ -202,7 +202,7 @@ app_wait(void)
     int pid;
 
     while((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-        D("waited pid:%d", pid);
+        log_debug("waited pid:%d", pid);
         
         app_delete(pid);
     }
@@ -219,7 +219,7 @@ child(void)
     
     fd = accept(C.fd, (struct sockaddr *)&addr, &size);
     if (fd<0) {
-        E("accept error:%d", -errno);
+        log_error("accept error:%d", -errno);
         
         return -errno;
     }
@@ -239,14 +239,14 @@ child(void)
         
         execl(C.script, C.script_name, NULL);
 
-        E("execl error:%d", -errno);
+        log_error("execl error:%d", -errno);
         err = -errno;
     }
     else if (pid>0) { // father
         err = app_create(pid);
     }
     else { // (pid<0), error
-        E("fork error:%d", -errno);
+        log_error("fork error:%d", -errno);
         
         err = -errno;
     }
@@ -275,7 +275,7 @@ is_new(int *new)
                 // is breaked
                 return 0;
             } else {
-                E("select error:%d", -errno);
+                log_error("select error:%d", -errno);
 		
                 return -errno;
             }
@@ -317,7 +317,7 @@ run(void)
    
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (fd<0) {
-        E("socket error:%d", -errno);
+        log_error("socket error:%d", -errno);
         
         err = -errno; goto error;
     }
@@ -338,14 +338,14 @@ run(void)
     };
     err = bind(fd, (struct sockaddr *)&addr, sizeof(addr));
     if (err) {
-        E("bind error:%d", -errno);
+        log_error("bind error:%d", -errno);
         
         err = -errno; goto error;
     }
 
     err = listen(fd, MAX_CLIENTS);
     if (err) {
-        E("listen error:%d", -errno);
+        log_error("listen error:%d", -errno);
         
         err = -errno; goto error;
     }
@@ -366,16 +366,20 @@ usage(int argc, char *argv[])
 {
     char *self = argv[0];
     
-    println("%s", self);
-    println("\t%s ip port script", self);
+    os_fprintln(stderr, "%s", self);
+    os_fprintln(stderr, "\t%s ip port script", self);
     
     return -EINVAL;
 }
 
+#ifndef __BUSYBOX__
+#define sinetd_main  main
+#endif
+
 /*
 * sinetd ip port script
 */
-int main(int argc, char *argv[])
+int sinetd_main(int argc, char *argv[])
 {
     char *ip    = argv[1];
     char *port  = argv[2];
@@ -392,7 +396,7 @@ int main(int argc, char *argv[])
     struct stat st;
     err = stat(script, &st);
     if (err) {
-        println("bad script %s", script);
+        os_println("bad script %s", script);
         
         return -EINVAL;
     }
@@ -402,17 +406,17 @@ int main(int argc, char *argv[])
     
     int len = strlen(script);
     if (len > MAX_SCRIPT) {
-        println("script too big, NOT more than %d", MAX_SCRIPT);
+        os_println("script too big, NOT more than %d", MAX_SCRIPT);
         
         return -EINVAL;
     }
-    memcpy(C.script, script, len);
+    os_memcpy(C.script, script, len);
     C.script_name = basename(C.script);
     openlog(C.script_name, 0, LOG_USER);
 
     struct in_addr addr;
     if (0==inet_aton(ip, &addr)) {
-        println("bad ip:%s", ip);
+        os_println("bad ip:%s", ip);
         
         return -EINVAL;
     }
@@ -420,7 +424,7 @@ int main(int argc, char *argv[])
     
     int iport = os_atoi(port);
     if (0==iport) {
-        println("bad port:%s", port);
+        os_println("bad port:%s", port);
         
         return -EINVAL;
     }
@@ -435,3 +439,4 @@ int main(int argc, char *argv[])
 }
 
 /******************************************************************************/
+AKID_DEBUGER; /* must last os_constructor */

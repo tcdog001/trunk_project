@@ -268,20 +268,19 @@ load_intf(
 {
     struct uci_element *e = NULL;
     int count = uci->param.n_params;
-    struct blob_attr **tb = (struct blob_attr **)os_alloca(count * sizeof(struct blob_attr *));
-    
-    if (NULL==tb) {
-        return;
-    }
-    
-	uci_foreach_element(&package->sections, e) {
-		struct uci_section *s = uci_to_section(e);
-		
-		if (0==os_strcmp(s->type, uci->uci_type)) {
-    		section_to_blob(s, &uci->param, tb, count);
-    		(*load)(s, tb, count, &uci->tmp);
-		}
+    struct blob_attr **tb = (struct blob_attr **)os_zalloc(count * sizeof(struct blob_attr *));
+    if (tb) {
+    	uci_foreach_element(&package->sections, e) {
+    		struct uci_section *s = uci_to_section(e);
+    		
+    		if (0==os_strcmp(s->type, uci->uci_type)) {
+        		section_to_blob(s, &uci->param, tb, count);
+        		(*load)(s, tb, count, &uci->tmp);
+    		}
+    	}
 	}
+
+	os_free(tb);
 }
 
 static int
@@ -418,14 +417,14 @@ load_global(struct um_uci *uci, struct blob_attr *tb[], void *addr[])
     [UM_LIMITPOLICY_ALLFLOWMAX] = &umc.limit[_class][_level]._obj.all.flow.max, \
     [UM_LIMITPOLICY_ALLRATEMAX] = &umc.limit[_class][_level]._obj.all.rate.max, \
     [UM_LIMITPOLICY_ALLRATEAVG] = &umc.limit[_class][_level]._obj.all.rate.avg, \
-} /* end of UM_LIMITPOLICY_MAP */
+}   /* end */
 
 #define load_obj_limit(_obj, _class, _level, _tb) do { \
     void *addr[UM_LIMITPOLICY_END] = UM_LIMITPOLICY_MAP(_obj, _class, _level); \
                                                         \
     os_objzero(&umc.limit[_class][_level]._obj);        \
     load_global(&umc.uci.limit[_class][_level]._obj, _tb, addr); \
-}while(0) /* end of load_obj_limit */
+}while(0)
 
 static int
 load_wifi_limit(int class, int level, struct blob_attr *tb[])

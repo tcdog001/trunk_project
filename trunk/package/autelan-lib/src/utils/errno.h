@@ -9,7 +9,7 @@
 #define __ERRNO_STEP    1000
 #endif
 
-#define __ERRNO(mod)       (__ERRNO_BASE + (mod) * __ERRNO_STEP)
+#define __ERRNO(_mod)   (__ERRNO_BASE + (_mod) * __ERRNO_STEP)
 
 enum {
     __ERRNO_COMMON      = 0,
@@ -67,6 +67,8 @@ enum {
     ETIMEOUT,   /* 26 */
     EEMPTY,     /* 27 */
     EHELP,      /* 28 */
+    ETRYEXCEED, /* 29 */
+    EHACKED,    /* 30 */
 };
 
 

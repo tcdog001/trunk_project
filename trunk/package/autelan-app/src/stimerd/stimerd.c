@@ -6,11 +6,13 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 static char TX[1 + STIMER_RESSIZE];
 static struct stimer_response *RES = (struct stimer_response *)TX;
 
-#define res_sprintf(fmt, args...) ({ \
-    int len = stimer_res_sprintf(RES, fmt, ##args); \
-    debug_trace(fmt, ##args); \
-    len; \
-})
+USE_INLINE_TIMER;
+
+#define res_sprintf(_fmt, _args...) ({  \
+    int len = stimer_res_sprintf(RES, _fmt, ##_args); \
+    debug_trace(_fmt, ##_args);         \
+    len;                                \
+})  /* end */
 
 static inline int
 res_error(int err)
@@ -490,7 +492,7 @@ __client(int fd)
     /*
     * todo: use select for timeout
     */
-    err = os_io_read(fd, buf, sizeof(buf), stimerd.timer.timeout);
+    err = io_read(fd, buf, sizeof(buf), stimerd.timer.timeout);
     if (err <0) {
         return err;
     }
@@ -500,7 +502,7 @@ __client(int fd)
         /* just log, NOT return */
     }
 
-    err = os_io_write(fd, (char *)RES, stimer_res_size(RES));
+    err = io_write(fd, (char *)RES, stimer_res_size(RES));
     if (err) {
         return err;
     }
@@ -671,10 +673,36 @@ init_server(void)
     return 0;
 }
 
-int main(int argc, char *argv[])
+#ifndef STIMERD_HASHSIZE
+#define STIMERD_HASHSIZE    1024
+#endif
+
+static int
+fini(void)
+{
+    os_tm_fini();
+
+    return 0;
+}
+
+static int
+init(void)
+{
+    int err = 0;
+
+    os_tm_init();
+    
+    err = mlist_table_init(&stimerd.head.mlist, STIMERD_HASHSIZE);
+    debug_ok_error(err, "__init timerfd");
+
+    return err;
+}
+
+static int 
+__main(int argc, char *argv[])
 {
     int err;
-
+    
     err = init_env(); debug_ok_error(err, "init env");
     if (err < 0) {
         return err;
@@ -698,18 +726,13 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-#ifndef STIMERD_HASHSIZE
-#define STIMERD_HASHSIZE    1024
+#ifndef __BUSYBOX__
+#define stimerd_main  main
 #endif
 
-static os_constructor void
-__init(void)
+int stimerd_main(int argc, char *argv[])
 {
-    int err = 0;
-
-    err = mlist_table_init(&stimerd.head.mlist, STIMERD_HASHSIZE);
-    debug_ok_error(err, "__init timerfd");
+    return os_call(init, fini, __main, argc, argv);
 }
-
 /******************************************************************************/
 AKID_DEBUGER; /* must last os_constructor */

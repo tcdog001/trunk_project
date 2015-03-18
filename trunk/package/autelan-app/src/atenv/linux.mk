@@ -6,7 +6,7 @@ DIR_SELF=$(shell pwd)
 #
 #changed DIR_ROOT
 #
-export DIR_ROOT=$(DIR_SELF)/../..
+DIR_ROOT=$(DIR_SELF)/../..
 
 #
 #don't change it
@@ -16,13 +16,12 @@ include $(DIR_ROOT)/mk/define.mk
 #
 #changed me, append obj
 #
-OBJS=$(DIR_SELF)/timer.o
-TARGET_NAME=timer
-SONAME=lib$(TARGET_NAME).so
-SONAME_MASTER=$(SONAME).1
-TARGET=$(SONAME_MASTER).0
-TARGET_TYPE=lib
+OBJS=$(DIR_SELF)/atenv.o
+TARGET_NAME=atenv
+TARGET=$(TARGET_NAME)
+TARGET_TYPE=exe
 LIB_DEPEND=c appkey
+CFLAGS+=-DATENV_DEV=\"./devenv\"
 
 #
 #don't change it

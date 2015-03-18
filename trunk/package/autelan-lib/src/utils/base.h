@@ -1,18 +1,18 @@
 #ifndef __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__
 #define __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__
 /******************************************************************************/
-#if defined(__BOOT__) || defined(__APP__)
+#if defined(__BOOT__) || defined(__BUSYBOX__) || defined(__APP__)
 /* Force a compilation error if condition is true */
-#define BUILD_BUG_ON(condition)     ((void)BUILD_BUG_ON_ZERO(condition))
+#define BUILD_BUG_ON(_condition)    ((void)BUILD_BUG_ON_ZERO(_condition))
 /* Force a compilation error if condition is true, but also produce a
    result (of value 0 and type size_t), so the expression can be used
    e.g. in a structure initializer (or where-ever else comma expressions
    aren't permitted). */
-#define BUILD_BUG_ON_ZERO(e)        (sizeof(struct { int:-!!(e); }))
-#define BUILD_BUG_ON_NULL(e)        ((void *)sizeof(struct { int:-!!(e); }))
+#define BUILD_BUG_ON_ZERO(_e)       (sizeof(struct { int:-!!(_e); }))
+#define BUILD_BUG_ON_NULL(_e)       ((void *)sizeof(struct { int:-!!(_e); }))
 
 #ifndef offsetof
-#define offsetof(TYPE, MEMBER)      __builtin_offsetof(TYPE,MEMBER)
+#define offsetof(_TYPE, _MEMBER)    __builtin_offsetof(_TYPE, _MEMBER)
 #endif
 
 #ifndef container_of
@@ -23,13 +23,13 @@
  * @member:	the name of the member within the struct.
  *
  */
-#define container_of(ptr, type, member) \
-	    ((type *)((char *)(ptr) - offsetof(type, member)))
+#define container_of(_ptr, _type, _member) \
+	    ((_type *)((char *)(_ptr) - offsetof(_type, _member)))
 #endif
 #endif /* __KERNEL__ */
 
 #ifndef os_count_of
-#define os_count_of(x)          (sizeof(x)/sizeof((x)[0]))
+#define os_count_of(_x)         (sizeof(_x)/sizeof((_x)[0]))
 #endif
 
 /*
@@ -53,63 +53,6 @@
 #define os_do_nothing       do{}while(0)
 #endif
 
-#define os_common_cmp(_a, _b) ({ \
-    int ret;                    \
-    typeof(_a)  a = (_a);       \
-    typeof(_b)  b = (_b);       \
-                                \
-    if (a > b) {                \
-        ret = 1;                \
-    }                           \
-    else if (a==b) {            \
-        ret = 0;                \
-    }                           \
-    else {                      \
-        ret = -1;               \
-    }                           \
-                                \
-    ret;                        \
-})
-
-/*
-* bad < good
-* bad == bad
-* all is good, use _object_cmp
-*/
-#define os_object_cmp(_a, _b, _is_good, _object_cmp) ({ \
-    int ret;                                \
-    typeof(_a)  a = (_a);                   \
-    typeof(_b)  b = (_b);                   \
-                                            \
-    if (_is_good(a)) {                      \
-        if (_is_good(b)) {                  \
-            /*                              \
-            * a is good, b is good          \
-            */                              \
-            ret = _object_cmp(a, b);        \
-        } else {                            \
-            /*                              \
-            * a is good, b is bad           \
-            */                              \
-            ret = 1;                        \
-        }                                   \
-    } else {                                \
-        if (_is_good(b)) {                  \
-            /*                              \
-            * a is bad, b is good           \
-            */                              \
-            ret = -1;                       \
-        } else {                            \
-            /*                              \
-            * a is bad, b is bad            \
-            */                              \
-            ret = 0;                        \
-        }                                   \
-    }                                       \
-                                            \
-    ret;                                    \
-}) /* end of os_obj_cmp */
-
 #define os_swap_value(_a, _b)  do {    \
     typeof(_a) _tmp = (_a);     \
     (_a) = (_b);                \
@@ -129,9 +72,9 @@ static inline bool is_good_common_id(int id)
     return id >= 0;
 }
 
-#define is_good_shmid(shmid)    is_good_common_id(shmid)
-#define is_good_semid(semid)    is_good_common_id(semid)
-#define is_good_fd(fd)          is_good_common_id(fd)
+#define is_good_shmid(_shmid)   is_good_common_id(_shmid)
+#define is_good_semid(_semid)   is_good_common_id(_semid)
+#define is_good_fd(_fd)         is_good_common_id(_fd)
 
 /*
 * check value with [begin, end)
@@ -139,64 +82,72 @@ static inline bool is_good_common_id(int id)
 #define is_good_value(_value, _begin, _end) ({  \
     typeof(_value) v = (_value);                \
     (v >= (_begin) && v < (_end));              \
-})
+})  /* end */
 
 /*
 * check id with [0, end)
 */
 #define is_good_enum(_id, _end)     is_good_value(_id, 0, _end)
 
-#define os_safe_value(_value, _min, _max)    ({  \
-    typeof(_value)  __value   = _value;             \
-    typeof(_value)  __min     = _min;               \
-    typeof(_value)  __max     = _max;               \
-                                                    \
-    if (__value < __min) {                          \
-        __value = __min;                            \
-    } else if (__value > __max) {                   \
-        __value = __max;                            \
-    }                                               \
-                                                    \
-    __value;                                        \
-})
+#define os_safe_value(_value, _min, _max) ({\
+    typeof(_value)  __value   = _value;     \
+    typeof(_value)  __min     = _min;       \
+    typeof(_value)  __max     = _max;       \
+                                            \
+    if (__value < __min) {          \
+        __value = __min;            \
+    } else if (__value > __max) {   \
+        __value = __max;            \
+    }                               \
+                                    \
+    __value;                        \
+})  /* end */
 
 /*
 * 忘了min/max在哪个头文件定义了，先放这里
 */
 #if 1
-#define os_min(x,y)    ({  \
-        typeof(x) _x = (x);     \
-        typeof(y) _y = (y);     \
-        (void) (&_x == &_y);    \
-        _x < _y ? _x : _y;      \
-    })
+#define os_min(_x,_y)   ({  \
+    typeof(_x) x = (_x);    \
+    typeof(_y) y = (_y);    \
+    (void) (&x == &y);      \
+    x < y ? x : y;          \
+})  /* end */
     
-#define os_max(x,y)    ({  \
-        typeof(x) _x = (x);     \
-        typeof(y) _y = (y);     \
-        (void) (&_x == &_y);    \
-        _x > _y ? _x : _y;      \
-    })
+#define os_max(_x,_y)   ({  \
+    typeof(_x) x = (_x);    \
+    typeof(_y) y = (_y);    \
+    (void) (&x == &y);      \
+    x > y ? x : y;          \
+})  /* end */
 #endif
 
 #define OS_IOVEC_INITER(_base, _len) { \
-    .iov_base   = _base,            \
-    .iov_len    = _len,             \
-}
+    .iov_base   = _base,    \
+    .iov_len    = _len,     \
+}   /* end */
 
-#define OS_MSGHDR_INITER(_iov, _iovlen, _name, _namelen, _control, _controllen) { \
+#define OS_MSGHDR_INITER(   \
+    _iov,                   \
+    _iovlen,                \
+    _name,                  \
+    _namelen,               \
+    _control,               \
+    _controllen             \
+)                           \
+{                           \
     .msg_iov        = _iov,         \
     .msg_iovlen     = _iovlen,      \
     .msg_name       = _name,        \
     .msg_namelen    = _namelen,     \
     .msg_control    = _control,     \
     .msg_controllen = _controllen,  \
-}
+}   /* end */
 
 #define OS_SOCKADDR_UNIX(_path) {   \
     .sun_family = AF_UNIX,          \
     .sun_path   = _path,            \
-}
+}   /* end */
 
 #define OS_SOCKADDR_INET(_ip, _port) { \
     .sun_family = AF_INET,          \
@@ -204,13 +155,13 @@ static inline bool is_good_common_id(int id)
     .sin_addr   = {                 \
         .s_addr = _ip,              \
     }                               \
-}
+}   /* end */
 
 #define OS_SOCKADDR_NETLINK(_pid, _groups) { \
     .sun_family = AF_NETLINK,       \
     .nl_pid     = _pid,             \
     .nl_groups  = _groups           \                               \
-}
+}   /* end */
 
 /*
 * copy from tcp.h
@@ -225,7 +176,7 @@ static inline bool os_seq_before(unsigned int seq1, unsigned int seq2)
 /*
 * seq1 is after seq2
 */
-#define os_seq_after(seq1, seq2) 	os_seq_before(seq2, seq1)
+#define os_seq_after(_seq1, _seq2)  os_seq_before(_seq2, _seq1)
 
 #define __APP_NAMELEN           (31 - sizeof(unsigned int))
 #define __APP_KEY_NAMELEN       31
@@ -242,7 +193,44 @@ static inline bool os_seq_before(unsigned int seq1, unsigned int seq2)
 #define OS_FILENAME_LEN         1023
 #endif
 
+#define __os_call(_begin, _end, _call, _first, _args...) ({ \
+    __label__ error;                \
+    int err;                        \
+                                    \
+    err = _begin(_first);           \
+    if (err) {                      \
+        goto error;                 \
+    }                               \
+                                    \
+    err = (*_call)(_first, ##_args);\
+    if (err) {                      \
+       goto error;                  \
+    }                               \
+                                    \
+error:                              \
+    _end(_first);                   \
+                                    \
+    err;                            \
+})  /* end */
 
-
+#define os_call(_begin, _end, _call, _first, _args...) ({ \
+    __label__ error;                \
+    int err;                        \
+                                    \
+    err = _begin();                 \
+    if (err) {                      \
+        goto error;                 \
+    }                               \
+                                    \
+    err = (*_call)(_first, ##_args);\
+    if (err) {                      \
+       goto error;                  \
+    }                               \
+                                    \
+error:                              \
+    _end();                         \
+                                    \
+    err;                            \
+})  /* end */
 /******************************************************************************/
 #endif /* __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__ */

@@ -63,13 +63,13 @@ xxxxH : xxxxxxxx xxxxxxxx xxxxxx            ; ccccccccccc
 typedef void dump_line_f(char *line);
 
 #ifdef OS_DUMP_PRINTF
-#define os_dump_printf(_fmt, args...)   OS_DUMP_PRINTF(_fmt, ##args)
+#define os_dump_printf(_fmt, _args...)  OS_DUMP_PRINTF(_fmt, ##_args)
 #else
-#define os_dump_printf(_fmt, args...)   os_printf(_fmt, ##args)
+#define os_dump_printf(_fmt, _args...)  os_printf(_fmt, ##_args)
 #endif
 
 static inline void
-os_dump_line(int line, byte *raw, int len, dump_line_f *dump_line)
+os_dump_line(int line, unsigned char *raw, int len, dump_line_f *dump_line)
 {
     int i, offset = 0;
     char buf[1 + __RAW_LINE_MAX] = {0};
@@ -111,7 +111,7 @@ os_dump_line(int line, byte *raw, int len, dump_line_f *dump_line)
     for (i=0; i<len; i++) {
         int c = (int)raw[i];
         
-        offset += os_soprintf(buf, offset, "%c", isprint(c)?c:'.');
+        offset += os_soprintf(buf, offset, "%c", os_isprint(c)?c:'.');
     }
     offset += os_soprintf(buf, offset, __crlf);
 
@@ -126,7 +126,7 @@ static inline void
 os_dump_buffer(void *buffer, int len, dump_line_f *dump_line)
 {
     int i, line, tail;
-    byte *raw = (byte *)buffer;
+    unsigned char *raw = (unsigned char *)buffer;
     
     /*
     * 行数，向上取整 

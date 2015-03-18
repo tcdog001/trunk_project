@@ -100,13 +100,13 @@ callstack_21(int type)
         _(00,01) \
         extern int __noused /* just for sourceinsight */
 
-#define FUNC(a, b) \
+#define FUNC(_a, _b) \
 static int \
-callstack_##a(int type) \
+callstack_##_a(int type) \
 { \
     int err; \
     os_println("enter %s", __func__); \
-    err = callstack_##b(type); \
+    err = callstack_##_b(type); \
     os_println("leave %s", __func__); \
     return err; \
 }

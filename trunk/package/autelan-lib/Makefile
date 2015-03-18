@@ -18,7 +18,8 @@ TARGET_CFLAGS += -Wall -fPIC \
 		-I$(AUTELAN_LIBS) \
 		-D__OPENWRT__ \
 		-DOS_TYPE=openwrt \
-		-D__TAB_AS_SPACE=4
+		-D__TAB_AS_SPACE=4 \
+		-std=gnu99
 		
 TARGET_LDFLAGS+= -shared
 
@@ -56,33 +57,6 @@ define Package/libautelan-appkey/compile
 	$(CP) $(PKG_BUILD_DIR)/appkey/libautelan-appkey.so $(STAGING_DIR)/lib
 endef
 ####################################################################
-define Package/libautelan-timer
-  SECTION:=libs
-  CATEGORY:=autelan-lib
-  TITLE:=Autelan Basic library
-  DEPENDS:=+libubox +libautelan-appkey
-endef
-
-define Package/libautelan-timer/install
-	$(Package/autelan-lib/install/common)
-
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/timer/libautelan-timer.so $(1)/lib/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/timer/libtimer.key $(1)/$(APPKEY_PATH)/
-endef
-
-define Package/libautelan-timer/compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/timer \
-		CC="$(TARGET_CC)" \
-		CFLAGS=" \
-			$(TARGET_CFLAGS) \
-			$(TARGET_CPPFLAGS) \
-			-D__THIS_NAME=\\\"libtimer\\\" \
-			-D__AKID_DEBUG=__libtimer_debug \
-			" \
-		LDFLAGS="$(TARGET_LDFLAGS)"
-	$(CP) $(PKG_BUILD_DIR)/timer/libautelan-timer.so $(STAGING_DIR)/lib
-endef
-####################################################################
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(CP) ./src/* $(PKG_BUILD_DIR)
@@ -95,8 +69,6 @@ endef
 
 define Build/Compile
 	$(Package/libautelan-appkey/compile)
-	$(Package/libautelan-timer/compile)
 endef
 ####################################################################
 $(eval $(call BuildPackage,libautelan-appkey))
-$(eval $(call BuildPackage,libautelan-timer))

@@ -1,6 +1,6 @@
 #ifndef __SFILE_H_CAF3737A24BFD00978F62CEB481C30B0__
 #define __SFILE_H_CAF3737A24BFD00978F62CEB481C30B0__
-#ifdef __APP__
+#if defined(__BUSYBOX__) || defined(__APP__)
 /******************************************************************************/
 /* simpile file api */
 /******************************************************************************/
@@ -216,140 +216,152 @@ os_sfscan_dir
     return __os_sfscan_dir(path, recur, file_filter, os_sfscan_file_handle, line_handle, control);
 }
 /******************************************************************************/
-#define __os_sgetx(prefix, stream, vfmt, pv) ({ \
-    int err = 0;                            \
-                                                \
-    if (NULL==(stream)) {                       \
-        err = -errno;                            \
-    } else if (1!=fscanf(stream, vfmt, pv)) {   \
-        err = -EFORMAT;                         \
-    }                                           \
-                                                \
-    if (stream) {                               \
-        prefix##close(stream);                  \
-    }                                           \
-                                                \
-    err;                                        \
+#define __os_sgetx(_prefix, _stream, _vfmt, _pv) ({ \
+    int err = 0;                    \
+                                    \
+    if (NULL==(_stream)) {          \
+        err = -errno;               \
+    } else if (1!=fscanf(_stream,   \
+                    _vfmt, _pv)) {  \
+        err = -EFORMAT;             \
+    }                               \
+                                    \
+    if (_stream) {                  \
+        _prefix##close(_stream);    \
+    }                               \
+                                    \
+    err;                            \
 })
 
-#define __os_sgets(prefix, stream, line, space) ({ \
-    int err = 0;                            \
-                                                \
-    if (NULL==(line)) {                         \
-        err = -EINVAL9;                         \
-    } else if ((space)<=0) {                    \
-        err = -EINVAL8;                         \
-    } else if (NULL==(stream)) {                \
-        err = -errno;                            \
-    } else if (NULL==fgets(line, space, stream)) { \
-        err = -errno;                            \
-    } else {                                    \
-        __string_strim_both(line, NULL);        \
-    }                                           \
-                                                \
-    if (stream) {                               \
-        prefix##close(stream);                  \
-    }                                           \
-                                                \
-    err;                                        \
-})
+#define __os_sgets(_prefix, _stream, _line, _space) ({ \
+    int err = 0;                    \
+                                    \
+    if (NULL==(_line)) {            \
+        err = -EINVAL9;             \
+    } else if ((_space)<=0) {       \
+        err = -EINVAL8;             \
+    } else if (NULL==(_stream)) {   \
+        err = -errno;               \
+    } else if (NULL==fgets(_line,   \
+                _space, _stream)) { \
+        err = -errno;               \
+    } else {                        \
+        __string_strim_both(_line, NULL);   \
+    }                               \
+                                    \
+    if (_stream) {                  \
+        _prefix##close(_stream);    \
+    }                               \
+                                    \
+    err;                            \
+}) /* end */
 
-#define os_sgetx(prefix, vfmt, pv, filename) ({ \
-    FILE *stream = prefix##open("r", filename); \
-    int err = __os_sgetx(prefix, stream, vfmt, pv); \
+#define os_sgetx(_prefix, _vfmt, _pv, _filename) ({     \
+    FILE *stream = _prefix##open("r", _filename);       \
+    int err = __os_sgetx(_prefix, stream, _vfmt, _pv);  \
     err; \
-})
-#define os_sgets(prefix, line, space, filename) ({ \
-    FILE *stream = prefix##open("r", filename); \
-    int err = __os_sgets(prefix, stream, line, space); \
-    err; \
-})
-#define os_sgeti(prefix, pi, filename)          os_sgetx(prefix, "%u", pi, filename)
-#define os_sgetll(prefix, pll, filename)        os_sgetx(prefix, "%llu", pll, filename)
+})  /* end */
+
+#define os_sgets(_prefix, _line, _space, _filename) ({  \
+    FILE *stream = _prefix##open("r", _filename);       \
+    int err = __os_sgets(_prefix, stream, _line, _space); \
+    err;                                                \
+})  /* end */
+
+#define os_sgeti(_prefix, _pi, _filename)    \
+    os_sgetx(_prefix, "%u", _pi, _filename)
+#define os_sgetll(_prefix, _pll, _filename)  \
+    os_sgetx(_prefix, "%llu", _pll, _filename)
 
 
-#define os_v_sgetx(prefix, vfmt, pv, fmt, args...) ({ \
-    FILE *stream = os_v_##prefix##open("r", fmt, ##args); \
-    int err = __os_sgetx(prefix, stream, vfmt, pv); \
-    err; \
-})
-#define os_v_sgets(prefix, line, space, fmt, args...) ({ \
-    FILE *stream = os_v_##prefix##open("r", fmt, ##args); \
-    int err = __os_sgets(prefix, stream, line, space); \
-    err; \
-})
-#define os_v_sgeti(prefix, pi, fmt, args...)    os_v_sgetx(prefix, "%u", pi, fmt, ##args)
-#define os_v_sgetll(prefix, pll, fmt, args...)  os_v_sgetx(prefix, "%u", pll, fmt, ##args)
+#define os_v_sgetx(_prefix, _vfmt, _pv, _fmt, _args...)     ({  \
+    FILE *stream = os_v_##_prefix##open("r", _fmt, ##_args);    \
+    int err = __os_sgetx(_prefix, stream, _vfmt, _pv);          \
+    err;                                                        \
+})  /* end */
+
+#define os_v_sgets(_prefix, _line, _space, _fmt, _args...)  ({  \
+    FILE *stream = os_v_##_prefix##open("r", _fmt, ##_args);    \
+    int err = __os_sgets(_prefix, stream, _line, _space);       \
+    err;                                                        \
+})  /* end */
+
+#define os_v_sgeti(_prefix, _pi, _fmt, _args...)     \
+    os_v_sgetx(_prefix, "%u", _pi, _fmt, ##_args)
+#define os_v_sgetll(_prefix, _pll, _fmt, _args...)   \
+    os_v_sgetx(_prefix, "%u", _pll, _fmt, ##_args)
 
 
 /*
-* get (string/int/long long int) from file
+* get (_string/int/long long int) from file
 */
-#define os_sfgets(line, space, filename)        os_sgets(f, line, space, filename)
-#define os_sfgeti(pi, filename)                 os_sgeti(f, pi, filename)
-#define os_sfgetll(pll, filename)               os_sgetll(f, pll, filename)
+#define os_sfgets(_line, _space, _filename)         os_sgets(f, _line, _space, _filename)
+#define os_sfgeti(_pi, _filename)                   os_sgeti(f, _pi, _filename)
+#define os_sfgetll(_pll, _filename)                 os_sgetll(f, _pll, _filename)
 
-#define os_v_sfgets(line, space, fmt, args...)  os_v_sgets(f, line, space, fmt, ##args)
-#define os_v_sfgeti(pi, fmt, args...)           os_v_sgeti(f, pi, fmt, ##args)
-#define os_v_sfgetll(pll, fmt, args...)         os_v_sgeti(f, pll, fmt, ##args)
+#define os_v_sfgets(_line, _space, _fmt, _args...)  os_v_sgets(f, _line, _space, _fmt, ##_args)
+#define os_v_sfgeti(_pi, _fmt, _args...)            os_v_sgeti(f, _pi, _fmt, ##_args)
+#define os_v_sfgetll(_pll, _fmt, _args...)          os_v_sgeti(f, _pll, _fmt, ##_args)
 
 /*
-* get (string/int/long long int) from pipe
+* get (_string/int/long long int) from pipe
 */
-#define os_spgets(line, space, filename)        os_sgets(p, line, space, filename)
-#define os_spgeti(pi, filename)                 os_sgeti(p, pi, filename)
-#define os_spgetll(pll, filename)               os_sgetll(p, pll, filename)
+#define os_spgets(_line, _space, _filename)         os_sgets(p, _line, _space, _filename)
+#define os_spgeti(_pi, _filename)                   os_sgeti(p, _pi, _filename)
+#define os_spgetll(_pll, _filename)                 os_sgetll(p, _pll, _filename)
 
-#define os_v_spgets(line, space, fmt, args...)  os_v_sgets(p, line, space, fmt, ##args)
-#define os_v_spgeti(pi, fmt, args...)           os_v_sgeti(p, pi, fmt, ##args)
-#define os_v_spgetll(pll, fmt, args...)         os_v_sgeti(p, pll, fmt, ##args)
+#define os_v_spgets(_line, _space, _fmt, _args...)  os_v_sgets(p, _line, _space, _fmt, ##_args)
+#define os_v_spgeti(_pi, _fmt, _args...)            os_v_sgeti(p, _pi, _fmt, ##_args)
+#define os_v_spgetll(_pll, _fmt, _args...)          os_v_sgeti(p, _pll, _fmt, ##_args)
 
 
-#define __os_ssetx(prefix, stream, vfmt, v) ({ \
-    int err = 0;                            \
-                                                \
-    if (NULL==(stream)) {                       \
-        err = -errno;                            \
-    } else {                                    \
-        err = fprintf(stream, vfmt, v);         \
-    }                                           \
-                                                \
-    if (stream) {                               \
-        prefix##close(stream);                  \
-    }                                           \
-                                                \
-    err;                                        \
-})
+#define __os_ssetx(_prefix, _stream, _vfmt, v) ({ \
+    int err = 0;                \
+                                \
+    if (NULL==(_stream)) {      \
+        err = -errno;           \
+    } else {                    \
+        err = fprintf(_stream,  \
+                _vfmt, v);      \
+    }                           \
+                                \
+    if (_stream) {              \
+        _prefix##close(_stream);\
+    }                           \
+                                \
+    err;                        \
+})  /* end */
 
-#define os_ssetx(prefix, vfmt, pv, filename) ({ \
-    FILE *stream = prefix##open(filename, "w"); \
-    int err = __os_ssetx(prefix, stream, vfmt, pv); \
-    err; \
-})
-#define os_v_ssetx(prefix, vfmt, pv, fmt, args...) ({ \
-    FILE *stream = os_v_##prefix##open("w", fmt, ##args); \
-    int err = __os_ssetx(prefix, stream, vfmt, pv); \
-    err; \
-})
+#define os_ssetx(_prefix, _vfmt, _pv, _filename)    ({  \
+    FILE *stream = _prefix##open(_filename, "w");       \
+    int err = __os_ssetx(_prefix, stream, _vfmt, _pv);  \
+    err;                                                \
+})  /* end */
+
+#define os_v_ssetx(_prefix, _vfmt, _pv, _fmt, _args...) ({  \
+    FILE *stream = os_v_##_prefix##open("w", _fmt, ##_args);\
+    int err = __os_ssetx(_prefix, stream, _vfmt, _pv);      \
+    err;                                                    \
+})  /* end */
     
-#define os_ssets(prefix, string, filename)          os_ssetx(prefix, "%s", string, filename)
-#define os_sseti(prefix, vi, filename)              os_ssetx(prefix, "%u", vi, filename)
-#define os_ssetll(prefix, vll, filename)            os_ssetx(prefix, "%llu", vll, filename)
+#define os_ssets(_prefix, _string, _filename)          os_ssetx(_prefix, "%s", _string, _filename)
+#define os_sseti(_prefix, _vi, _filename)              os_ssetx(_prefix, "%u", _vi, _filename)
+#define os_ssetll(_prefix, _vll, _filename)            os_ssetx(_prefix, "%llu", _vll, _filename)
 
-#define os_v_ssets(prefix, string, fmt, args...)    os_v_ssetx(prefix, "%s", string, fmt, ##args)
-#define os_v_sseti(prefix, vi, fmt, args...)        os_v_ssetx(prefix, "%u", vi, fmt, ##args)
-#define os_v_ssetll(prefix, vll, fmt, args...)      os_v_ssetx(prefix, "%llu", vll, fmt, ##args)
+#define os_v_ssets(_prefix, _string, _fmt, _args...)    os_v_ssetx(_prefix, "%s", _string, _fmt, ##_args)
+#define os_v_sseti(_prefix, _vi, _fmt, _args...)        os_v_ssetx(_prefix, "%u", _vi, _fmt, ##_args)
+#define os_v_ssetll(_prefix, _vll, _fmt, _args...)      os_v_ssetx(_prefix, "%llu", _vll, _fmt, ##_args)
 
 /*
-* set (string/int/long long int) to file
+* set (_string/int/long long int) to file
 */
-#define os_sfsets(string, filename)                 os_ssets(f, string, filename)
-#define os_sfseti(vi, filename)                     os_sseti(f, vi, filename)
-#define os_sfsetll(vll, filename)                   os_ssetll(f, vll, filename)
+#define os_sfsets(_string, _filename)                 os_ssets(f, _string, _filename)
+#define os_sfseti(_vi, _filename)                     os_sseti(f, _vi, _filename)
+#define os_sfsetll(_vll, _filename)                   os_ssetll(f, _vll, _filename)
 
-#define os_v_sfsets(string, fmt, args...)           os_v_ssets(f, string, fmt, ##args)
-#define os_v_sfseti(vi, fmt, args...)               os_v_sseti(f, vi, fmt, ##args)
-#define os_v_sfsetll(vll, fmt, args...)             os_v_ssetll(f, vll, fmt, ##args)
+#define os_v_sfsets(_string, _fmt, _args...)           os_v_ssets(f, _string, _fmt, ##_args)
+#define os_v_sfseti(_vi, _fmt, _args...)               os_v_sseti(f, _vi, _fmt, ##_args)
+#define os_v_sfsetll(_vll, _fmt, _args...)             os_v_ssetll(f, _vll, _fmt, ##_args)
 
 /*
 * get file size by full filename(include path)
@@ -371,11 +383,11 @@ os_sfsize(char *filename)
 /*
 * get file size
 */
-#define os_v_sfsize(fmt, args...) ({   \
+#define os_v_sfsize(_fmt, _args...) ({  \
     int size;                           \
     char buf[1+OS_LINE_LEN] = {0};      \
                                         \
-    os_saprintf(buf, fmt, ##args);      \
+    os_saprintf(buf, _fmt, ##_args);    \
     size = os_sfsize(buf);              \
                                         \
     size;                               \

@@ -1,18 +1,29 @@
+#
+#don't change it
+#
+DIR_SELF=$(shell pwd)
 
-OBJS=btt.o
-__TARGET=btt
-TARGET=$(__TARGET)
-LIBS_DEPEND=-lubacktrace -lautelan-appkey
+#
+#changed DIR_ROOT
+#
+DIR_ROOT=$(DIR_SELF)/../..
 
-.PHONY:all
-all:$(TARGET)
+#
+#don't change it
+#
+include $(DIR_ROOT)/mk/define.mk
 
-.PHONY: clean
-clean:
-	rm -f $(OBJS) $(TARGET)
+#
+#changed me, append obj
+#
+OBJS=$(DIR_SELF)/btt.o
+TARGET_NAME=btt
+TARGET=$(TARGET_NAME)
+TARGET_TYPE=exe
+LIB_DEPEND=c appkey
+CFLAGS+=
 
-$(TARGET):$(OBJS)
-	${CC} ${CFLAGS} ${LDFLAGS} $(LIBS_DEPEND) -o $(TARGET) $(OBJS)
-	echo $(OBJS) > $(FILENO_PATH)/$(__TARGET).fileno
-%.o:%.c
-	${CC} -c ${CFLAGS} -D__THIS_FILE=$(shell $(FILENO_BIN) $@ $(OBJS)) $< -o $@
+#
+#don't change it
+#
+include $(DIR_ROOT)/mk/common.mk

@@ -1,7 +1,6 @@
 #ifndef __SLICE_H_91462AFE324E762AF291F223339C3F7E__
 #define __SLICE_H_91462AFE324E762AF291F223339C3F7E__
 /******************************************************************************/
-#include "utils.h"
 /*
 |<--slice_SIZE --------------------------------------------------------------->|
 |                |<--slice_size ---------------------------------------------->|
@@ -22,15 +21,15 @@ slice rules:
 */
 #define SLICE_STACK 0x01
 
-struct slice {
+typedef struct {
     int     flag;
     int     resv;
     int     offset;
     int     len;
     int     size;
     
-    byte    *head; /* fixed */
-};
+    unsigned char *head; /* fixed */
+} slice_t;
 
 #define slice_len(_slice)       (_slice)->len
 #define slice_size(_slice)      (_slice)->size
@@ -40,7 +39,7 @@ struct slice {
 #define slice_flag(_slice)      (_slice)->flag
 
 static inline bool
-slice_in_stack(const struct slice *slice)
+slice_in_stack(const slice_t *slice)
 {
     return os_hasflag(slice_flag(slice), SLICE_STACK);
 }
@@ -48,7 +47,7 @@ slice_in_stack(const struct slice *slice)
 #define slice_in_heap(_slice)   (false==slice_in_stack(_slice))
 
 static inline bool 
-slice_is_clean(const struct slice *slice)
+slice_is_clean(const slice_t *slice)
 {
     return  0==slice_len(slice)     &&
             0==slice_size(slice)    &&
@@ -57,7 +56,7 @@ slice_is_clean(const struct slice *slice)
 }
 
 static inline bool
-slice_is_empty(const struct slice *slice)
+slice_is_empty(const slice_t *slice)
 {
     os_assert(slice);
     
@@ -69,16 +68,16 @@ slice_is_empty(const struct slice *slice)
     .len    = 0,                            \
     .size   = (int)(_size) - (int)(_resv),  \
     .resv   = (int)(_resv),                 \
-    .head   = (byte *)(_data),     \
+    .head   = (unsigned char *)(_data),     \
 }
 
 #define SLICE_INITER(_data, _size, _is_local) \
         __SLICE_INITER(_data, _size, 0, _is_local)
 
 #define __SLICE_LOCAL_GUID(_slice, _size, _resv, _guid) \
-    byte buffer_##_guid[_size]; \
-    struct slice slice_##_guid = __SLICE_INITER(buffer_##_guid, _size, _resv, true); \
-    struct slice *_slice = &slice_##_guid
+    unsigned char buffer_##_guid[_size]; \
+    slice_t slice_##_guid = __SLICE_INITER(buffer_##_guid, _size, _resv, true); \
+    slice_t *_slice = &slice_##_guid
 
 #define __SLICE_LOCAL(_slice, _size, _resv) \
         __SLICE_LOCAL_GUID(_slice, _size, _resv, 91462AFE324E762AF291F223339C3F7E)
@@ -106,7 +105,7 @@ slice_is_empty(const struct slice *slice)
 }while(0)
 
 static inline int 
-slice_reinit(struct slice *slice, int size, int resv, bool local)
+slice_reinit(slice_t *slice, int size, int resv, bool local)
 {
     os_assert(slice);
     os_assert(size > 0);
@@ -130,7 +129,7 @@ slice_reinit(struct slice *slice, int size, int resv, bool local)
 }
 
 static inline void 
-slice_init_resv(struct slice *slice, byte *data, int size, int resv, bool local)
+slice_init_resv(slice_t *slice, unsigned char *data, int size, int resv, bool local)
 {
     slice_head(slice) = data;
 
@@ -138,50 +137,50 @@ slice_init_resv(struct slice *slice, byte *data, int size, int resv, bool local)
 }
 
 static inline void
-slice_init(struct slice *slice, byte *data, int size, bool local)
+slice_init(slice_t *slice, unsigned char *data, int size, bool local)
 {
     slice_init_resv(slice, data, size, 0, local);
 }
 
 /* real seize */
 static inline int 
-slice_SIZE(const struct slice *slice)
+slice_SIZE(const slice_t *slice)
 {
     return slice_size(slice) + slice_resv(slice);
 }
 
 static inline int 
-slice_remain(const struct slice *slice)
+slice_remain(const slice_t *slice)
 {
     return slice_size(slice) - slice_len(slice);
 }
 
-static inline byte *
-slice_data(const struct slice *slice)
+static inline unsigned char *
+slice_data(const slice_t *slice)
 {
     return slice_head(slice) + slice_resv(slice);
 }
 
-static inline byte *
-slice_cookie(const struct slice *slice)
+static inline unsigned char *
+slice_cookie(const slice_t *slice)
 {
     return slice_data(slice) + slice_offset(slice);
 }
 
-static inline byte *
-slice_end(const struct slice *slice)
+static inline unsigned char *
+slice_end(const slice_t *slice)
 {
     return slice_data(slice) + slice_size(slice);
 }
 
-static inline byte *
-slice_tail(const struct slice *slice)
+static inline unsigned char *
+slice_tail(const slice_t *slice)
 {
     return slice_data(slice) + slice_len(slice);
 }
 
 static inline void 
-slice_zero(struct slice *slice)
+slice_zero(slice_t *slice)
 {
     os_memzero(slice_data(slice), slice_size(slice));
     
@@ -189,7 +188,7 @@ slice_zero(struct slice *slice)
 }
 
 static inline int
-slice_alloc(struct slice *slice, int size)
+slice_alloc(slice_t *slice, int size)
 {
     void *buf = NULL;
 
@@ -204,15 +203,15 @@ slice_alloc(struct slice *slice, int size)
 }
 
 static inline void
-slice_release(struct slice *slice)
+slice_release(slice_t *slice)
 {
     if (slice && slice_head(slice)) {
         os_free(slice_head(slice));
     }
 }
 
-static inline struct slice *
-slice_clone(struct slice *dst, const struct slice *src)
+static inline slice_t *
+slice_clone(slice_t *dst, const slice_t *src)
 {
     void *buf;
     
@@ -239,7 +238,7 @@ slice_clone(struct slice *dst, const struct slice *src)
 #endif
 
 static inline int
-slice_grow(struct slice *slice, int grow)
+slice_grow(slice_t *slice, int grow)
 {
     void *buf;
     int size = slice_SIZE(slice);
@@ -279,8 +278,8 @@ slice_grow(struct slice *slice, int grow)
 * as skb_pull 
 *   remove data from the start of a buffer
 */
-static inline byte *
-slice_pull(struct slice *slice, int len)
+static inline unsigned char *
+slice_pull(slice_t *slice, int len)
 {
     os_assert(slice);
 
@@ -327,8 +326,8 @@ slice_pull(struct slice *slice, int len)
 * as skb_push
 *   add data to the start of a buffer
 */
-static inline byte *
-slice_push(struct slice *slice, int len)
+static inline unsigned char *
+slice_push(slice_t *slice, int len)
 {
     os_assert(slice);
 
@@ -346,8 +345,8 @@ slice_push(struct slice *slice, int len)
     return slice_data(slice);
 }
 
-static inline byte *
-slice_unpull(struct slice *slice)
+static inline unsigned char *
+slice_unpull(slice_t *slice)
 {
     return slice_push(slice, slice_resv(slice));
 }
@@ -356,8 +355,8 @@ slice_unpull(struct slice *slice)
 * as skb_put
 *   add data to a buffer
 */
-static inline byte *
-slice_put(struct slice *slice, int len)
+static inline unsigned char *
+slice_put(slice_t *slice, int len)
 {
     os_assert(slice);
     
@@ -373,8 +372,8 @@ slice_put(struct slice *slice, int len)
     return slice_tail(slice);
 }
 
-static inline byte *
-slice_trim(struct slice *slice, int len)
+static inline unsigned char *
+slice_trim(slice_t *slice, int len)
 {
     os_assert(slice);
     
@@ -390,10 +389,10 @@ slice_trim(struct slice *slice, int len)
     return slice_tail(slice);
 }
 
-static inline byte *
-slice_put_char(struct slice *slice, int ch)
+static inline unsigned char *
+slice_put_char(slice_t *slice, int ch)
 {
-    byte *new;
+    unsigned char *new;
     
     os_assert(slice);
 
@@ -405,8 +404,8 @@ slice_put_char(struct slice *slice, int ch)
     return new;
 }
 
-static inline byte *
-slice_put_buf(struct slice *slice, void *buf, int len)
+static inline unsigned char *
+slice_put_buf(slice_t *slice, void *buf, int len)
 {
     os_assert(slice);
 
@@ -423,10 +422,6 @@ slice_put_buf(struct slice *slice, void *buf, int len)
 }
 
 #define SLICE_F_GROW    0x01
-
-extern int
-slice_vsprintf(struct slice *slice, int flag, const char *fmt, va_list args);
- 
 /*
 * 语义类似 snprintf
 * 
@@ -455,16 +450,64 @@ slice_vsprintf(struct slice *slice, int flag, const char *fmt, va_list args);
 *           此时写入数据完整
 *       }
 */
-extern int 
-slice_sprintf(struct slice *slice, int flag, const char *fmt, ...)
-    __attribute__((format(printf, 3, 4)));
+#define slice_sprintf(_slice, _flag, _fmt, _args...) ({ \
+    __label__ try_again;                                \
+    __label__ ok;                                       \
+    int len = 0, space;                                 \
+                                                        \
+    if (NULL==(_slice)) {                               \
+        char tmp[4];                                    \
+                                                        \
+        /*                                              \
+        * 这里只是计算需要多少空间                      \
+        */                                              \
+        len = os_snprintf(tmp, 0, _fmt, ##_args);       \
+                                                        \
+        goto ok;                                        \
+    }                                                   \
+                                                        \
+try_again:                                              \
+    space = slice_remain(_slice);                       \
+    debug_trace("slice_vsprintf: remain %d", space);    \
+                                                        \
+    /*                                                  \
+    * 理论上 slice_remain 应该大于等于 0                \
+    *                                                   \
+    * 将 space 重置为 1(便于后续减一操作)               \
+    *                                                   \
+    * 所以, 当剩余空间为1或0时，                        \
+    *   vsnprintf 不会有任何写入操作                    \
+    */                                                  \
+    space = (space>0)?space:1;                          \
+                                                        \
+    len = os_snprintf((char *)slice_tail(_slice),       \
+                space, _fmt, ##_args);                  \
+    debug_trace("slice_vsprintf: needed %d", len);      \
+                                                        \
+    if (os_snprintf_is_full(space, len)) { /* no space */ \
+        debug_trace("slice_vsprintf: full");            \
+        if (os_hasflag(_flag, SLICE_F_GROW) \           \
+            && 0==slice_grow(_slice, len + 1 - space)) {\
+            debug_trace("slice_vsprintf: grow and try");\
+                                                        \
+            goto try_again;                             \
+        } else {                                        \
+            /* do nothing */                            \
+        }                                               \
+    } else {                                            \
+        slice_put(_slice, len);                         \
+    }                                                   \
+                                                        \
+ok:                                                     \
+    return len;                                         \
+}) /* end */
 
-#ifdef __APP__
+#if defined(__BUSYBOX__) || defined(__APP__)
 
 static inline void 
 __slice_to_msg
 (
-    struct slice    *slice, 
+    slice_t    *slice, 
     bool            is_send,
     struct iovec    *iov,
     struct msghdr   *msg,
@@ -479,7 +522,7 @@ __slice_to_msg
  	msg->msg_iovlen = 1;
 }
 
-static inline int slice_send(int fd, struct slice *slice, struct sockaddr *remote, int flag)
+static inline int slice_send(int fd, slice_t *slice, struct sockaddr *remote, int flag)
 {
     struct iovec    iov = {0};
     struct msghdr   msg = {0};
@@ -489,7 +532,7 @@ static inline int slice_send(int fd, struct slice *slice, struct sockaddr *remot
     return sendmsg(fd, &msg, flag);
 }
 
-static inline int slice_recv(int fd, struct slice *slice, struct sockaddr *remote, int flag)
+static inline int slice_recv(int fd, slice_t *slice, struct sockaddr *remote, int flag)
 {
     struct iovec    iov = {0};
     struct msghdr   msg = {0};

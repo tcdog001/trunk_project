@@ -30,7 +30,7 @@ update_limit(struct apuser *user)
 }
 
 static int
-hashbuf(byte *buf, int len, int mask)
+hashbuf(unsigned char *buf, int len, int mask)
 {
     int i;
     int sum = 0;
@@ -43,7 +43,7 @@ hashbuf(byte *buf, int len, int mask)
 }
 
 static inline int
-hashmac(byte mac[])
+hashmac(unsigned char mac[])
 {
     return hashbuf(mac, OS_MACSIZE, UM_HASHMASK);
 }
@@ -51,11 +51,11 @@ hashmac(byte mac[])
 static inline int
 haship(uint32_t ip)
 {
-    return hashbuf((byte *)&ip, sizeof(ip), UM_HASHMASK);
+    return hashbuf((unsigned char *)&ip, sizeof(ip), UM_HASHMASK);
 }
 
 static inline struct hlist_head *
-headmac(byte mac[])
+headmac(unsigned char mac[])
 {
     return &umc.head.mac[hashmac(mac)];
 }
@@ -111,7 +111,7 @@ __bindif(struct apuser *user, struct um_intf *intf)
 }
 
 static struct apuser *
-__get(byte mac[])
+__get(unsigned char mac[])
 {
     struct apuser *user;
     
@@ -230,7 +230,7 @@ __reinsert_byip(struct apuser *user, uint32_t ip)
 }
 
 static struct apuser *
-__create(byte mac[], struct um_intf *intf)
+__create(unsigned char mac[], struct um_intf *intf)
 {
     if (NULL==intf) {
         return NULL;
@@ -451,7 +451,7 @@ um_script_deauth_notify(struct apuser *user, int reason)
 }
 
 static struct apuser *
-__find_and_create(byte mac[], struct um_intf *intf)
+__find_and_create(unsigned char mac[], struct um_intf *intf)
 {
     struct apuser *user = __get(mac);
     if (NULL==user) {
@@ -513,7 +513,7 @@ update_cb(struct apuser *old, struct apuser *new)
 }
 
 struct apuser *
-user_connect(byte mac[], struct um_intf *intf)
+user_connect(unsigned char mac[], struct um_intf *intf)
 {
     struct apuser *user = __find_and_create(mac, intf);
     
@@ -559,19 +559,19 @@ user_deauth(struct apuser *user, int reason)
 }
 
 struct apuser *
-um_user_connect(byte mac[], char *ifname)
+um_user_connect(unsigned char mac[], char *ifname)
 {
     return user_connect(mac, um_intf_get(ifname));
 }
 
 void
-um_user_disconnect(byte mac[])
+um_user_disconnect(unsigned char mac[])
 {
     user_disconnect(__get(mac));
 }
 
 struct apuser *
-um_user_bind(byte mac[], uint32_t ip, char *ifname)
+um_user_bind(unsigned char mac[], uint32_t ip, char *ifname)
 {
     struct um_intf *intf = um_intf_get(ifname);
     /*
@@ -583,19 +583,19 @@ um_user_bind(byte mac[], uint32_t ip, char *ifname)
 }
 
 void
-um_user_unbind(byte mac[])
+um_user_unbind(unsigned char mac[])
 {
     user_unbind(__get(mac));
 }
 
 struct apuser *
-um_user_auth(byte mac[], int class)
+um_user_auth(unsigned char mac[], int class)
 {
     return user_auth(__get(mac), class);
 }
 
 void
-um_user_deauth(byte mac[], int reason)
+um_user_deauth(unsigned char mac[], int reason)
 {
     user_deauth(__get(mac), reason);
 }
@@ -625,7 +625,7 @@ um_user_foreach(um_foreach_f *foreach)
 
 
 struct apuser *
-um_user_getbymac(byte mac[])
+um_user_getbymac(unsigned char mac[])
 {
     return __get(mac);
 }
@@ -656,7 +656,7 @@ um_user_del(struct apuser *user)
 }
 
 int
-um_user_delbymac(byte mac[])
+um_user_delbymac(unsigned char mac[])
 {
     return um_user_del(__get(mac));
 }
@@ -675,8 +675,8 @@ um_user_bindif(struct apuser *user, struct um_intf *intf)
     }
 }
 
-#define __um_user_dump(_fmt, args...)   os_println(__tab _fmt, ##args)
-#define __um_user_dump_objs(_user, _obj) do{ \
+#define __um_user_dump(_fmt, _args...)      os_println(__tab _fmt, ##_args)
+#define __um_user_dump_objs(_user, _obj)    do{ \
     __um_user_dump(#_obj ".uptime = %u",  _user->info._obj.uptime);                     \
     __um_user_dump(#_obj ".up.flow.total  = %llu",  _user->info._obj.up.flow.total);    \
     __um_user_dump(#_obj ".up.flow.cache  = %llu",  _user->info._obj.up.flow.cache);    \
@@ -728,7 +728,7 @@ um_user_dump(struct apuser *user, char *action)
 }
 
 static inline bool
-match_mac(byte umac[], byte fmac[], byte mask[])
+match_mac(unsigned char umac[], unsigned char fmac[], unsigned char mask[])
 {
     if (is_good_mac(fmac)) {
         if (is_zero_mac(mask)) {

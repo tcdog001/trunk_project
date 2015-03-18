@@ -9,7 +9,7 @@
 
 typedef char os_ipstring_t[1+OS_IPSTRINGLEN];
 
-#ifdef __APP__
+#if defined(__BUSYBOX__) || defined(__APP__)
 /*
 * just for single-thread, unsafe for multi-thread
 *
