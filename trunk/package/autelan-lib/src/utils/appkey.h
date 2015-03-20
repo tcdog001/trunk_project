@@ -7,9 +7,6 @@ typedef unsigned int appkey_t;
 * enable app debug(use share memory)
 */
 #ifdef __APP__
-extern int 
-appkey_reload(void);
-
 extern appkey_t 
 __appkey_getbyname(char *app, char *key);
 
@@ -31,19 +28,30 @@ appkey_get(appkey_t akid, unsigned int deft)
 extern int 
 appkey_set(appkey_t akid, unsigned int value);
 
+extern int
+appkey_reload(void);
+
+extern int
+__appkey_init(void);
+
+extern int
+__appkey_fini(void);
+
 #define AKID_DEBUG_NAME     "debug"
 
-#define AKID_DEBUGER \
-        static os_constructor void ____akid_debug_initer(void) \
-        { \
-            __AKID_DEBUG = appkey_getbyname(AKID_DEBUG_NAME); \
-            openlog(__THIS_NAME, LOG_PID | LOG_CONS, LOG_DAEMON); \
-        } \
-        static os_destructor  void ____akid_debug_finier(void) \
-        { \
-            closelog(); \
-        } \
-        appkey_t __AKID_DEBUG
+#define appkey_init() do{   \
+    __appkey_init();        \
+                            \
+    __AKID_DEBUG = appkey_getbyname(AKID_DEBUG_NAME); \
+    openlog(__THIS_NAME, LOG_PID | LOG_CONS, LOG_DAEMON); \
+}while(0);
+
+#define appkey_fini() do{   \
+    closelog();             \
+    __appkey_fini();        \
+}while(0)
+
+#define AKID_DEBUGER    appkey_t __AKID_DEBUG
 #else 
 /*
 * kernel/boot
@@ -53,13 +61,14 @@ appkey_set(appkey_t akid, unsigned int value);
 #define appkey_get(_akid, _deft)        (_deft)
 #define appkey_set(_akid, _value)       0
 
+#define appkey_init()       os_do_nothing
+#define appkey_fini()       os_do_nothing
+
 #ifndef __AKID_DEBUG
-#define __AKID_DEBUG        __akid_debug
+#define __AKID_DEBUG        __##__THIS_NAME##_debug
 #endif
 
-#ifndef AKID_DEBUGER
 #define AKID_DEBUGER        extern int __AKID_DEBUG
-#endif
 #endif /* __APP__ */
 /******************************************************************************/
 #endif /* __APPKEY_H_4DCB6A57D69734A56298406D6DF398AA__ */

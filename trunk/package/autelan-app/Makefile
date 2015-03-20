@@ -11,6 +11,7 @@ AUTELAN_LIBS=$(BUILD_DIR)/autelan-lib
 
 export FILENO_PATH=$(TOPDIR)/fileno/$(TARGET_DIR_NAME)
 export FILENO_BIN=$(SCRIPT_DIR)/fileno
+export OS_TYPE=openwrt
 
 TARGET_CFLAGS += -Wall \
 		-fexceptions -fno-omit-frame-pointer \

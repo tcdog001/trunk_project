@@ -1,7 +1,21 @@
 /*******************************************************************************
 Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
+#ifndef __THIS_NAME
+#define __THIS_NAME     "sinetd"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __sinetd_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
 #include "utils.h"
+
+AKID_DEBUGER;
 
 #define __log(_level, _fmt, _args...) do{ \
     syslog(_level, _fmt, ##_args);  \
@@ -389,6 +403,8 @@ int sinetd_main(int argc, char *argv[])
     if (4!=argc) {
         return usage(argc, argv);
     }
+
+    appkey_init();
     
     /*
     * check script
@@ -439,4 +455,3 @@ int sinetd_main(int argc, char *argv[])
 }
 
 /******************************************************************************/
-AKID_DEBUGER; /* must last os_constructor */

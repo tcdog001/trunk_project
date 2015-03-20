@@ -1,7 +1,21 @@
 /*******************************************************************************
 Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
-#include "atotp/atopt.h"
+#ifndef __THIS_NAME
+#define __THIS_NAME     "atotp"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __atotp_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
+#include "atotp/atotp.h"
+
+AKID_DEBUGER;
 
 static char *self;
 
@@ -83,20 +97,40 @@ static struct simpile_cmd otp[] = {
     },
 };
 
+static int
+__fini(void)
+{
+    appkey_fini();
+}
+
+static int
+__init(void)
+{
+    appkey_init();
+
+    return 0;
+}
 
 #ifndef __BUSYBOX__
-#define atdog_main  main
+#define atotp_main  main
 #endif
 
 /*
 * otp have enabled when boot
 */
-int atdog_main(int argc, char *argv[])
+static int
+__main(int argc, char *argv[])
 {
     self = argv[0];
 
     return simpile_cmd_handle(otp, argc-1, argv+1, usage);
 }
-/******************************************************************************/
-AKID_DEBUGER; /* must last os_constructor */
 
+/*
+* otp have enabled when boot
+*/
+int atotp_main(int argc, char *argv[])
+{
+    return os_call(__init, __fini, __main, argc, argv);
+}
+/******************************************************************************/

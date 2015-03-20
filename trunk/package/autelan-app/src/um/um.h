@@ -456,6 +456,7 @@ enum {
     
 	UM_USER_END,
 };
+#define UM_USER_END UM_USER_END
 
 #define __UM_USER_POLICY_INITER(_OBJ, _obj) \
     UM_POLICY_INITER(UM_USER_##_OBJ##_UPTIME,       #_obj ".uptime",        INT32), \

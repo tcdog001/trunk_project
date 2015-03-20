@@ -1,3 +1,15 @@
+#ifndef __THIS_NAME
+#define __THIS_NAME     "um"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __atum_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     3
+#endif
+
 #include "utils.h"
 #include "um.h"
 

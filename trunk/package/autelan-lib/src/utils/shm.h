@@ -1,6 +1,6 @@
 #ifndef __SHM_H_B3E2577A5EA2EF53FBFCE139C3E3B2FD__
 #define __SHM_H_B3E2577A5EA2EF53FBFCE139C3E3B2FD__
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 /******************************************************************************/
 #include "utils/base.h"
 

@@ -16,7 +16,11 @@ include $(DIR_ROOT)/mk/define.mk
 #
 #changed me, append obj
 #
-OBJS=$(DIR_SELF)/stimerd.o
+OBJS=$(DIR_SELF)/um.o \
+	$(DIR_SELF)/user.o \
+	$(DIR_SELF)/uci.o \
+	$(DIR_SELF)/ubus.o \
+	# end
 TARGET_NAME=um
 TARGET=$(TARGET_NAME)
 TARGET_TYPE=exe

@@ -501,7 +501,7 @@ os_tm_fini(void)
     }
 }
 
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 
 static inline int
 os_timer_fd(uint32_t sec, uint32_t nsec)

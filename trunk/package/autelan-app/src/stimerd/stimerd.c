@@ -1,12 +1,26 @@
 /*******************************************************************************
 Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
+#ifndef __THIS_NAME
+#define __THIS_NAME     "stimerd"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __stimerd_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
 #include "stimer/stimer.h"
+
+AKID_DEBUGER;
+USE_INLINE_TIMER;
 
 static char TX[1 + STIMER_RESSIZE];
 static struct stimer_response *RES = (struct stimer_response *)TX;
 
-USE_INLINE_TIMER;
 
 #define res_sprintf(_fmt, _args...) ({  \
     int len = stimer_res_sprintf(RES, _fmt, ##_args); \
@@ -678,7 +692,7 @@ init_server(void)
 #endif
 
 static int
-fini(void)
+__fini(void)
 {
     os_tm_fini();
 
@@ -686,10 +700,12 @@ fini(void)
 }
 
 static int
-init(void)
+__init(void)
 {
     int err = 0;
 
+    appkey_init();
+    
     os_tm_init();
     
     err = mlist_table_init(&stimerd.head.mlist, STIMERD_HASHSIZE);
@@ -732,7 +748,6 @@ __main(int argc, char *argv[])
 
 int stimerd_main(int argc, char *argv[])
 {
-    return os_call(init, fini, __main, argc, argv);
+    return os_call(__init, __fini, __main, argc, argv);
 }
 /******************************************************************************/
-AKID_DEBUGER; /* must last os_constructor */

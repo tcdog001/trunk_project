@@ -451,8 +451,7 @@ slice_put_buf(slice_t *slice, void *buf, int len)
 *       }
 */
 #define slice_sprintf(_slice, _flag, _fmt, _args...) ({ \
-    __label__ try_again;                                \
-    __label__ ok;                                       \
+    __label__ try_again, ok;                            \
     int len = 0, space;                                 \
                                                         \
     if (NULL==(_slice)) {                               \
@@ -499,10 +498,10 @@ try_again:                                              \
     }                                                   \
                                                         \
 ok:                                                     \
-    return len;                                         \
+    len;                                                \
 }) /* end */
 
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 
 static inline void 
 __slice_to_msg

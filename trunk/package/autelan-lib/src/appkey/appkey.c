@@ -3,6 +3,18 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 ********************************************************************************
     manage app key
 *******************************************************************************/
+#ifndef __THIS_NAME
+#define __THIS_NAME     "libappkey"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __libappkey_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
 extern int __AKID_DEBUG;
 static int *__debug_init_pointer = &__AKID_DEBUG;
 
@@ -12,19 +24,11 @@ static int *__debug_init_pointer = &__AKID_DEBUG;
 int __AKID_DEBUG = __debug_init_error;
 /******************************************************************************/
 #ifndef APPKEY_PATH
-#ifdef __PC__
-#define APPKEY_PATH         "../../appkey"
-#else
-#define APPKEY_PATH         "/etc/appkey"
-#endif
+#define APPKEY_PATH         "/tmp/appkey"
 #endif
 
 #ifndef APPKEY_FILE_LIMIT
 #define APPKEY_FILE_LIMIT   APPKEY_PATH "/libappkey.limit"
-#endif
-
-#ifndef APPKEY_FILE_ENUM
-#define APPKEY_FILE_ENUM    APPKEY_PATH "/libappkey.enum"
 #endif
 
 #define INVALID_APPKEY      0
@@ -522,8 +526,8 @@ init(unsigned int limit)
     return 0;
 }
 
-static os_destructor void 
-__fini(void) 
+int 
+__appkey_fini(void) 
 {
     if (INVALID_SHM_ADDR != __ak.shm.address) {
         shmdt(__ak.shm.address);
@@ -531,36 +535,42 @@ __fini(void)
         
         debug_trace("shm fini shmdt(address:%p)", __ak.shm.address);
     }
+
+    return 0;
 }
 
-static os_constructor void 
-__init(void) 
+int 
+__appkey_init(void) 
 {
-    int ret = 0;
+    int err = 0;
     unsigned int limit = APPKEY_LIMIT;
 
-    openlog(__THIS_NAME, LOG_PID | LOG_CONS, LOG_DAEMON);
+    if (INVALID_SHM_ADDR==__ak.shm.address) {
+        openlog(__THIS_NAME, LOG_PID | LOG_CONS, LOG_DAEMON);
 
-    os_sfgeti(&limit, APPKEY_FILE_LIMIT);
-    
-    __ak.shm.size = sizeof(struct appkey) * limit
-                        + sizeof(struct appkey_hdr)
-                        + sizeof(unsigned int)/* protect_1 */;
-    debug_trace("limit=0x%x, size=0x%x", limit, __ak.shm.size);
-    
-    ret = os_shm_create(&__ak.shm, false);
-    if (ret<0) {
-        goto error;
+        os_sfgeti(&limit, APPKEY_FILE_LIMIT);
+        
+        __ak.shm.size = sizeof(struct appkey) * limit
+                            + sizeof(struct appkey_hdr)
+                            + sizeof(unsigned int)/* protect_1 */;
+        debug_trace("limit=0x%x, size=0x%x", limit, __ak.shm.size);
+        
+        err = os_shm_create(&__ak.shm, false);
+        if (err<0) { /* >=0 is valid shm id */
+            goto error;
+        }
+        
+        init(limit);
+
+        debug_ok("init OK!");
     }
     
-    init(limit);
-
-    debug_ok("init OK!");
-    
-    return;
+    return 0;
 error:
     debug_error("init failed!");
     
-    __fini();
+    __appkey_fini();
+
+    return err;
 }
 /******************************************************************************/

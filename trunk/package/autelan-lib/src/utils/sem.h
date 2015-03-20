@@ -1,6 +1,6 @@
 #ifndef __SEM_H_EF321BBA18F9C8C9E4977949EC03D97E__
 #define __SEM_H_EF321BBA18F9C8C9E4977949EC03D97E__
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 /******************************************************************************/
 typedef struct {
     int id;
@@ -15,13 +15,13 @@ typedef struct {
 }
 
 static inline void 
-__os_do_sem(int semid, int op)
+__os_do_sem(int semid, int op, int undo)
 {
     struct {
         unsigned short sem_num;
         short sem_op;
         short sem_flag;
-    } sem = {0, op, SEM_UNDO};
+    } sem = {0, op, undo};
     
     semop(semid, (struct sembuf *)&sem, 1);
 }
@@ -35,13 +35,13 @@ os_sem_is_inited(os_sem_t *sem)
 static inline void 
 os_sem_lock (os_sem_t *sem)
 {
-    __os_do_sem(sem->id, -1);
+    __os_do_sem(sem->id, -1, SEM_UNDO);
 }
 
 static inline void 
 os_sem_unlock(os_sem_t *sem)
 {
-    __os_do_sem(sem->id, 1);
+    __os_do_sem(sem->id, 1, 0);
 }
 
 static inline void 

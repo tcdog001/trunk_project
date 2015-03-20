@@ -12,12 +12,12 @@ APPKEY_PATH=etc/appkey
 
 export FILENO_PATH=$(TOPDIR)/fileno/$(TARGET_DIR_NAME)
 export FILENO_BIN=$(SCRIPT_DIR)/fileno
+export OS_TYPE=openwrt
 
 TARGET_CFLAGS += -Wall -fPIC \
 		-fexceptions -fno-omit-frame-pointer \
 		-I$(AUTELAN_LIBS) \
 		-D__OPENWRT__ \
-		-DOS_TYPE=openwrt \
 		-D__TAB_AS_SPACE=4 \
 		-std=gnu99
 		

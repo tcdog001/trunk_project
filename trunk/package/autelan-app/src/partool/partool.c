@@ -1,11 +1,25 @@
 /*******************************************************************************
 Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
+#ifndef __THIS_NAME
+#define __THIS_NAME     "partool"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __partool_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
 #ifdef __BOOT__
 #include <common.h>
 #include <command.h>
 #endif
 #include "utils.h"
+
+AKID_DEBUGER;
 
 #ifndef PART_BLOCK_CACHE_SIZE
 #define PART_BLOCK_CACHE_SIZE   (64*1024)
@@ -2196,5 +2210,3 @@ __fini(void)
 }
 #endif
 /******************************************************************************/
-AKID_DEBUGER; /* must last os_constructor */
-

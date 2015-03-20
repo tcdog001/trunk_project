@@ -5,7 +5,7 @@
 #define __THIS_NAME     "boot"
 #endif
 
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 #   define __syslog(_fmt, _args...)     syslog(LOG_DEBUG, _fmt, ##_args)
 #else
 #   define __syslog(_fmt, _args...)     os_do_nothing
@@ -26,11 +26,6 @@
 #ifdef __BOOT__
     extern int __AKID_DEBUG;
 #   define __debug_init         __AKID_DEBUG
-#   define __THIS_FILE          0
-#elif defined(__BUSYBOX__)
-    extern int __AKID_DEBUG;
-#   define __debug_init         __debug_init_default
-#   define __THIS_NAME          "busybox"
 #   define __THIS_FILE          0
 #elif defined(__KERNEL__) || defined(__APPKEY__)
     /*

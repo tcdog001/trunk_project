@@ -1,7 +1,21 @@
 /*******************************************************************************
 Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
+#ifndef __THIS_NAME
+#define __THIS_NAME     "stimerc"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __stimerc_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
 #include "stimer/stimer.h"
+
+AKID_DEBUGER;
 
 static char RX[1 + STIMER_RESSIZE];
 static struct stimer_response *RES = (struct stimer_response *)RX;
@@ -240,6 +254,8 @@ int stimerc_main(int argc, char *argv[])
 {
     int err;
 
+    appkey_init();
+    
     dump_argv(argc, argv);
     stimerc.name = argv[0];
     
@@ -258,4 +274,3 @@ int stimerc_main(int argc, char *argv[])
     return shell_error(err);
 }
 /******************************************************************************/
-AKID_DEBUGER; /* must last os_constructor */

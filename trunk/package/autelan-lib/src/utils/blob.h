@@ -9,7 +9,7 @@
 #define BLOB_F_MAX      0x04
 #define BLOB_F_STRING   0x08 /* last must zero */
 
-enum blob_type {
+enum {
     BLOB_T_EMPTY    = 0,
 	BLOB_T_OBJECT   = 1,
 	BLOB_T_ARRAY    = 2,
@@ -23,7 +23,7 @@ enum blob_type {
 };
 
 static inline bool
-is_good_blob_type(enum blob_type type)
+is_good_blob_type(int type)
 {
     return is_good_enum(type, BLOB_T_END);
 }
@@ -55,10 +55,10 @@ blob_len(const blob_t *blob)
     return (unsigned int)blob->len;
 }
 
-static inline enum blob_type
+static inline int
 blob_type(const blob_t *blob)
 {
-    return (enum blob_type)blob->type;
+    return blob->type;
 }
 
 static inline unsigned int
@@ -311,7 +311,7 @@ blob_eq(const blob_t *a, const blob_t *b)
     /* end */
 
 static inline bool
-blob_base_check(const void *value, unsigned int len, enum blob_type type)
+blob_base_check(const void *value, unsigned int len, int type)
 {
     static struct {
         uint32_t flag;
@@ -378,7 +378,7 @@ blob_base_check(const void *value, unsigned int len, enum blob_type type)
     
 typedef struct blob_rule {
     const char *name;
-    enum blob_type type;
+    int type;
     unsigned int minlen; /* os_min value len */
     unsigned int maxlen; /* os_max value len */
     bool (*validate)(const struct blob_rule *, blob_t *);
@@ -415,7 +415,7 @@ blob_parse(blob_t *blob, blob_t *cache[], const blob_rule_t rule[], int count)
         int bid = blob_id(pos);
         unsigned int len    = blob_value_len(pos);
         const char *name    = blob_name(pos);
-        enum blob_type type = blob_type(pos);
+        int type = blob_type(pos);
         
         if (false==is_good_blob_type(type)) {
             continue;
@@ -485,7 +485,7 @@ static inline void
 __blob_init(
     blob_t *blob, 
     int id, 
-    enum blob_type type, 
+    int type, 
     const char *name, 
     int payload
 )
@@ -501,7 +501,7 @@ __blob_new(
     slice_t *slice, 
     bool put, 
     int id, 
-    enum blob_type type, 
+    int type, 
     const char *name, 
     int payload
 )
@@ -551,13 +551,13 @@ __blob_new(
 }
 
 static inline blob_t *
-blob_new(slice_t *slice, int id, enum blob_type type, const char *name, int payload)
+blob_new(slice_t *slice, int id, int type, const char *name, int payload)
 {
 	return __blob_new(slice, true, id, type, name, payload);
 }
 
 static inline blob_t *
-blob_root_init(slice_t *slice, int id /* root */, enum blob_type type, const char *name)
+blob_root_init(slice_t *slice, int id /* root */, int type, const char *name)
 {
     slice_offset(slice) = 0;
 
@@ -568,7 +568,7 @@ static inline void *
 __blob_nest_start(slice_t *slice, int id, bool array, const char *name)
 {
 	blob_t *root_new;
-	enum blob_type type = array?BLOB_T_ARRAY:BLOB_T_OBJECT;
+	int type = array?BLOB_T_ARRAY:BLOB_T_OBJECT;
     
 	root_new = blob_new(slice, id, type, name, 0);
 	if (NULL==root_new) {
@@ -620,26 +620,26 @@ blob_array_end(slice_t *slice, void *cookie)
 
 #if 0
 #define blob_sprintf(_slice, _id, _name, _fmt, _args...) ({ \
-    __label__ error, ok;                            \
+    __label__ error;                                \
+    __label__ ok;                                   \
     int len, space, size;                           \
     int payload = 1 + os_strlen(_fmt);              \
     blob_t *blob = __blob_new(_slice, false, _id,   \
         BLOB_T_STRING, _name, payload);             \
                                                     \
-    /* put blob header/_name */                     \
+    /* pub blob header/_name */                     \
     size = sizeof(*blob) + blob_name_size(blob);    \
-    if (NULL==slice_put(_slice, size)) {            \
+    if (NULL==slice_put(_slice, size)) {           \
         blob = NULL; goto error;                    \
     }                                               \
                                                     \
     space = slice_remain(_slice);                   \
-    debug_ok("blob_vsprintf: remail %d", space);    \
+    debug_ok("blob_sprintf: remain %d", space);     \
                                                     \
-    len = slice_sprintf(_slice,                    \
+    len = slice_sprintf(_slice,                     \
         SLICE_F_GROW, _fmt, ##_args);               \
     if (os_snprintf_is_full(space, len)) {          \
-        debug_ok("blob_vsprintf: full");            \
-                                                    \
+        debug_error("blob_sprintf: full");         \
         blob = NULL; goto error;                    \
     }                                               \
                                                     \
@@ -655,17 +655,16 @@ blob_array_end(slice_t *slice, void *cookie)
     blob_add_value_len(blob, len);                  \
     blob_add_value_len(blob_root(_slice),           \
         blob_size(blob));                           \
-                                                    \
     if (__is_debug_init_trace) {                    \
-	    __blob_dump(blob);                          \
-	}                                               \
+        __blob_dump(blob);                          \
+    }                                               \
                                                     \
     goto ok;                                        \
 error:                                              \
     slice_trim(_slice, size);                       \
 ok:                                                 \
     blob;                                           \
-}) /* end */
+})  /* end */
 #else
 #define blob_sprintf(_slice, _id, _name, _fmt, _args...)    NULL
 
@@ -675,7 +674,7 @@ static inline blob_t *
 blob_put(
     slice_t *slice, 
     int id, 
-    enum blob_type type, 
+    int type, 
     const char *name, 
     const void *value, 
     unsigned int len
@@ -778,12 +777,12 @@ blob_put_blob(slice_t *slice, blob_t *blob)
 	            __blob_value(blob), blob_value_len(blob));
 }
 
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 static inline void
 __blob_byteorder(blob_t *blob, bool ntoh)
 {
     int rem;
-    enum blob_type type = blob_type(blob);
+    int type = blob_type(blob);
 
     if (ntoh) {
         blob->id  = bswap_16(blob->id);
@@ -820,7 +819,7 @@ __blob_byteorder(blob_t *blob, bool ntoh)
     }
 }
 
-extern void
+static inline void
 blob_ntoh(blob_t *blob)
 {
     __blob_byteorder(blob, true);

@@ -45,7 +45,7 @@ os_digitchar2int(int ch)
 #define os_atoi(_string)    simple_strtol(_string, NULL, 0)
 #define os_atol(_string)    simple_strtol(_string, NULL, 0)
 #define os_atoll(_string)   simple_strtoull(_string, NULL, 0)
-#elif defined(__BUSYBOX__) || defined(__APP__)
+#elif defined(__APP__)
 #define os_atoi(_string)    atoi(_string)
 #define os_atol(_string)    atol(_string)
 #define os_atoll(_string)   atoll(_string)
@@ -53,6 +53,6 @@ os_digitchar2int(int ch)
 #error "need to define atoi/atol/atoll"
 #endif
 
-#define os_isprint(_x)      isprint(_x)
+#define os_isprint(_x)      ((_x)>=0x20 && (_x)<=0x7e)
 /******************************************************************************/
 #endif /* __NUMBER_H_D1912A84AB1249D4A3313CDD1D2C0B44__ */

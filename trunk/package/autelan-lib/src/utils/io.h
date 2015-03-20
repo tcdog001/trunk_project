@@ -3,7 +3,7 @@
 /******************************************************************************/
 #include "utils/time.h"
 /******************************************************************************/
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 static inline int
 io_read(int fd, char *buf, int size, int timeout /* ms */)
 {

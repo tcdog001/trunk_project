@@ -1,9 +1,23 @@
 /*******************************************************************************
 Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 *******************************************************************************/
+#ifndef __THIS_NAME
+#define __THIS_NAME     "atdog"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __atdog_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
 #include "utils.h"
 #include "utils/cmd.h"
 #include "hi_unf_wdg.h"
+
+AKID_DEBUGER;
 
 #define ATDOG_COUNT     2
 
@@ -194,20 +208,6 @@ usage(void)
     return -EFORMAT;
 }
 
-#ifndef __BUSYBOX__
-#define atdog_main  main
-#endif
-
-/*
-* dog have enabled when boot
-*/
-int atdog_main(int argc, char *argv[])
-{
-    self = argv[0];
-
-    return simpile_cmd_handle(dog, argc-1, argv+1, usage);
-}
-
 #define __method(_method)           do{ \
     int err = HI_UNF_WDG_##_method();   \
     if (err) {                          \
@@ -215,17 +215,41 @@ int atdog_main(int argc, char *argv[])
     }                                   \
 }while(0)
 
-static os_destructor void
+static int
 __fini(void)
 {
     __method(DeInit);
+
+    return 0;
 }
 
-static os_constructor void
+static int
 __init(void)
 {
+    appkey_init();
+    
     __method(Init);
+
+    return 0;
+}
+
+#ifndef __BUSYBOX__
+#define atdog_main  main
+#endif
+
+static int
+__main(int argc, char *argv[])
+{
+    self = argv[0];
+
+    return simpile_cmd_handle(dog, argc-1, argv+1, usage);
+}
+
+/*
+* dog have enabled when boot
+*/
+int atdog_main(int argc, char *argv[])
+{
+    return os_call(__init, __fini, __main, argc, argv);
 }
 /******************************************************************************/
-AKID_DEBUGER; /* must last os_constructor */
-

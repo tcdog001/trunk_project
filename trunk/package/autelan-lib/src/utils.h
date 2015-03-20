@@ -28,10 +28,9 @@
 #   include <linux/list.h>
 #   include <net/sock.h>
 #else /* __APP__ */
+#   define __APP__
 #   ifdef __BUSYBOX__
 #       include "libbb.h"
-#   else
-#       define __APP__
 #   endif
 #   include <stdint.h>
 #   include <stdarg.h>

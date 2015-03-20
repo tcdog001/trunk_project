@@ -1,3 +1,16 @@
+#ifndef __THIS_NAME
+#define __THIS_NAME     "um"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __um_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     2
+#endif
+
+
 #include "utils.h"
 #include "um.h"
 
@@ -183,7 +196,7 @@ __load_intf(char *ifname, struct blob_attr *tb[], int count, struct list_head *h
         um = blobmsg_get_bool(p);
     }
     if (false==um) {
-        debug_uci_trace("no load none-um intf(%s)", ifname);
+        debug_uci_trace("no load um intf(%s)", ifname);
         
         return NULL;
     }

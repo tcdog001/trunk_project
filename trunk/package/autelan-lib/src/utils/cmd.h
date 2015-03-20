@@ -1,6 +1,6 @@
 #ifndef __CMD_H_F3687584F159827DAA20B322924194D1__
 #define __CMD_H_F3687584F159827DAA20B322924194D1__
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 /******************************************************************************/
 #ifndef __COMMAND_COUNT
 #define __COMMAND_COUNT         (2*32)

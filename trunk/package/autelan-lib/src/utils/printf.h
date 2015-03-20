@@ -1,7 +1,7 @@
 #ifndef __PRINTF_H_6115A6C5DFF707CC6D8400E2B7190543__
 #define __PRINTF_H_6115A6C5DFF707CC6D8400E2B7190543__
 /******************************************************************************/
-#if defined(__BOOT__) || defined(__BUSYBOX__) || defined(__APP__)
+#if defined(__BOOT__) || defined(__APP__)
 #define os_printf(_fmt, _args...)               printf(_fmt, ##_args)
 #define os_vprintf(_fmt, _args)                 vprintf(_fmt, _args)
 #else
@@ -9,7 +9,7 @@
 #define os_vprintf(_fmt, _args)                 vprintk(KERN_ALERT _fmt, _args)
 #endif
 
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 #define os_fprintf(_stream, _fmt, _args...)     fprintf(_stream, _fmt, ##_args)
 #define os_vfprintf(_stream, _fmt, _args)       vfprintf(_stream, _fmt, _args)
 #else
@@ -127,7 +127,7 @@
 #define os_eprintln(_err, _fmt, _args...)   \
     (os_println(_fmt, ##_args), (_err))
 
-#if defined(__BUSYBOX__) || defined(__APP__)
+#ifdef __APP__
 #define os_v_xopen(_type, _func, _mod, _fmt, _args...) ({  \
     char buf[1+OS_LINE_LEN] = {0};  \
     _type tvar;                     \

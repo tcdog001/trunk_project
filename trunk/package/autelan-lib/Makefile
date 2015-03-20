@@ -9,6 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 
 AUTELAN_LIBS=$(PKG_BUILD_DIR)
 APPKEY_PATH=etc/appkey
+export OS_TYPE=openwrt
 
 export FILENO_PATH=$(TOPDIR)/fileno/$(TARGET_DIR_NAME)
 export FILENO_BIN=$(SCRIPT_DIR)/fileno

@@ -1,6 +1,19 @@
+#ifndef __THIS_NAME
+#define __THIS_NAME     "um"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __um_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
 #include "utils.h"
 #include "um.h"
 
+AKID_DEBUGER;
 USE_INLINE_TIMER;
 
 static inline unsigned int
@@ -359,16 +372,18 @@ um_timer_init(void)
 }while(0)
     
 static int
-fini(void)
+__fini(void)
 {
     return 0;
 }
 
 static int
-init(void) 
+__init(void) 
 {
     int i, j;
 
+    appkey_init();
+    
     for (i=0; i<UM_CLASS_END; i++) {
         for (j=0; j<UM_LEVEL_END; j++) {
             struct um_uci *uci;
@@ -441,8 +456,7 @@ finish:
 
 int um_main(int argc, char **argv)
 {
-    return os_call(init, fini, __main, argc, argv);
+    return os_call(__init, __fini, __main, argc, argv);
 }
 /******************************************************************************/
-AKID_DEBUGER; /* must last os_constructor */
 

@@ -1,7 +1,7 @@
 #ifndef __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__
 #define __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__
 /******************************************************************************/
-#if defined(__BOOT__) || defined(__BUSYBOX__) || defined(__APP__)
+#if defined(__BOOT__) || defined(__APP__)
 /* Force a compilation error if condition is true */
 #define BUILD_BUG_ON(_condition)    ((void)BUILD_BUG_ON_ZERO(_condition))
 /* Force a compilation error if condition is true, but also produce a
@@ -42,11 +42,19 @@
 * 建议 os_constructor/os_destructor 与 static 结合使用
 */
 #ifndef os_constructor
-#define os_constructor     __attribute__((constructor))
+#   ifdef __BUSYBOX__
+#       define os_constructor   inline
+#   else
+#       define os_constructor   __attribute__((constructor))
+#   endif
 #endif
 
-#ifndef os_destructor 
-#define os_destructor      __attribute__((destructor))
+#ifndef os_destructor
+#   ifdef __BUSYBOX__
+#       define os_destructor    inline
+#   else
+#       define os_destructor    __attribute__((destructor))
+#   endif
 #endif
 
 #ifndef os_do_nothing 
@@ -202,7 +210,7 @@ static inline bool os_seq_before(unsigned int seq1, unsigned int seq2)
         goto error;                 \
     }                               \
                                     \
-    err = (*_call)(_first, ##_args);\
+    err = _call(_first, ##_args);   \
     if (err) {                      \
        goto error;                  \
     }                               \
@@ -222,7 +230,7 @@ error:                              \
         goto error;                 \
     }                               \
                                     \
-    err = (*_call)(_first, ##_args);\
+    err = _call(_first, ##_args);   \
     if (err) {                      \
        goto error;                  \
     }                               \
@@ -232,5 +240,7 @@ error:                              \
                                     \
     err;                            \
 })  /* end */
+
+
 /******************************************************************************/
 #endif /* __BASE_H_DF48B466F7D87EDB327C3D4C73E6E4A3__ */

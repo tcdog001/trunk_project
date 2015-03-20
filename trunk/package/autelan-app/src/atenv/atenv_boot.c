@@ -14,7 +14,7 @@ Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
         " "                     \
     "console=ttyAMA0,115200"    \
         " "                     \
-    "root=/dev/mmcblk0p14"      \
+    "root=" AT_DEV(14)          \
         " "                     \
     "rootfstype=ext4"           \
         " "                     \
@@ -88,7 +88,6 @@ static at_ops_t __ops[]     = AT_DEFT_OPS;
 static at_cache_t __cache[os_count_of(__ops)];
 at_control_t at_control     = AT_CONTROL_DEFT(NULL, __ops, __cache);
 
-#if 0
 static int 
 read_emmc(unsigned int begin, void *buf, int size)
 {
@@ -109,7 +108,6 @@ read_emmc(unsigned int begin, void *buf, int size)
 
     return ret << 9;
 }
-#endif
 
 static int 
 write_emmc(unsigned int begin, void *buf, int size)
@@ -130,6 +128,16 @@ write_emmc(unsigned int begin, void *buf, int size)
     }
     
     return ret << 9;
+}
+
+
+int
+__at_load(int idx /* atenv's block */)
+{
+    int offset  = AT_BLOCK_SIZE * idx;
+    void *obj   = (char *)__at_env + offset;
+    
+    return read_emmc(AT_ENV_OFFSET + offset, obj, AT_BLOCK_SIZE);
 }
 
 int
@@ -206,7 +214,7 @@ change_bootargs(void)
 
     return __change_bootenv(
                 "bootargs", 
-                "root=/dev/mmcblk0p", 
+                "root=" __AT_DEV, 
                 array[idx]);
 }
 
@@ -304,11 +312,10 @@ at_boot(void)
 {
     __at_control->env = (at_env_t *)(env_ptr->env);
     
-    at_init();
+    __at_init();
     
     at_boot_check();
     at_boot_select();
     at_boot_save();
 }
 /******************************************************************************/
-AKID_DEBUGER; /* must last os_constructor */

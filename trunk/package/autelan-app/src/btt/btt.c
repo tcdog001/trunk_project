@@ -1,5 +1,19 @@
+#ifndef __THIS_NAME
+#define __THIS_NAME     "btt"
+#endif
+
+#ifndef __AKID_DEBUG
+#define __AKID_DEBUG    __btt_debug
+#endif
+
+#ifndef __THIS_FILE
+#define __THIS_FILE     1
+#endif
+
 #include "utils.h"
 #include "utils/cmd.h"
+
+AKID_DEBUGER;
 
 enum {
     BT_DIV_0,
@@ -216,6 +230,4 @@ int main(int argc, char *argv[])
     
     return os_do_command(argc, argv, &ctrl);
 }
-
-AKID_DEBUGER; /* must last os_constructor */
 /******************************************************************************/
