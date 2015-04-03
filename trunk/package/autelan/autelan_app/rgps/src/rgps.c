@@ -199,7 +199,8 @@ void print_gpsinfo(char *buf)
 				memset(rgps.gps_Velocity, 0, sizeof(rgps.gps_Velocity));
 				memcpy(rgps.gps_Velocity, GPS_speed, strlen(GPS_speed));
 				memset(rgps.gps_Date, 0, sizeof(rgps.gps_Date));
-				memcpy(rgps.gps_Date, GPS_date, strlen(GPS_date));
+				sprintf(rgps.gps_Date, "20%s", GPS_date);
+				//memcpy(rgps.gps_Date, GPS_date, strlen(GPS_date));
 				memset(rgps.gps_Orientation, 0, sizeof(rgps.gps_Orientation));
 				memcpy(rgps.gps_Orientation, GPS_direction, strlen(GPS_direction));
 			}
@@ -584,8 +585,8 @@ int gps_report(char * url, int status)
 	}
 
 	if (0 == status) {
-		sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"%s\",\"east_west\":\"%c\",\"date\":\"%s-%s\",\"speed\":\"%s\",\"north_south\":\"%c\",\"longitude\":\"%s\",\"height\":\"%s\"}", status, rgps.gps_Lat, rgps.east_west, rgps.gps_Date, rgps.gps_Time, rgps.gps_Velocity, rgps.north_south, rgps.gps_Lng, rgps.gps_Elevation);
-		//sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"\",\"east_west\":\"\",\"date\":\"\",\"speed\":\"\",\"north_south\":\"\",\"longitude\":\"\",\"height\":\"\"}", status);
+		//sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"%s\",\"east_west\":\"%c\",\"date\":\"%s-%s\",\"speed\":\"%s\",\"north_south\":\"%c\",\"longitude\":\"%s\",\"height\":\"%s\"}", status, rgps.gps_Lat, rgps.east_west, rgps.gps_Date, rgps.gps_Time, rgps.gps_Velocity, rgps.north_south, rgps.gps_Lng, rgps.gps_Elevation);
+		sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"\",\"east_west\":\"\",\"date\":\"\",\"speed\":\"\",\"north_south\":\"\",\"longitude\":\"\",\"height\":\"\"}", status);
 		printf("%s\n", temp_str);
 		system("/sbin/gps_invalid.sh");
 	} else {
