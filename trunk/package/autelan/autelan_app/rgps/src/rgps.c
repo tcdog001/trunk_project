@@ -576,9 +576,14 @@ int WEBQuest(const char * Url, const char * pUrl)
 	return ture;
 }
 
+char Timereport[50] = {0};
 int gps_report(char * url, int status)
 {
 	char temp_str[256] = {0};
+	char temp_str1[50] = {0};
+	
+	struct tm *t;
+	time_t tt;
 
 	if (((rgps.east_west != 'E')&&(rgps.east_west != 'W'))||((rgps.north_south != 'N')&&(rgps.north_south != 'S'))) {
 		status = 0;
@@ -586,7 +591,23 @@ int gps_report(char * url, int status)
 
 	if (0 == status) {
 		//sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"%s\",\"east_west\":\"%c\",\"date\":\"%s-%s\",\"speed\":\"%s\",\"north_south\":\"%c\",\"longitude\":\"%s\",\"height\":\"%s\"}", status, rgps.gps_Lat, rgps.east_west, rgps.gps_Date, rgps.gps_Time, rgps.gps_Velocity, rgps.north_south, rgps.gps_Lng, rgps.gps_Elevation);
-		sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"\",\"east_west\":\"\",\"date\":\"\",\"speed\":\"\",\"north_south\":\"\",\"longitude\":\"\",\"height\":\"\"}", status);
+
+		
+		time(&tt);
+		t = localtime(&tt);
+		
+		memset(Timereport, 0, sizeof(Timereport));
+		if (10 == (strlen(rgps.gps_Date))&&(8 == strlen(rgps.gps_Time))) {
+			sprintf(Timereport, "%s-%s", rgps.gps_Date, rgps.gps_Time);
+		} else if (8 == strlen(rgps.gps_Time)) {
+			sprintf(temp_str1, "%4d-%02d-%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday);
+			sprintf(Timereport, "%s-%s", temp_str1, rgps.gps_Time);
+		} else {
+			sprintf(temp_str1, "%4d-%02d-%02d-%02d:%02d:%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+			sprintf(Timereport, "%s", temp_str1);
+		}
+
+		sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"\",\"east_west\":\"\",\"date\":\"%s\",\"speed\":\"\",\"north_south\":\"\",\"longitude\":\"\",\"height\":\"\"}", status, Timereport);
 		printf("%s\n", temp_str);
 		system("/sbin/gps_invalid.sh");
 	} else {
@@ -611,23 +632,8 @@ const char *path_str = "/tmp/.gps";
 void tmp_gps_files(int status)
 {
 	char temp_str[256] = {0};
-	char Timereport[30] = {0};
-	struct tm *t;
-	time_t tt;
 
-	time(&tt);
-	t = localtime(&tt);
-
-	memset(temp_str, 0, sizeof(temp_str));
-	if (10 == (strlen(rgps.gps_Date))&&(8 == strlen(rgps.gps_Time))) {
-		sprintf(temp_str, "echo %s-%s > %s/gps_time", rgps.gps_Date, rgps.gps_Time, path_str);
-	} else if (8 == strlen(rgps.gps_Time)) {
-		sprintf(Timereport, "%4d-%02d-%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday);
-		sprintf(temp_str, "echo %s-%s > %s/gps_time", Timereport, rgps.gps_Time, path_str);
-	} else {
-		sprintf(Timereport, "%4d-%02d-%02d-%02d:%02d:%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
-		sprintf(temp_str, "echo %s > %s/gps_time", Timereport, path_str);
-	}
+	sprintf(temp_str, "echo %s > %s/gps_time", Timereport, path_str);
 	system(temp_str);
 
 	memset(temp_str, 0, sizeof(temp_str));
