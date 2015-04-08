@@ -66,6 +66,6 @@ do_get_iccid.sh &
 /usr/sbin/get_usr_flow.sh &
 
 # usr flow limit limit stop
-/usr/sbin/flow_control.sh 52428800 104857600 &
+# /usr/sbin/flow_control.sh 52428800 104857600 &
 
 exit 0
