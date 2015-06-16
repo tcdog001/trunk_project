@@ -168,13 +168,12 @@ get_host_sysinfo() {
 	local model_Of3g=$(get_model_Of3g)
 	local iccid=$(get_iccid)
 	local hard_version=$(get_hard_version)
-	local firmware_version=$(get_firmware_version)
 	local company_of3g=$(get_company_of3g)
 	local meid_of3g=$(report_meid_of3g)	
 	local sn_Of3g=${meid_of3g}
 	local Operators=$(get_Operators)	
 
-	printf '{"hostCompany":"%s","hostModel":"%s","hostsn":"%s","mac":"%s","cpuModel":"%s","cpuSN":"%s","memoryModel":"%s","memorySN":"%s","boardSN":"%s","networkCardMac":"%s","lowFreModel":"%s","lowFreSN":"%s","hignFreModel":"%s","hignFreSN":"%s","gpsModel":"%s","gpsSN":"%s","MEID_3g":"%s","Company_3g":"%s","modelOf3g":"%s","snOf3g":"%s","iccid":"%s","Operators":"%s","hardVersion":"%s","firmwareVersion":"%s"}\n' \
+	printf '{"hostCompany":"%s","hostModel":"%s","hostsn":"%s","mac":"%s","cpuModel":"%s","cpuSN":"%s","memoryModel":"%s","memorySN":"%s","boardSN":"%s","networkCardMac":"%s","lowFreModel":"%s","lowFreSN":"%s","hignFreModel":"%s","hignFreSN":"%s","gpsModel":"%s","gpsSN":"%s","MEID_3g":"%s","Company_3g":"%s","modelOf3g":"%s","snOf3g":"%s","iccid":"%s","Operators":"%s","hardVersion":"%s"}\n' \
 		"${device_company}" 	\
 		"${host_model}" 	\
 		"${host_sn}"    	\
@@ -197,8 +196,7 @@ get_host_sysinfo() {
 		"${sn_Of3g}"		\
 		"${iccid}"		\
 		"${Operators}"		\
-		"${hard_version}" 	\
-		"${firmware_version}"
+		"${hard_version}" 
 }
 
 check_iccid() {
@@ -245,7 +243,7 @@ main() {
 
 	sleep 30
         local json_file=/tmp/apinfo.json
-        get_host_sysinfo >${json_file}
+        [[ ! -f ${json_file} ]] && get_host_sysinfo >${json_file}
 
 	check_iccid
 	check_meid
