@@ -28,9 +28,9 @@ status_3g() {
         if [[ -z ${inter_evdo} ]];then
                 echo ${DOWN} >${FILE}
                 ((status_i++))
-                if [[ ${WFDG_stat} -eq 1 ]];then
-                        ${WIFIDOG} start >/dev/null 2>&1
-                fi
+                #if [[ ${WFDG_stat} -eq 1 ]];then
+                #        ${WIFIDOG} start >/dev/null 2>&1
+                #fi
                 if [[ ${status_i} -ge 9 ]];then
                         killall check_3gdown_result.sh 2>/dev/null
                         check_3gdown_result.sh &
@@ -41,9 +41,9 @@ status_3g() {
                 echo ${UP} >${FILE}
                 status_i=0
                 echo ${evdo_ip} >${file_evdo_ip}
-                if [[ ${WFDG_stat} -eq 0 ]];then
-                        ${WIFIDOG} stop >/dev/null 2>&1
-                fi
+                #if [[ ${WFDG_stat} -eq 0 ]];then
+                #        ${WIFIDOG} stop >/dev/null 2>&1
+                #fi
         fi
         rm -rf ${PS_WFDG} 2>/dev/null
 }
