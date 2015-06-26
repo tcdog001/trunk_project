@@ -41,9 +41,9 @@ status_3g() {
                 echo ${UP} >${FILE}
                 status_i=0
                 echo ${evdo_ip} >${file_evdo_ip}
-                #if [[ ${WFDG_stat} -eq 0 ]];then
-                #        ${WIFIDOG} stop >/dev/null 2>&1
-                #fi
+                if [[ ${WFDG_stat} -eq 0 ]];then
+                        ${WIFIDOG} stop >/dev/null 2>&1
+                fi
         fi
         rm -rf ${PS_WFDG} 2>/dev/null
 }
