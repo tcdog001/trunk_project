@@ -8,4 +8,4 @@ fi
 
 . ${__ROOTFS__}/etc/jsock/jsock.in
 
-readonly file_register=/tmp/.register.json
+readonly file_register=/data/.register.json

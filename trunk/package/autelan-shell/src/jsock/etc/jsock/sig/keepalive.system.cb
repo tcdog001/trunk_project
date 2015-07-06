@@ -16,7 +16,7 @@ main() {
 	# use for media
 	if [ "${boardtype}" == "md" ];then
 		${__ROOTFS__}/etc/jsock/jsig.sh asyn keepalive &
-		${__ROOTFS__}/usr/sbin/sysreboot/usr/sbin/syn_ap_time.sh &
+		${__ROOTFS__}/usr/sbin/syn_ap_time.sh &
 	fi
 
 	#

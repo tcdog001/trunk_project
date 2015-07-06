@@ -14,14 +14,9 @@ main() {
 		return ${e_bad_board}
 	}
 
-	echo ${body} > ${file_register}
-	jmsg_logger "recive message:${self%%.*}, body:${body}"
-
-	local json=$(${__ROOTFS__}/usr/sbin/getmdinfo.sh)
-	jmsg_logger "get media json:${json}"
-
-	sed -i 's/}/,'"${json}"'}/g' ${file_register}
-	${__ROOTFS__}/etc/platform/bin/register.sh &
+	local ap_json="${body}"
+	local md_json="{$(/usr/sbin/getmdinfo.sh)}"
+	echo "${ap_json}" | jq -j ". * ${md_json}" > ${file_register}; fsync ${file_register}
 }
 
 main "$@"

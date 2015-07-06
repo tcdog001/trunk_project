@@ -37,42 +37,6 @@ get_board_type() {
 }
 
 #
-#$1:task name
-#
-gettaskcount() {
-	local task=$1
-	local count=$(ps | grep ${task} | wc -l)
-
-	((count--))
-	echo ${count}
-
-	if ((0==count)); then
-		return ${e_noexist}
-	fi
-}
-
-
-#
-#$1:task
-#[$2:app...]
-#
-monitortask() {
-	local task=$1; shift
-	local app="$*"
-	local count
-
-	count=$(gettaskcount ${task}) || {
-		if [ -z "${app}" ]; then
-			${task} &
-		else
-			${app} &
-		fi
-
-		echo_logger "monitor" "monitor ${task} is dead, restart it"
-	}
-}
-
-#
 #$1:lockfile
 #$2:action...
 #

@@ -17,3 +17,5 @@ fi
 . ${__ROOTFS__}/etc/utils/number.in
 . ${__ROOTFS__}/etc/utils/version.in
 . ${__ROOTFS__}/etc/utils/json.in
+. ${__ROOTFS__}/etc/utils/jlog.in
+. ${__ROOTFS__}/etc/utils/dir.in

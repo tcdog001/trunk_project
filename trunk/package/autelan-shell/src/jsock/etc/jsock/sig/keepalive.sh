@@ -51,14 +51,14 @@ main() {
 		kpalive_state=$((kpalive_state+1))
 		echo ${kpalive_state} > ${file_keepalive_state}
 
-		if [ "${board_type}" == "ap" ];then
-			#
-			# if first keepalive on route, also send register info
-			#
-			#if ((send_register_info<10)); then
-				${__ROOTFS__}/etc/jsock/msg/getsysinfo.sh
-			#	((send_register_info++))
-			#fi
+                if [ "${board_type}" == "ap" ];then
+                        #
+                        # if first keepalive on route, also send register info
+                        #
+                        #if ((send_register_info<10)); then
+                                ${__ROOTFS__}/etc/jsock/msg/getsysinfo.sh
+                        #       ((send_register_info++))
+                        #fi
 
 			${__ROOTFS__}/etc/jsock/jsig.sh asyn keepalive
 		fi

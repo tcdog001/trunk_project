@@ -1,0 +1,3 @@
+#!/bin/bash
+
+readonly file_systemlog_ap=/tmp/.systemlog_ap
