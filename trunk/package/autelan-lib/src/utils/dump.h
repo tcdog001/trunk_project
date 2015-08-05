@@ -17,59 +17,32 @@ xxxxH : xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx ; cccccccccccccccc
 xxxxH : xxxxxxxx xxxxxxxx xxxxxx            ; ccccccccccc
 */
 
-#ifndef __RAW_LINE_BLOCK
-#define __RAW_LINE_BLOCK        4
-#endif
-
-#ifndef __RAW_LINE_BLOCK_BYTES
+#define __RAW_LINE_BYTES        16
 #define __RAW_LINE_BLOCK_BYTES  4
-#endif
+#define __RAW_LINE_MAX          63 /* "xxxxH : xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx ; cccccccccccccccc" + "\n" */
 
-#ifndef __RAW_LINE_LIMIT
-#define __RAW_LINE_LIMIT        80
-#endif
-
-#define __RAW_LINE_BYTES        (__RAW_LINE_BLOCK_BYTES * __RAW_LINE_BLOCK)
-#define __RAW_LINE_MAX       (0 \
-        + 8 /* "xxxxH : " */    \
-        + (2 * __RAW_LINE_BLOCK_BYTES + 1) * __RAW_LINE_BLOCK \
-        + 2 /* "; " */          \
-        + __RAW_LINE_BYTES      \
-        + 1 /* "\n" */          \
-)
-
-#if __RAW_LINE_MAX > __RAW_LINE_LIMIT
-#error "must __RAW_LINE_MAX < __RAW_LINE_LIMIT"
-#endif
-
-#ifndef __RAW_LINE_SEPARATOR
 #define __RAW_LINE_SEPARATOR \
 "=============================================================="
-#endif
 
-#ifndef __RAW_LINE_SEPARATOR_SUB
 #define __RAW_LINE_SEPARATOR_SUB \
 "--------------------------------------------------------------"
-#endif
 
-#ifndef __RAW_LINE_HEADER
 #define __RAW_LINE_HEADER \
 "      :                                     ;"                 __crlf \
 " Line :       Hexadecimal Content           ; Raw Content"     __crlf \
 "      : 0 1 2 3  4 5 6 7  8 9 A B  C D E F  ;"                 __crlf \
 "      :                                     ;"                 __crlf
-#endif
 
 typedef void dump_line_f(char *line);
 
 #ifdef OS_DUMP_PRINTF
-#define os_dump_printf(_fmt, _args...)  OS_DUMP_PRINTF(_fmt, ##_args)
+#define os_dump_printf(_fmt, args...)   OS_DUMP_PRINTF(_fmt, ##args)
 #else
-#define os_dump_printf(_fmt, _args...)  os_printf(_fmt, ##_args)
+#define os_dump_printf(_fmt, args...)   os_printf(_fmt, ##args)
 #endif
 
 static inline void
-os_dump_line(int line, unsigned char *raw, int len, dump_line_f *dump_line)
+os_dump_line(int line, byte *raw, int len, dump_line_f *dump_line)
 {
     int i, offset = 0;
     char buf[1 + __RAW_LINE_MAX] = {0};
@@ -111,7 +84,7 @@ os_dump_line(int line, unsigned char *raw, int len, dump_line_f *dump_line)
     for (i=0; i<len; i++) {
         int c = (int)raw[i];
         
-        offset += os_soprintf(buf, offset, "%c", os_isprint(c)?c:'.');
+        offset += os_soprintf(buf, offset, "%c", isprint(c)?c:'.');
     }
     offset += os_soprintf(buf, offset, __crlf);
 
@@ -126,7 +99,7 @@ static inline void
 os_dump_buffer(void *buffer, int len, dump_line_f *dump_line)
 {
     int i, line, tail;
-    unsigned char *raw = (unsigned char *)buffer;
+    byte *raw = (byte *)buffer;
     
     /*
     * 行数，向上取整 

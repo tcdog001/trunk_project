@@ -49,7 +49,7 @@ __os_crc32(unsigned int crc_in, const void *buf, unsigned int size) {
         0xB40BBE37,0xC30C8EA1,0x5A05DF1B,0x2D02EF8D
     };
     unsigned int crc = crc_in ^ 0xFFFFFFFF;
-    unsigned char *B = (unsigned char *) buf;
+    byte *B = (byte *) buf;
     int i;
     
     /** accumulate crc32 for buffer **/

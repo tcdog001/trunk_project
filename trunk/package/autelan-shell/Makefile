@@ -18,25 +18,17 @@ endef
 
 
 define Package/autelan-jsock/install
-#	$(INSTALL_DIR) $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/xinetd.d/
 	$(INSTALL_DIR) $(1)/etc/utils/
-#	$(INSTALL_DIR) $(1)/etc/jsock
-	$(INSTALL_DIR) $(1)/etc/jsock/msg/
-	$(INSTALL_DIR) $(1)/etc/jsock/sig/
-#	$(INSTALL_DIR) $(1)/etc/stimer/
-	$(INSTALL_DIR) $(1)/etc/stimer/keepalive
-	$(INSTALL_DIR) $(1)/etc/stimer/system
-#	$(INSTALL_DIR) $(1)/etc/fagent/
-	$(INSTALL_DIR) $(1)/etc/fagent/cb
-	$(INSTALL_DIR) $(1)/etc/fagent/conf
-#	$(INSTALL_DIR) $(1)/usr/
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/jsock/
+	$(INSTALL_DIR) $(1)/etc/jsock/functions/
+	$(INSTALL_DIR) $(1)/etc/jsock/functions/msg/
+	$(INSTALL_DIR) $(1)/etc/jsock/functions/sig/
 
 	sed -i 's,env += JSOCK_PEER=1.0.0.5,env += JSOCK_PEER=1.0.0.6,' ./src/jsock/etc/xinetd.d/jsock_tcp
 	sed -i 's,env += JSOCK_PEER=1.0.0.5,env += JSOCK_PEER=1.0.0.6,' ./src/jsock/etc/xinetd.d/jsock_udp
-	
-	$(CP) ./src/jsock/* $(1)/
+	$(CP) ./src/jsock/etc/* $(1)/etc/
 endef
 ####################################################################
 define Build/Prepare

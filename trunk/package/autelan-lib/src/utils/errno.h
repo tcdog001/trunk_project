@@ -9,33 +9,16 @@
 #define __ERRNO_STEP    1000
 #endif
 
-#define __ERRNO(_mod)   (__ERRNO_BASE + (_mod) * __ERRNO_STEP)
+#define __ERRNO(mod)       (__ERRNO_BASE + (mod) * __ERRNO_STEP)
 
 enum {
     __ERRNO_COMMON      = 0,
     __ERRNO_APPKEY      = 1,
-    __ERRNO_STIMER      = 2,
     
     ERRNO_END
 };
 
 #define ERRNO_COMMON        __ERRNO(__ERRNO_COMMON) /* 1000 */
-
-static inline int
-shell_error(int err)
-{
-    if (err) {
-        err = -err;
-    }
-
-    if (err < __ERRNO_BASE) {
-        return err;
-    } else {
-        err -= __ERRNO_BASE;
-
-        return (err % __ERRNO_STEP);
-    }
-}
 
 enum {
     EINVAL0 = ERRNO_COMMON,
@@ -48,27 +31,20 @@ enum {
     EINVAL7,
     EINVAL8,
     EINVAL9,
-    ENOSUPPORT, /* 10 */
-    ENOINIT,    /* 11 */
-    ENOEXIST,   /* 12 */
+    ENOEXIST,   /* 10 */
+    EKEYNULL,   /* 11 */
+    EKEYBAD,    /* 12 */
     ENOSPACE,   /* 13 */
-    ENOEMPTY,   /* 14 */
-    ENOINLIST,  /* 15 */
-    EBADIDX,    /* 16 */
-    EBADREF,    /* 17 */
-    EBADCRC,    /* 18 */
-    EKEYNULL,   /* 19 */
-    EKEYBAD,    /* 20 */
-    ESYSTEM,    /* 21 */
-    EFORMAT,    /* 22 */
-    ETOOBIG,    /* 23 */
-    ELIMIT,     /* 24 */
-    EINLIST,    /* 25 */
-    ETIMEOUT,   /* 26 */
-    EEMPTY,     /* 27 */
-    EHELP,      /* 28 */
-    ETRYEXCEED, /* 29 */
-    EHACKED,    /* 30 */
+    ESYSTEM,    /* 14 */
+    EFORMAT,    /* 15 */
+    ETOOBIG,    /* 16 */
+    ELIMIT,     /* 17 */
+    EINLIST,    /* 18 */
+    EBADCRC,    /* 19 */
+    ETIMEOUT,   /* 20 */
+    ENOSUPPORT, /* 21 */
+    EEMPTY,     /* 22 */
+    ENOEMPTY,   /* 23 */
 };
 
 
@@ -112,7 +88,7 @@ enum {
 #define	EDOM		33	/* Math argument out of domain of func */
 #define	ERANGE		34	/* Math result not representable */
 
-#define errno       EINVAL
+#define errno       (-EINVAL)
 
 #endif
 /******************************************************************************/

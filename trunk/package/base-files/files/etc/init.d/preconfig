@@ -33,12 +33,14 @@ check_upgrade_flag()
 }
 
 start() {
-
+	local err=0
 	#kes_service
 	
-	/usr/bin/partool -part mtd2 -new system.state ok
-	/usr/bin/partool -part mtd2 -new system.failed_count 0
-	
+	/usr/bin/partool -part mtd2 -new system.state ok; err=$?
+	[[ ${err} -ne 0 ]] && /usr/bin/partool -part mtd2 -empty
+	/usr/bin/partool -part mtd2 -new system.failed_count 0; err=$?
+	[[ ${err} -ne 0 ]] && /usr/bin/partool -part mtd2 -empty	
+
 	check_upgrade_flag
 	
 	

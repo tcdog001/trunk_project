@@ -1,8 +1,8 @@
 #!/bin/bash
-FLOW_3GDOWN="/root/usr/traffic_control_3Gdown.log"
-ONLINE_UER_LIST="/root/usr/usr_online.log"
-LIMIT_LIST="/tmp/limit_list.log"
-STOP_LIST="/tmp/stop_list.log"
+FLOW_3GDOWN="/tmp/usr/traffic_control_3Gdown.log"
+ONLINE_UER_LIST="/tmp/usr/usr_online.log"
+LIMIT_LIST="/tmp/usr/limit_list.log"
+STOP_LIST="/tmp/usr/stop_list.log"
 INET="192.168.0."
 
 
@@ -19,7 +19,7 @@ change_usr_speed() {
 stop_usr() {
 	local usr_ip=$1
 	local ip=$(echo ${usr_ip} | awk -F '.' '{print $4}')
-	tc class change dev eth0 parent 10: classid 10:5${ip} htb rate 1bps ceil 1bps
+	tc class change dev eth0 parent 10: classid 10:5${ip} htb rate 1kbps ceil 1kbps
 	echo "stop ${usr_ip}"
 }
 
@@ -33,7 +33,7 @@ usr_flow_control() {
 	
 	if [ -z ${flow_limit} ] || [ -z ${flow_stop} ] || [ -z ${flow} ]; then
 		echo "please enter 3 flow"
-		exit
+		return
 	fi
 	
 	if [ ${flow} -gt ${flow_limit} ]; then
@@ -72,7 +72,7 @@ main() {
 			cat ${STOP_LIST} | grep "${usr_ip},"; local stop_state=$?
 			#if [ ${limit_state} -ne 0 ] && [ ${stop_state} -ne 0 ]; then
 			if [ ${stop_state} -ne 0 ]; then
-				usr_flow_control "${usr_ip}" "${flow_limit}" "${flow_stop}" "${limit_download}" "${limit_mdownload}" ""
+				usr_flow_control "${usr_ip}" "${flow_limit}" "${flow_stop}" "${limit_download}" "${limit_mdownload}"
 			fi
 		done
 		sleep 300

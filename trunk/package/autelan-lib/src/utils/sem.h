@@ -15,13 +15,13 @@ typedef struct {
 }
 
 static inline void 
-__os_do_sem(int semid, int op, int undo)
+__os_do_sem(int semid, int op)
 {
     struct {
         unsigned short sem_num;
         short sem_op;
         short sem_flag;
-    } sem = {0, op, undo};
+    } sem = {0, op, SEM_UNDO};
     
     semop(semid, (struct sembuf *)&sem, 1);
 }
@@ -35,13 +35,13 @@ os_sem_is_inited(os_sem_t *sem)
 static inline void 
 os_sem_lock (os_sem_t *sem)
 {
-    __os_do_sem(sem->id, -1, SEM_UNDO);
+    __os_do_sem(sem->id, -1);
 }
 
 static inline void 
 os_sem_unlock(os_sem_t *sem)
 {
-    __os_do_sem(sem->id, 1, 0);
+    __os_do_sem(sem->id, 1);
 }
 
 static inline void 
@@ -74,7 +74,7 @@ os_sem_create(os_sem_t *sem, int key)
                     "sem get(key:%#x, flags:%#x) error:%d", 
                     sem->key,
                     flags,
-                    -errno);
+                    errno);
                 
                 return INVALID_SEM_ID;
             }
@@ -83,7 +83,7 @@ os_sem_create(os_sem_t *sem, int key)
                 "sem create (key:%#x, flags:%#x) error:%d.", 
                 sem->key,
                 flags,
-                -errno);
+                errno);
             
             return INVALID_SEM_ID;
         }

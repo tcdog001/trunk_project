@@ -1,7 +1,7 @@
 #ifndef __CMD_H_F3687584F159827DAA20B322924194D1__
 #define __CMD_H_F3687584F159827DAA20B322924194D1__
-#ifdef __APP__
 /******************************************************************************/
+
 #ifndef __COMMAND_COUNT
 #define __COMMAND_COUNT         (2*32)
 #endif
@@ -176,10 +176,8 @@ __commond_do_help_one(struct command_item *cmd)
     */
     os_printf(__tab);
     
-    for (i=0; i<cmd->count; i++) {
-        if (cmd->list[i]) {
-            os_printf( "%s ", cmd->list[i]);
-        }
+    for (i=0; i<cmd->count && cmd->list[i]; i++) {
+        os_printf( "%s ", cmd->list[i]);
     }
     
     /* 
@@ -243,16 +241,18 @@ __command_match(int argc, char *argv[], struct command_ctrl *ctrl, int idx)
         return false;
     }
     
-    for (i=0; i<cmd->count; i++) {
-        if (cmd->list[i]
+    for (i=0; i<cmd->count && cmd->list[i]; i++) {
+        if ('-' != cmd->list[i][0]) {
             /* 
-            * begin with '-', need compare 
+            * not begin with '-', need not compare 
             */
-            && '-' == cmd->list[i][0]
+            continue;
+        }
+        
+        if (0 != os_strcmp(argv[i+1], cmd->list[i])) {
             /* 
             * main's argv != cmd's arg
             */
-            && 0 != os_strcmp(argv[i+1], cmd->list[i])) {
             return false;
         }
     }
@@ -323,78 +323,6 @@ show_help:
     
     return -EFORMAT;
 }
+
 /******************************************************************************/
-struct cmd_table {
-    char *tag;
-
-    union {
-        void *cb;
-        int (*line_cb)(char *args);
-        int (*argv_cb)(int argc, char *argv[]);
-    } u;
-};
-
-#define CMD_ENTRY(_tag, _cb)   { \
-    .tag    = _tag,         \
-    .u      = {             \
-        .cb = _cb,          \
-    },                      \
-}
-
-static inline int
-os_cmd_line_cb(struct cmd_table *table, char *args)
-{
-    return (*table->u.line_cb)(args);
-}
-
-static inline int
-os_cmd_argv_cb(struct cmd_table *table, int argc, char *argv[])
-{
-    return (*table->u.argv_cb)(argc, argv);
-}
-
-#define os_cmd_dump_argv(_dump, _argc, _argv) do { \
-    int i;                                      \
-                                                \
-    for (i=0; i<_argc; i++) {                   \
-        _dump("function:%s argv[%d]=%s",        \
-            __func__, i, _argv[i]);             \
-    }                                           \
-}while(0)
-/******************************************************************************/
-struct simpile_cmd {
-    int argc;
-    char **argv;
-    
-    int (*handle)(int argc, char *argv[]);
-};
-
-static int
-__simpile_cmd_handle(int count, struct simpile_cmd cmd[], int argc, char *argv[], int (*usage)(void))
-{
-    int i, j;
-
-    for (i=0; i<count; i++) {
-        if (argc != cmd[i].argc) {
-            continue;
-        }
-        
-        for (j=0; j<argc; j++) {
-            char *args = cmd[i].argv[j];
-            
-            if (args && os_strcmp(argv[j], args)) {
-                continue;
-            }
-
-            return (*cmd[i].handle)(argc-1, argv+1);
-        }
-    }
-
-    return (*usage)();
-}
-
-#define simpile_cmd_handle(_cmd, _argc, _argv, _usage) \
-    __simpile_cmd_handle(os_count_of(_cmd), _cmd, _argc, _argv, _usage)
-/******************************************************************************/
-#endif
 #endif /* __CMD_H_F3687584F159827DAA20B322924194D1__ */

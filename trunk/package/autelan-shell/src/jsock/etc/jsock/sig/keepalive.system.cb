@@ -1,11 +1,6 @@
 #!/bin/bash
 
-. ${__ROOTFS__}/etc/jsock/sig/keepalive.in
-#
-# NOT used it
-# NOT used it
-# NOT used it
-#
+. ${__ROOTFS__}/etc/jsock/sig/sig.in
 
 #
 #call by jsock.cb
@@ -19,7 +14,7 @@ main() {
 	# check board type
 	local boardtype="$(get_board_type)"
 	# use for media
-	if [[ "${boardtype}" == "md" ]];then
+	if [ "${boardtype}" == "md" ];then
 		${__ROOTFS__}/etc/jsock/jsig.sh asyn keepalive &
 		${__ROOTFS__}/usr/sbin/syn_ap_time.sh &
 	fi

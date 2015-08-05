@@ -10,7 +10,6 @@
 /tmp
 /logs
 /package/openwrt-packages
-/package/.idea
 *.orig
 *.rej
 *~

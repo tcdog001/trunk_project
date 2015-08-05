@@ -17,14 +17,14 @@ os_fdtransfer(char *path)
     
     fd = fd_socket(PF_UNIX, SOCK_DGRAM, 0);
     if (fd<0) {
-        return -errno;
+        return errno;
     }
 
     err = fd_bind(fd, (struct sockaddr*)&local, sizeof(local));
-    if (err) {
+    if (err<0) {
         close(fd);
 
-        return -errno;
+        return errno;
     }
     
     return fd;
@@ -79,7 +79,7 @@ os_fdsend(int sender, int fd, void *buf, int len)
 
     err = fd_sendmsg(sender, &msg, 0);
     if (2!=err) {
-        return -errno;
+        return errno;
     }
 
     return 0;  
@@ -108,7 +108,7 @@ os_fdrecv(int recver, char *buf, int *len)
     
     err = fd_recvmsg(recver, &msg, 0);
     if (err<__FDTRANSFER_BUFMIN) {
-        return -errno;
+        return errno;
     } else if (__IS_FDTRANSFER_EMPTY(buf)) {
         
     } else {

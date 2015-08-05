@@ -42,6 +42,7 @@ define Package/at_ctrl/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_BUILD_DIR)/at_ttyUSB1 $(1)/usr/sbin/
 	$(CP) $(PKG_BUILD_DIR)/at_ttyUSB3 $(1)/usr/sbin/
+	$(CP) $(PKG_BUILD_DIR)/at_ttyUSB0 $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,at_ctrl))

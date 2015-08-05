@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -n "${__UTILS_TIME_IN__}" ]]; then
+if [ -n "${__UTILS_TIME_IN__}" ]; then
 	return
 else
 	__UTILS_TIME_IN__="$0"

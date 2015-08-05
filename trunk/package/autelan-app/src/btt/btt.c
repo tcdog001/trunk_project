@@ -1,19 +1,5 @@
-#ifndef __THIS_NAME
-#define __THIS_NAME     "btt"
-#endif
-
-#ifndef __AKID_DEBUG
-#define __AKID_DEBUG    __btt_debug
-#endif
-
-#ifndef __THIS_FILE
-#define __THIS_FILE     1
-#endif
-
 #include "utils.h"
 #include "utils/cmd.h"
-
-AKID_DEBUGER;
 
 enum {
     BT_DIV_0,
@@ -32,7 +18,7 @@ bt_div_0(void)
     int n;
 
     os_println("before div 0");
-    n = a/b; (void)n;
+    n = a/b;
     os_println("after div 0");
     
     return 0;
@@ -114,13 +100,13 @@ callstack_21(int type)
         _(00,01) \
         extern int __noused /* just for sourceinsight */
 
-#define FUNC(_a, _b) \
+#define FUNC(a, b) \
 static int \
-callstack_##_a(int type) \
+callstack_##a(int type) \
 { \
     int err; \
     os_println("enter %s", __func__); \
-    err = callstack_##_b(type); \
+    err = callstack_##b(type); \
     os_println("leave %s", __func__); \
     return err; \
 }
@@ -230,4 +216,6 @@ int main(int argc, char *argv[])
     
     return os_do_command(argc, argv, &ctrl);
 }
+
+AKID_DEBUGER; /* must last os_constructor */
 /******************************************************************************/

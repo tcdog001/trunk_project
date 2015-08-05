@@ -1,7 +1,7 @@
 #!/bin/bash
 
 . ${__ROOTFS__}/sbin/autelan_functions.sh
-. ${__ROOTFS__}/etc/jsock/jsock.in
+. ${__ROOTFS__}/etc/jsock/msg/msg.in
 ERROR_NOSUPPORT="Not supported"
 
 get_gps_time() {
@@ -59,27 +59,6 @@ get_wifi() {
     local mode=$(get_wifi_mode ${device})
     local signal=$(get_wifi_signal ${device})
     echo "${mode}/${signal}"
-}
-
-#
-# $1: key
-# $2: value; shift 2
-# $@: json string
-#
-add_json_string() {
-    local key="$1"
-    local value="$2"; shift 2
-    local str_old="$@"
-    local str_new="\"${key}\":\"${value}\""
-    local str_entirety
-
-    if [[ ${str_old} ]]; then
-        str_entirety="${str_old},${str_new}"
-    else
-        str_entirety=${str_new}
-    fi
-
-    echo ${str_entirety}
 }
 
 #

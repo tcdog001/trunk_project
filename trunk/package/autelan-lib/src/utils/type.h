@@ -1,40 +1,41 @@
 #ifndef __TYPE_H_6BA367A7D4B17C3588DAABDD4B9B396D__
 #define __TYPE_H_6BA367A7D4B17C3588DAABDD4B9B396D__
 /******************************************************************************/
-#ifdef BOOL
-#undef BOOL
+#ifndef NULL
+#define NULL            ((void *)0)
 #endif
 
-#ifdef TRUE
-#undef TRUE
-#endif
-
-#ifdef FALSE
-#undef FALSE
-#endif
-
-#ifdef bool
-#undef bool
-#endif
-
-#ifdef true
-#undef true
-#endif
-
-#ifdef false
-#undef false
-#endif
-
+#ifndef BOOL
 #define BOOL            int
-#define TRUE            1
-#define FALSE           0
+#endif
 
+#ifndef bool
 #define bool            BOOL
-#define true            TRUE
-#define false           FALSE
+#endif
 
-#define __BOOL(_x)      ((BOOL)!!(_x))
-#define __bool(_x)      __BOOL(_x)
+#ifndef TRUE
+#define TRUE            1
+#endif
+
+#ifndef true
+#define true            TRUE
+#endif
+
+#ifndef FALSE
+#define FALSE           0
+#endif
+
+#ifndef false
+#define false           FALSE
+#endif
+
+#ifndef BYTE
+#define BYTE            unsigned char
+#endif
+
+#ifndef byte
+#define byte            BYTE
+#endif
 
 #if defined(LP64) || defined(ILP64) || defined(LLP64)
 #define OS64            1
@@ -97,8 +98,8 @@ multi_value_u;
 
 #define MV_INITER               { .value = 0 }
 
-#define mv2_result(_mv)         (_mv).v2.result
-#define mv2_control(_mv)        (_mv).v2.control
+#define mv2_result(mv)          (mv).v2.result
+#define mv2_control(mv)         (mv).v2.control
 #define mv2_INITER(_control, _result) { \
     .v2 = {                             \
         .result = _result,              \
@@ -118,16 +119,16 @@ __mv2_return(int control, int result)
 #define mv2_GO(_result)         __mv2_return(OS_MV_GO, _result)
 #define mv2_OK                  0 /* mv2_GO(0) */
 
-#define mv2_is_break(_mv)       (OS_MV_BREAK==mv2_control(_mv))
-#define mv2_is_go(_mv)          (OS_MV_GO==mv2_control(_mv))
+#define mv2_is_break(mv)        (OS_MV_BREAK==mv2_control(mv))
+#define mv2_is_go(mv)           (OS_MV_GO==mv2_control(mv))
 
-#define mv3_result(_mv)         (_mv).v3.result
-#define mv3_control(_mv)        (_mv).v3.control
-#define mv3_private(_mv)        (_mv).v3.private
+#define mv3_result(mv)          (mv).v3.result
+#define mv3_control(mv)         (mv).v3.control
+#define mv3_private(mv)         (mv).v3.private
 
-#define mv4_result(_mv)         (_mv).v4.result
-#define mv4_control(_mv)        (_mv).v4.control
-#define mv4_private(_mv)        (_mv).v4.private
-#define mv4_value(_mv)          (_mv).v4.value
+#define mv4_result(mv)          (mv).v4.result
+#define mv4_control(mv)         (mv).v4.control
+#define mv4_private(mv)         (mv).v4.private
+#define mv4_value(mv)           (mv).v4.value
 /******************************************************************************/
 #endif /* __TYPE_H_6BA367A7D4B17C3588DAABDD4B9B396D__ */

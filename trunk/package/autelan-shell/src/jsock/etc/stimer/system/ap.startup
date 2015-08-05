@@ -1,2 +1,0 @@
-#alias          delay   interval    limit   command
-keepalive       0       10          0       /etc/jsock/sig/jkeepalive.sh

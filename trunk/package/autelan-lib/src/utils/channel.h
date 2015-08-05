@@ -1,535 +1,371 @@
 #ifndef __CHANNEL_H_18AEA12667A8CB993E7009393B52CF95__
 #define __CHANNEL_H_18AEA12667A8CB993E7009393B52CF95__
 /******************************************************************************/
+#include "utils.h"
+
 enum channel_type {
-    CHANNEL_OBJECT,
-    CHANNEL_POINTER,
+    CHANNEL_BUFFER,
     CHANNEL_U8,
     CHANNEL_U16,
     CHANNEL_U32,
     CHANNEL_U64,
+    CHANNEL_POINTER,
 
     CHANNEL_END
 };
 
 typedef struct {
     int size;
+    int count;
     int limit;
     int type;
     int reader;
     int writer;
 
-    unsigned char buf[0];
+    union {
+        byte        *buffer;
+        void        **pointer;
+        uint8_t     *pv8;
+        uint16_t    *pv16;
+        uint32_t    *pv32;
+        uint64_t    *pv64;
+    } msg;
 } channel_t;
 
-static inline int
-__ch_align(channel_t *ch, int number)
+static inline byte *
+__channel_buffer(channel_t *ch, int idx)
 {
-    if (number < 0) {
-        return __ch_align(ch, number + ch->limit);
+    return ch->msg.buffer + (ch->size * idx);
+}
+
+static inline bool
+__channel_empty(channel_t *ch)
+{
+    return 0==ch->count;
+}
+
+static inline bool
+__channel_full(channel_t *ch)
+{
+    return ch->limit==ch->count;
+}
+
+static inline int
+__channel_align(channel_t *ch, int number)
+{
+    if (number<0) {
+        return __channel_align(ch, number + ch->limit);
     }
-    else if(number < ch->limit) {
+    else if(number<ch->limit) {
         return number;
     }
     else { /* number >= ch->limit */
-        return __ch_align(ch, number - ch->limit);
+        return __channel_align(ch, number - ch->limit);
     }
-}
-#define __ch_data(_ch, _type)   ((_type *)((_ch)->buf))
-
-#define __ch_GET(_ch, _type, _idx, _obj)        do{ \
-    *(_type *)_obj = __ch_data(_ch, _type)[_idx];   \
-    __ch_data(_ch, _type)[_idx] = (_type)0;         \
-}while(0)
-
-#define __ch_SET(_ch, _type, _idx, _obj)        do{ \
-    __ch_data(_ch, _type)[_idx] = *(_type *)_obj;   \
-}while(0)
-
-static inline unsigned char *
-__ch_buffer(channel_t *ch, int idx)
-{
-    return ch->buf + ch->size * idx;
-}
-
-static inline bool
-__ch_count(channel_t *ch)
-{
-    return __ch_align(ch, ch->limit + ch->writer - ch->reader);
-}
-
-static inline bool
-__ch_left(channel_t *ch)
-{
-    return ch->limit - __ch_count(ch);
-}
-
-static inline bool
-__ch_is_empty(channel_t *ch)
-{
-    return 0==__ch_count(ch);
-}
-
-static inline bool
-__ch_is_full(channel_t *ch)
-{
-    return 1==__ch_left(ch);
-}
-
-static inline bool
-__ch_is_writeable(channel_t *ch, int idx)
-{
-    int reader = ch->reader;
-    int writer = ch->writer;
-    
-    idx = __ch_align(ch, idx);
-
-    if (reader==writer) {
-        /*
-        * ch is empty
-        */
-        return true;
-    }
-    else if (reader < writer) {
-        return idx >= writer || idx < reader;
-    }
-    else { /* reader > writer */
-        return idx >= writer && idx < reader;
-    }
-}
-
-static inline bool
-__ch_is_readable(channel_t *ch, int idx)
-{
-    return false==__ch_is_writeable(ch, idx);
-}
-
-static inline int
-__ch_SIZE(int type, int size)
-{
-    switch(type) {
-        case CHANNEL_OBJECT:
-            if (size <= 0) {
-                return os_assert_value(0);
-            }
-            
-            break;
-        case CHANNEL_POINTER:
-            size = sizeof(void *);
-            
-            break;
-        case CHANNEL_U8:
-            size = sizeof(unsigned char);
-            
-            break;
-        case CHANNEL_U16:
-            size = sizeof(uint16_t);
-            
-            break;
-        case CHANNEL_U32:
-            size = sizeof(uint32_t);
-            
-            break;
-        case CHANNEL_U64:
-            size = sizeof(uint64_t);
-            
-            break;
-        default:
-            return os_assert_value(0);
-    }
-
-    return size;
 }
 
 static inline channel_t *
-__ch_new(int type, int limit, int size)
+os_ch_new(int size, int limit, int type)
 {
-    if (0==size) {
+    channel_t *ch = NULL;
+    
+    if (size<=0) {
         return os_assert_value(NULL);
     }
-    
-    channel_t *ch = (channel_t *)os_zalloc(sizeof(*ch) + limit * size);
+    else if (limit<=0) {
+        return os_assert_value(NULL);
+    }
+
+    switch(type) {
+        case CHANNEL_BUFFER:
+            /* do nothing */
+            break;
+        case CHANNEL_POINTER:
+            if (sizeof(void *)!=size) {
+                return os_assert_value(NULL);
+            }
+            
+            break;
+        case CHANNEL_U8:
+            if (sizeof(byte)!=size) {
+                return os_assert_value(NULL);
+            }
+            
+            break;
+        case CHANNEL_U16:
+            if (sizeof(uint16_t)!=size) {
+                return os_assert_value(NULL);
+            }
+            
+            break;
+        case CHANNEL_U32:
+            if (sizeof(uint32_t)!=size) {
+                return os_assert_value(NULL);
+            }
+            
+            break;
+        case CHANNEL_U64:
+            if (sizeof(uint64_t)!=size) {
+                return os_assert_value(NULL);
+            }
+            
+            break;
+        default:
+            return os_assert_value(NULL);
+    }
+
+    ch = (channel_t *)os_zalloc(sizeof(*ch) + limit * size);
     if (ch) {
         ch->size        = size;
         ch->limit       = limit;
         ch->type        = type;
+        ch->msg.buffer  = (byte *)(ch + 1);
     }
     
     return ch;
 }
 
-static inline int
-__ch_get(channel_t *ch, int idx, void *obj)
+static inline void
+os_ch_free(channel_t *ch)
 {
-    idx = __ch_align(ch, idx);
+    os_free(ch);
+}
 
-    if (false==__ch_is_readable(ch, idx)) {
-        return -ENOEXIST;
+static inline int
+os_ch_read(channel_t *ch, void *msg)
+{
+    if (NULL==ch) {
+        return os_assert_value(-ENOEXIST);
+    }
+    else if (NULL==msg) {
+        return os_assert_value(-EINVAL1);
+    }
+    else if (__channel_empty(ch)) {
+        return -EKEYBAD;
     }
     
     switch(ch->type) {
-        case CHANNEL_OBJECT: {
-            unsigned char *buffer = __ch_buffer(ch, idx);
+        case CHANNEL_BUFFER:
+            os_memcpy(msg, __channel_buffer(ch, ch->reader), ch->size);
             
-            os_memcpy(obj, buffer, ch->size);
-            os_memzero(buffer, ch->size);
-            
-        }   break;
+            break;
         case CHANNEL_POINTER:
-            __ch_GET(ch, void*, idx, obj);
+            *(void **)msg = ch->msg.pointer[ch->reader];
+            ch->msg.pointer[ch->reader] = NULL;
 
-            os_assert(NULL != *(void **)obj);
+            os_assert(NULL != *(void **)msg);
             break;
         case CHANNEL_U8:
-            __ch_GET(ch, uint8_t, idx, obj);
+            *(uint8_t *)msg = ch->msg.pv8[ch->reader];
             
             break;
         case CHANNEL_U16:
-            __ch_GET(ch, uint16_t, idx, obj);
+            *(uint16_t *)msg = ch->msg.pv16[ch->reader];
             
             break;
         case CHANNEL_U32:
-            __ch_GET(ch, uint32_t, idx, obj);
+            *(uint32_t *)msg = ch->msg.pv32[ch->reader];
             
             break;
         case CHANNEL_U64:
-            __ch_GET(ch, uint64_t, idx, obj);
+            *(uint64_t *)msg = ch->msg.pv64[ch->reader];
             
             break;
         default:
             return -EINVAL9;
     }
     
+    ch->reader = __channel_align(ch, ch->reader+1);
+    if (__channel_full(ch)) {
+        ch->writer = __channel_align(ch, ch->reader-1);
+    }
+    ch->count--;
+    
     return 0;
 }
 
 static inline int
-__ch_set(channel_t *ch, int idx, void *obj)
+os_ch_write(channel_t *ch, void *msg)
 {
-    idx = __ch_align(ch, idx);
-
-    if (false==__ch_is_writeable(ch, idx)) {
-        return -EEXIST;
+    if (NULL==ch) {
+        return os_assert_value(-EKEYBAD);
+    }
+    else if (NULL==msg) {
+        return os_assert_value(-EINVAL1);
+    }
+    else if (__channel_full(ch)) {
+        return -EKEYBAD;
     }
     
     switch(ch->type) {
-        case CHANNEL_OBJECT:
-            os_memcpy(__ch_buffer(ch, idx), obj, ch->size);
+        case CHANNEL_BUFFER:
+            os_memcpy(__channel_buffer(ch, ch->writer), msg, ch->size);
             
             break;
         case CHANNEL_POINTER:
-            __ch_SET(ch, void*, idx, obj);
+            ch->msg.pointer[ch->writer] = msg;
             
             break;
         case CHANNEL_U8:
-            __ch_SET(ch, uint8_t, idx, obj);
+            ch->msg.pv8[ch->writer] = *(uint8_t *)msg;
             
             break;
         case CHANNEL_U16:
-            __ch_SET(ch, uint16_t, idx, obj);
+            ch->msg.pv16[ch->writer] = *(uint16_t *)msg;
             
             break;
         case CHANNEL_U32:
-            __ch_SET(ch, uint32_t, idx, obj);
+            ch->msg.pv32[ch->writer] = *(uint32_t *)msg;
             
             break;
         case CHANNEL_U64:
-            __ch_SET(ch, uint64_t, idx, obj);
+            ch->msg.pv64[ch->writer] = *(uint64_t *)msg;
             
             break;
         default:
             return -EINVAL;
     }
     
-    return 0;
-}
-
-static inline int
-__ch_read(channel_t *ch, void *obj)
-{
-    int reader = ch->reader;
-    int err = 0;
-
-    err = __ch_get(ch, reader, obj);
-    if (err) {
-        return err;
+    ch->writer = __channel_align(ch, ch->writer+1);
+    if (__channel_empty(ch)) {
+        ch->reader = __channel_align(ch, ch->writer-1);
     }
-    
-    ch->reader = __ch_align(ch, reader+1);
+    ch->count++;
     
     return 0;
 }
 
-static inline int
-__ch_write(channel_t *ch, void *obj)
+/******************************************************************************/
+extern channel_t *
+os_bch_new(int size, int limit)
 {
-    int writer = ch->writer;
-    int err = 0;
+    return os_ch_new(size, limit, CHANNEL_BUFFER);
+}
 
-    err = __ch_set(ch, writer, obj);
-    if (err) {
-        return err;
-    }
-    
-    ch->writer = __ch_align(ch, writer+1);
-    
-    return 0;
+extern void
+os_bch_free(channel_t *ch)
+{
+    os_ch_free(ch);
+}
+
+static inline int
+os_bch_read(channel_t *ch, void *buffer)
+{
+    return os_ch_read(ch, buffer);
+}
+
+static inline int
+os_bch_write(channel_t *ch, void *buffer)
+{
+    return os_ch_write(ch, buffer);
 }
 /******************************************************************************/
-static inline bool
-os_ch_left(channel_t *ch)
-{
-    if (NULL==ch) {
-        return os_assert_value(0);
-    } else {
-        return __ch_left(ch);
-    }
-}
-
-static inline bool
-os_ch_count(channel_t *ch)
-{
-    if (NULL==ch) {
-        return os_assert_value(0);
-    } else {
-        return __ch_count(ch);
-    }
-}
-
-static inline bool
-os_ch_is_empty(channel_t *ch)
-{
-    if (NULL==ch) {
-        /*
-        * NULL as full
-        */
-        return os_assert_value(false);
-    } else {
-        return __ch_is_empty(ch);
-    }
-}
-
-static inline bool
-os_ch_is_full(channel_t *ch)
-{
-    if (NULL==ch) {
-        /*
-        * NULL as full
-        */
-        return os_assert_value(true);
-    } else {
-        return __ch_is_full(ch);
-    }
-}
-
-static inline bool
-os_ch_is_writeable(channel_t *ch, int idx)
-{
-    if (NULL==ch) {
-        /*
-        * NULL as full
-        */
-        return os_assert_value(false);
-    } else {
-        return __ch_is_writeable(ch, idx);
-    }
-}
-
-static inline bool
-os_ch_is_readable(channel_t *ch, int idx)
-{
-    if (NULL==ch) {
-        /*
-        * NULL as full
-        */
-        return os_assert_value(true);
-    } else {
-        return __ch_is_readable(ch, idx);
-    }
-}
-
 static inline channel_t *
-os_ch_new(int type, int limit, int size)
+os_8ch_new(int limit)
 {
-    if (limit<=0) {
-        return os_assert_value(NULL);
-    } else {
-        return __ch_new(type, limit, __ch_SIZE(type, size));
-    }
+    return os_ch_new(sizeof(byte), limit, CHANNEL_U8);
 }
 
-#define os_ch_free(_ch)     os_free(_ch)
-
-static inline int
-os_ch_get(channel_t *ch, int idx, void *obj)
+extern void
+os_8ch_free(channel_t *ch)
 {
-    if (NULL==ch) {
-        return os_assert_value(-ENOEXIST);
-    } else if (NULL==obj) {
-        return os_assert_value(-EINVAL1);
-    } else {
-        return __ch_get(ch, idx, obj);
-    }
+    os_ch_free(ch);
 }
 
 static inline int
-os_ch_set(channel_t *ch, int idx, void *obj)
+os_8ch_read(channel_t *ch, uint8_t *pv8)
 {
-    if (NULL==ch) {
-        return os_assert_value(-ENOEXIST);
-    } else if (NULL==obj) {
-        return os_assert_value(-EINVAL1);
-    } else {
-        return __ch_set(ch, idx, obj);
-    }
+    return os_ch_read(ch, pv8);
 }
 
 static inline int
-os_ch_read(channel_t *ch, void *obj)
+os_8ch_write(channel_t *ch, uint8_t *pv8)
 {
-    if (NULL==ch) {
-        return os_assert_value(-ENOEXIST);
-    } else if (NULL==obj) {
-        return os_assert_value(-EINVAL1);
-    } else {
-        return __ch_read(ch, obj);
-    }
-}
-
-static inline int
-os_ch_write(channel_t *ch, void *obj)
-{
-    if (NULL==ch) {
-        return os_assert_value(-EKEYBAD);
-    } else if (NULL==obj) {
-        return os_assert_value(-EINVAL1);
-    } else {
-        return __ch_write(ch, obj);
-    }
+    return os_ch_write(ch, pv8);
 }
 /******************************************************************************/
-#define os_och_new(_limit, _size)       os_ch_new(CHANNEL_OBJECT, _limit, _size)
-#define os_och_get(_ch, _idx, _obj)     os_ch_get(_ch, _idx, _obj)
-#define os_och_set(_ch, _idx, _obj)     os_ch_set(_ch, _idx, _obj)
-#define os_och_read(_ch, _obj)          os_ch_read(_ch, _obj)
-#define os_och_write(_ch, _obj)         os_ch_write(_ch, _obj)
-/******************************************************************************/
-#define os_8ch_new(_limit)          os_ch_new(CHANNEL_U8, _limit, 0)
-
-static inline int
-os_8ch_get(channel_t *ch, int idx, uint8_t *pv)
+static inline channel_t *
+os_16ch_new(int limit)
 {
-    return os_ch_get(ch, idx, pv);
+    return os_ch_new(sizeof(uint16_t), limit, CHANNEL_U16);
+}
+
+extern void
+os_16ch_free(channel_t *ch)
+{
+    os_ch_free(ch);
 }
 
 static inline int
-os_8ch_set(channel_t *ch, int idx, uint8_t v)
+os_16ch_read(channel_t *ch, uint16_t *pv16)
 {
-    return os_ch_set(ch, idx, &v);
+    return os_ch_read(ch, pv16);
 }
 
 static inline int
-os_8ch_read(channel_t *ch, uint8_t *pv)
+os_16ch_write(channel_t *ch, uint16_t *pv16)
 {
-    return os_ch_read(ch, pv);
-}
-
-static inline int
-os_8ch_write(channel_t *ch, uint8_t v)
-{
-    return os_ch_write(ch, &v);
+    return os_ch_write(ch, pv16);
 }
 /******************************************************************************/
-#define os_16ch_new(_limit)         os_ch_new(CHANNEL_U16, _limit, 0)
-
-static inline int
-os_16ch_get(channel_t *ch, int idx, uint16_t *pv)
+static inline channel_t *
+os_32ch_new(int limit)
 {
-    return os_ch_get(ch, idx, pv);
+    return os_ch_new(sizeof(uint32_t), limit, CHANNEL_U32);
+}
+
+extern void
+os_32ch_free(channel_t *ch)
+{
+    os_ch_free(ch);
 }
 
 static inline int
-os_16ch_set(channel_t *ch, int idx, uint16_t v)
+os_32ch_read(channel_t *ch, uint32_t *pv32)
 {
-    return os_ch_set(ch, idx, &v);
+    return os_ch_read(ch, pv32);
 }
 
 static inline int
-os_16ch_read(channel_t *ch, uint16_t *pv)
+os_32ch_write(channel_t *ch, uint32_t *pv32)
 {
-    return os_ch_read(ch, pv);
-}
-
-static inline int
-os_16ch_write(channel_t *ch, uint16_t v)
-{
-    return os_ch_write(ch, &v);
+    return os_ch_write(ch, pv32);
 }
 /******************************************************************************/
-#define os_32ch_new(_limit)         os_ch_new(CHANNEL_U32, _limit, 0)
-
-static inline int
-os_32ch_get(channel_t *ch, int idx, uint32_t *pv)
+static inline channel_t *
+os_64ch_new(int limit)
 {
-    return os_ch_get(ch, idx, pv);
+    return os_ch_new(sizeof(uint64_t), limit, CHANNEL_U64);
+}
+
+extern void
+os_64ch_free(channel_t *ch)
+{
+    os_ch_free(ch);
 }
 
 static inline int
-os_32ch_set(channel_t *ch, int idx, uint32_t v)
+os_64ch_read(channel_t *ch, uint64_t *pv64)
 {
-    return os_ch_set(ch, idx, &v);
+    return os_ch_read(ch, pv64);
 }
 
 static inline int
-os_32ch_read(channel_t *ch, uint32_t *pv)
+os_64ch_write(channel_t *ch, uint64_t *pv64)
 {
-    return os_ch_read(ch, pv);
-}
-
-static inline int
-os_32ch_write(channel_t *ch, uint32_t v)
-{
-    return os_ch_write(ch, &v);
+    return os_ch_write(ch, pv64);
 }
 /******************************************************************************/
-#define os_64ch_new(_limit)         os_ch_new(CHANNEL_U64, _limit, 0)
-
-static inline int
-os_64ch_get(channel_t *ch, int idx, uint64_t *pv)
+static inline channel_t *
+os_pch_new(int limit)
 {
-    return os_ch_get(ch, idx, pv);
+    return os_ch_new(sizeof(void*), limit, CHANNEL_POINTER);
 }
 
-static inline int
-os_64ch_set(channel_t *ch, int idx, uint64_t v)
+extern void
+os_pch_free(channel_t *ch)
 {
-    return os_ch_set(ch, idx, &v);
-}
-
-static inline int
-os_64ch_read(channel_t *ch, uint64_t *pv)
-{
-    return os_ch_read(ch, pv);
-}
-
-static inline int
-os_64ch_write(channel_t *ch, uint64_t v)
-{
-    return os_ch_write(ch, &v);
-}
-/******************************************************************************/
-#define os_pch_new(_limit)          os_ch_new(CHANNEL_POINTER, _limit, 0)
-
-static inline int
-os_pch_get(channel_t *ch, int idx, void **pointer)
-{
-    return os_ch_get(ch, idx, (void *)pointer);
-}
-
-static inline int
-os_pch_set(channel_t *ch, int idx, void *pointer)
-{
-    return os_ch_set(ch, idx, (void *)&pointer);
+    os_ch_free(ch);
 }
 
 static inline int
@@ -541,7 +377,7 @@ os_pch_read(channel_t *ch, void **pointer)
 static inline int
 os_pch_write(channel_t *ch, void *pointer)
 {
-    return os_ch_write(ch, (void *)&pointer);
+    return os_ch_write(ch, pointer);
 }
 /******************************************************************************/
 #endif /* __CHANNEL_H_18AEA12667A8CB993E7009393B52CF95__ */

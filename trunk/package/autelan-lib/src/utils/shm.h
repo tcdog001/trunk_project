@@ -79,9 +79,9 @@ os_shm_create(os_shm_t *shm, bool readonly)
             shm->key,
             shm->size,
             flags,
-            -errno);
+            errno);
         
-        return -errno;
+        return errno;
     } else {
         debug_trace(
             "shm create(key:%#x, size:%#x, flags:%#x) id:%d", 
@@ -99,9 +99,9 @@ os_shm_create(os_shm_t *shm, bool readonly)
             shm->size,
             flags,
             shm->id,
-            -errno);
+            errno);
         
-        return -errno;
+        return errno;
     } else {
         debug_trace(
             "shm map(key:%#x, size:%#x, flags:%#x, id:%d) address:%p", 

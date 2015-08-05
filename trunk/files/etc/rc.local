@@ -4,7 +4,7 @@
 # ap syslogd
 /bin/mkdir -p /root/log/init
 /bin/mkdir -p /root/log/ulog
-/bin/mkdir -p /root/usr
+/bin/mkdir -p /tmp/usr
 dmesg_syslogd.sh &
 
 # get iccid
@@ -24,24 +24,23 @@ do_get_iccid.sh &
 /bin/mkdir -p /tmp/.ppp/
 /bin/mkdir -p /root/ppp/
 
-# this is for xinetd and json
-/etc/stimer/stimer_system_startup.sh &
-
-# this is for gps report
-/sbin/upload_gps.sh &
-
 # this is for on_off log
 /bin/mkdir /root/onoff
 
 # this is for vcc log
 /bin/mkdir /root/vcc
 
+# this is for xinetd and json
+/etc/jsock/jsock_init.sh
+
+# set evdo\wireless\lms and others about oem
+/usr/sbin/set_oem_service.sh
+
+# this is for gps report
+/sbin/upload_gps.sh &
+
 # this is upload OFF&VCC log
 /sbin/upload_tftp.sh &
-
-# traffic control
-/usr/sbin/set_tc_3g.sh
-/usr/sbin/set_tc_local.sh
 
 # From power began to wait 12 hours
 /sbin/auto_reboot_ap.sh &
@@ -56,16 +55,17 @@ do_get_iccid.sh &
 # monitor ap in every 5 mins
 /sbin/systemlog_ap.sh &
 
-# set evdo service
-/usr/sbin/set_evdo_service.sh &
-
 # usr connlimit
-/usr/sbin/set_connlimit.sh
+#/usr/sbin/set_connlimit.sh
+
+# traffic control
+#/usr/sbin/set_tc_3g.sh
+#/usr/sbin/set_tc_local.sh
 
 # usr flow report
-/usr/sbin/get_usr_flow.sh &
+#/usr/sbin/get_usr_flow.sh &
 
 # usr flow limit limit stop
-/usr/sbin/flow_control.sh 52428800 104857600 &
+#/usr/sbin/flow_control.sh 52428800 104857600 &
 
 exit 0

@@ -1,8 +1,8 @@
 #ifndef __ASSERT_H_4F501D5C3D10778EA387560D3B8CB7C0__
 #define __ASSERT_H_4F501D5C3D10778EA387560D3B8CB7C0__
 
-#if defined(__BOOT__) || defined(__APP__)
-#define os_assert(_x)           assert(_x)
+#ifndef __KERNEL__
+#define os_assert(x)                            assert(x)
 #else
 /*
 *   return os_assert_value(x); 
@@ -11,9 +11,9 @@
 *   os_assert(0);
 *       ==> (void)0;
 */
-#define os_assert(_x)           (void)0
+#define os_assert(x)                            (void)0
 #endif
 
-#define os_assert_value(_x)     (os_assert(0), _x)
+#define os_assert_value(x)                      (os_assert(0), x)
 /******************************************************************************/
 #endif /* __ASSERT_H_4F501D5C3D10778EA387560D3B8CB7C0__ */

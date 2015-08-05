@@ -1,20 +1,8 @@
 /*******************************************************************************
 Copyright (c) 2012-2015, Autelan Networks. All rights reserved.
 ********************************************************************************
-    manage app key
+    manage app key/sys key
 *******************************************************************************/
-#ifndef __THIS_NAME
-#define __THIS_NAME     "libappkey"
-#endif
-
-#ifndef __AKID_DEBUG
-#define __AKID_DEBUG    __libappkey_debug
-#endif
-
-#ifndef __THIS_FILE
-#define __THIS_FILE     1
-#endif
-
 extern int __AKID_DEBUG;
 static int *__debug_init_pointer = &__AKID_DEBUG;
 
@@ -24,11 +12,19 @@ static int *__debug_init_pointer = &__AKID_DEBUG;
 int __AKID_DEBUG = __debug_init_error;
 /******************************************************************************/
 #ifndef APPKEY_PATH
-#define APPKEY_PATH         "/tmp/appkey"
+#ifdef __PC__
+#define APPKEY_PATH         "../../appkey"
+#else
+#define APPKEY_PATH         "/etc/appkey"
+#endif
 #endif
 
 #ifndef APPKEY_FILE_LIMIT
 #define APPKEY_FILE_LIMIT   APPKEY_PATH "/libappkey.limit"
+#endif
+
+#ifndef APPKEY_FILE_ENUM
+#define APPKEY_FILE_ENUM    APPKEY_PATH "/libappkey.enum"
 #endif
 
 #define INVALID_APPKEY      0
@@ -164,8 +160,11 @@ getbyid(appkey_t akid)
     }
     
     key = ak_key(ak_idx(akid));
+    if (address != (char *)key) {
+        return NULL;
+    }
 
-    return (address==(char *)key)?key:NULL;
+    return key;
 }
 
 static inline struct appkey *
@@ -214,8 +213,11 @@ __appkey_getbyname(char *app, char *key)
     }
 
     ak = getbyname(app, key);
-
-    return ak?ak_make(getidx(ak), getoffset(ak)):INVALID_APPKEY;
+    if (NULL==ak) {
+        return INVALID_APPKEY;
+    }
+    
+    return ak_make(getidx(ak), getoffset(ak));
 }
 
 int 
@@ -416,17 +418,17 @@ load_line(char *filename/* not include path */, char *line, void *__no_used)
     debug_trace("load file(%s) line(%s)", filename, line);
     
     err = load_line_app(&info);
-    if (err) {
+    if (err<0) {
         return mv2_GO(err);
     }
 
     err = load_line_kv(&info);
-    if (err) {
+    if (err<0) {
         return mv2_GO(err);
     }
 
     err = load_line_value(&info);
-    if (err) {
+    if (err<0) {
         return mv2_GO(err);
     }
     
@@ -526,8 +528,8 @@ init(unsigned int limit)
     return 0;
 }
 
-int 
-__appkey_fini(void) 
+static os_destructor void 
+__fini(void) 
 {
     if (INVALID_SHM_ADDR != __ak.shm.address) {
         shmdt(__ak.shm.address);
@@ -535,42 +537,36 @@ __appkey_fini(void)
         
         debug_trace("shm fini shmdt(address:%p)", __ak.shm.address);
     }
-
-    return 0;
 }
 
-int 
-__appkey_init(void) 
+static os_constructor void 
+__init(void) 
 {
-    int err = 0;
+    int ret = 0;
     unsigned int limit = APPKEY_LIMIT;
 
-    if (INVALID_SHM_ADDR==__ak.shm.address) {
-        openlog(__THIS_NAME, LOG_PID | LOG_CONS, LOG_DAEMON);
+    openlog(__THIS_NAME, LOG_PID | LOG_CONS, LOG_DAEMON);
 
-        os_sfgeti(&limit, APPKEY_FILE_LIMIT);
-        
-        __ak.shm.size = sizeof(struct appkey) * limit
-                            + sizeof(struct appkey_hdr)
-                            + sizeof(unsigned int)/* protect_1 */;
-        debug_trace("limit=0x%x, size=0x%x", limit, __ak.shm.size);
-        
-        err = os_shm_create(&__ak.shm, false);
-        if (err<0) { /* >=0 is valid shm id */
-            goto error;
-        }
-        
-        init(limit);
-
-        debug_ok("init OK!");
+    os_sfgeti(&limit, APPKEY_FILE_LIMIT);
+    
+    __ak.shm.size = sizeof(struct appkey) * limit
+                        + sizeof(struct appkey_hdr)
+                        + sizeof(unsigned int)/* protect_1 */;
+    debug_trace("limit=0x%x, size=0x%x", limit, __ak.shm.size);
+    
+    ret = os_shm_create(&__ak.shm, false);
+    if (ret<0) {
+        goto error;
     }
     
-    return 0;
+    init(limit);
+
+    debug_ok("init OK!");
+    
+    return;
 error:
     debug_error("init failed!");
     
-    __appkey_fini();
-
-    return err;
+    __fini();
 }
 /******************************************************************************/

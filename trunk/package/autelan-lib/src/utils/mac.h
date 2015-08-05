@@ -25,67 +25,66 @@
 #define MACSTRINGLEN_S              (2*OS_MACSIZE)
 #endif
 
-#define OS_ZEROMAC                  ((unsigned char *)"\x00\x00\x00\x00\x00\x00")
-#define OS_FULLMAC                  ((unsigned char *)"\xff\xff\xff\xff\xff\xff")
-#define OS_2BMAC                    ((unsigned char *)"\x2b\x2b\x2b\x2b\x2b\x2b")
+#define OS_ZEROMAC                  ((byte *)"\x00\x00\x00\x00\x00\x00")
+#define OS_FULLMAC                  ((byte *)"\xff\xff\xff\xff\xff\xff")
 
-static inline unsigned char *
-os_maccpy(unsigned char dst[], unsigned char src[])
+static inline byte *
+os_maccpy(byte *mac_dst, byte *mac_src)
 {
-    return os_memcpy(dst, src, OS_MACSIZE);
+    return os_memcpy(mac_dst, mac_src, OS_MACSIZE);
 }
 
-static inline unsigned char *
-os_maczero(unsigned char mac[])
+static inline byte *
+os_maczero(byte *mac)
 {
     return os_memzero(mac, OS_MACSIZE);
 }
 
-static inline unsigned char *
-os_macfull(unsigned char mac[])
+static inline byte *
+os_macfull(byte *mac)
 {
     return os_maccpy(mac, OS_FULLMAC);
 }
 
 static inline int
-os_maccmp(unsigned char a[], unsigned char b[])
+os_maccmp(byte *mac_a, byte *mac_b)
 {
-    return os_memcmp(a, b, OS_MACSIZE);
+    return os_memcmp(mac_a, mac_b, OS_MACSIZE);
 }
 
 static inline bool
-os_maceq(unsigned char a[], unsigned char b[])
+os_maceq(byte *mac_a, byte *mac_b)
 {
-    return 0==os_maccmp(a, b);
+    return 0==os_maccmp(mac_a, mac_b);
 }
 
 static inline bool
-os_macmaskmach(unsigned char a[], unsigned char b[], unsigned char mask[])
+os_macmaskmach(byte *mac_a, byte *mac_b, byte *mac_mask)
 {
-    return os_bufmaskmatch(a, b, mask, OS_MACSIZE);
+    return os_bufmaskmatch(mac_a, mac_b, mac_mask, OS_MACSIZE);
 }
 
 static inline bool
-is_zero_mac(unsigned char mac[])
+is_zero_mac(byte *mac)
 {
     return os_maceq(mac, OS_ZEROMAC);
 }
 
 static inline bool
-is_full_mac(unsigned char mac[])
+is_full_mac(byte *mac)
 {
     return os_maceq(mac, OS_FULLMAC);
 }
 
 static inline bool
-is_good_mac(unsigned char mac[])
+is_good_mac(byte *mac)
 {
     return false==is_zero_mac(mac) 
         && false==is_full_mac(mac);
 }
 
-static inline unsigned char *
-os_getmac_bystring(unsigned char mac[], char macstring[])
+static inline byte *
+os_getmac_bystring(byte *mac, char *macstring)
 {
     int len = os_strlen(macstring);
     int width = 3;
@@ -104,7 +103,7 @@ os_getmac_bystring(unsigned char mac[], char macstring[])
         width = 2;
     }
     else {
-        return OS_2BMAC;
+        os_assert(0);
     }
     
     for (i=0; i<OS_MACSIZE; i++) {
@@ -114,19 +113,8 @@ os_getmac_bystring(unsigned char mac[], char macstring[])
     return mac;
 }
 
-/*
-*  multi-thread unsafe
-*/
-static inline unsigned char *
-os_getmac(char macstring[])
-{
-    static unsigned char mac[OS_MACSIZE] = {0};
-    
-    return macstring?os_getmac_bystring(mac, macstring):OS_ZEROMAC;
-}
-
 static inline int
-os_macsnprintf(unsigned char mac[], char macstring[], int len, int sep)
+os_macsnprintf(byte *mac, char *macstring, int len, int sep)
 {
     if (0==sep) {
         return os_snprintf(macstring, len,
@@ -159,55 +147,21 @@ os_macsnprintf(unsigned char mac[], char macstring[], int len, int sep)
     }
 }
 
-#define os_macsaprintf(_mac, _macstring, _sep) \
-        os_macsnprintf(_mac, _macstring, sizeof(_macstring), _sep)
+#define os_macsaprintf(mac, macstring, sep) \
+        os_macsnprintf(mac, macstring, sizeof(macstring), sep)
 
+/*
+*  multi-thread unsafe
+*/
 static inline char *
-__os_getmacstring(unsigned char mac[], int sep, char macstring[])
+os_getmacstring(byte mac[], int sep)
 {
+    static char macstring[1+MACSTRINGLEN_L] = {0};
+
     os_macsaprintf(mac, macstring, sep);
 
     return macstring;
 }
 
-/*
-*  multi-thread unsafe
-*/
-static inline char *
-os_getmacstring(unsigned char mac[], int sep)
-{
-    static char macstring[1+MACSTRINGLEN_L] = {0};
-
-    return __os_getmacstring(mac, sep, macstring);
-}
-
-static inline char *
-__os_macstring(unsigned char mac[], char macstring[])
-{
-    return __os_getmacstring(mac, ':', macstring);
-}
-
-/*
-*  multi-thread unsafe
-*/
-static inline char *
-os_macstring(unsigned char mac[])
-{
-    return os_getmacstring(mac, ':');
-}
-
-typedef struct {
-    unsigned char mac[OS_MACSIZE];
-    unsigned char reserved[2];
-    
-    struct {
-        struct hlist_node   hash;
-        struct list_head    list;
-    } node;
-} mac_sym_t;
-
-typedef struct {
-    
-} mac_table_t;
 /******************************************************************************/
 #endif /* __MAC_H_F836BDB5B61CB538446562E3E6DD918C__ */

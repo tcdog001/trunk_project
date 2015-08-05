@@ -2,7 +2,7 @@
 #define __MEMORY_H_449CCD8BC1CB461480DB11AD8A1CEB17__
 /******************************************************************************/
 #ifdef __BOOT__
-#define size_t unsigned int
+#define size_t int
 #endif
 
 static inline void *
@@ -30,7 +30,7 @@ os_memset(void *s, int ch, size_t n)
 #endif
 
 static inline int
-os_memcmp(const void *a, const void *b, size_t n)
+os_memcmp(void *a, const void *b, size_t n)
 {
     if (a) {
         if (b) {
@@ -63,7 +63,7 @@ os_memcmp(const void *a, const void *b, size_t n)
 }
 
 #ifndef os_memeq
-#define os_memeq(_a, _b, _size)     (0==os_memcmp(_a, _b, _size))
+#define os_memeq(_a, _b, _size)         (0==os_memcmp(_a, _b, _size))
 #endif
 
 /*
@@ -140,13 +140,6 @@ os_memcmp(const void *a, const void *b, size_t n)
 #endif
 
 /*
-* use (*_dst)'s size
-*/
-#ifndef os_objcpy
-#define os_objcpy(_dst, _src)       os_objdcpy(_dst, _src)
-#endif
-
-/*
 * use (*_a)'s size
 */
 #ifndef os_objcmp
@@ -160,110 +153,27 @@ os_memcmp(const void *a, const void *b, size_t n)
 #define os_objeq(_a, _b)            (0==os_objcmp(_a, _b))
 #endif
 
-#define os_value_cmp(_a, _b) ({ \
-    int ret;                    \
-    typeof(_a)  a = (_a);       \
-    typeof(_b)  b = (_b);       \
-                                \
-    if (a > b) {                \
-        ret = 1;                \
-    }                           \
-    else if (a==b) {            \
-        ret = 0;                \
-    }                           \
-    else {                      \
-        ret = -1;               \
-    }                           \
-                                \
-    ret;                        \
-})
 
-#define os_cmp_allways_eq(_a, _b)   0
-/*
-* bad < good
-* bad == bad
-* all is good, use _objcmp
-*/
-#define __os_objcmp(_a, _b, _is_good, _objcmp) ({ \
-    int ret;                                \
-    typeof(_a)  x = (_a);                   \
-    typeof(_b)  y = (_b);                   \
-                                            \
-    if (_is_good(x)) {                      \
-        if (_is_good(y)) {                  \
-            /*                              \
-            * x is good, y is good          \
-            */                              \
-            ret = _objcmp(x, y);            \
-        } else {                            \
-            /*                              \
-            * x is good, y is bad           \
-            */                              \
-            ret = 1;                        \
-        }                                   \
-    } else {                                \
-        if (_is_good(y)) {                  \
-            /*                              \
-            * x is bad, y is good           \
-            */                              \
-            ret = -1;                       \
-        } else {                            \
-            /*                              \
-            * x is bad, y is bad            \
-            */                              \
-            ret = 0;                        \
-        }                                   \
-    }                                       \
-                                            \
-    ret;                                    \
-}) /* end */
-
-#ifndef __os_getobjarrayidx
-#define __os_getobjarrayidx(_array, _obj, _cmp, _begin, _end) ({ \
-    int i, idx = (_end);                    \
-                                            \
-    for (i=(_begin); i<(_end); i++) {       \
-        if (0==_cmp((_array)[i], _obj)) {   \
-            idx = i;                        \
-            break;                          \
-        }                                   \
-    }                                       \
-                                            \
-    idx;                                    \
-})  /* end */
-#endif
-
-#ifndef os_getobjarrayidx
-#define os_getobjarrayidx(_array, _obj, _begin, _end) \
-        __os_getobjarrayidx(_array, _obj, os_objcmp, _begin, _end)
-#endif
-
-
-#if defined(__BOOT__) || defined(__APP__)
+#ifndef __KERNEL__
 #define os_malloc(_size)            malloc(_size)
-#define os_calloc(_count, _size)        ({  \
-    void *p = os_malloc((_count)*(_size));  \
-    if (p) {                                \
-        os_memzero(p, (_count)*(_size));    \
-    }                                       \
-    p;                                      \
-})  /* end */
-
+#define os_calloc(_count, _size)    calloc(_count, _size)
+#define os_alloca(_size)            alloca(_size)
 #define os_realloc(_ptr, _size)     realloc(_ptr, _size)
 #define os_free(_ptr) \
         do{ if (_ptr) { free(_ptr); (_ptr) = NULL; } }while(0)
 #else
 #define os_malloc(_size)            kmalloc(_size, GFP_KERNEL)
-#define os_calloc(_count, _size)    calloc(_count, _size)
+#define os_calloc(_count, _size)            ({  \
+        void *p = os_malloc((_count)*(_size));  \
+        if (p) {                                \
+            os_memzero(p, (_count)*(_size));    \
+        }                                       \
+        p;                                      \
+    })
 #define os_realloc(_ptr, _size)     krealloc(_ptr, _size, GFP_KERNEL)
 #define os_free(_ptr) \
         do{ if (_ptr) { kfree(_ptr); (_ptr) = NULL; } }while(0)
 #endif
-
-#ifdef __APP__
-#define os_alloca(_size)            alloca(_size)
-#endif
-
 #define os_zalloc(_size)            os_calloc(1, _size)
 
 /******************************************************************************/

@@ -1,23 +1,10 @@
-#ifndef __THIS_NAME
-#define __THIS_NAME     "um"
-#endif
-
-#ifndef __AKID_DEBUG
-#define __AKID_DEBUG    __um_debug
-#endif
-
-#ifndef __THIS_FILE
-#define __THIS_FILE     2
-#endif
-
-
 #include "utils.h"
 #include "um.h"
 
 static void
 deluser_byif(struct um_intf *intf)
 {
-    struct user_filter f = USER_FILTER_INITER;
+    struct user_filter f = USER_FILTER_INITER(true);
 
     switch(intf->type) {
         case UM_INTF_RADIO:
@@ -38,20 +25,13 @@ static struct um_intf *
 intf_create(char *ifname)
 {
     struct um_intf *intf = NULL;
-    char macstring[1+MACSTRINGLEN_L] = {0};
-    
+
     intf = (struct um_intf *)os_zalloc(sizeof(*intf));
     if (NULL==intf) {
         return NULL;
     }
     os_strdcpy(intf->ifname, ifname);
-    /*
-    * get intf's MAC
-    */
-    os_v_pgets(macstring, sizeof(macstring), 
-        "ifconfig %s | grep HWaddr | awk '{print $5}'", 
-        ifname);
-    
+
     debug_uci_ok("load intf(%s)", ifname);
     
     return intf;
@@ -81,28 +61,14 @@ intf_remove(struct um_intf *intf, bool delete_user)
     list_del(&intf->node);
 }
 
-static struct um_intf *
-intf_get(char *ifname, struct list_head *head)
-{
-    struct um_intf *intf;
-
-    list_for_each_entry(intf, head, node) {
-        if (0==os_strcmp(ifname, intf->ifname)) {
-            return intf;
-        }
-    }
-
-    return NULL;
-}
-
-static int 
+static void 
 uci_init(void)
 {
     umc.uci.ctx = uci_alloc_context();
     if (NULL==umc.uci.ctx) {
         debug_uci_error("open uci context failed");
 
-        return -ENOMEM;
+        return;
     } else {
         debug_uci_ok("open uci context");
     }
@@ -111,8 +77,6 @@ uci_init(void)
     uci_set_confdir(umc.uci.ctx, "/etc/config");
     debug_uci_trace("set uci config path");
 #endif
-
-    return 0;
 }
 
 static void 
@@ -126,17 +90,14 @@ uci_fini(void)
 }
 
 static void
-__package_close(struct uci_package *package, char *name)
+package_close(struct uci_package *p)
 {
-    if (umc.uci.ctx && package && name) {
-        uci_unload(umc.uci.ctx, package);
+    if (umc.uci.ctx && p) {
+        uci_unload(umc.uci.ctx, p);
 
-        debug_uci_ok("close uci package(%s)", name);
+        debug_uci_ok("close uci package(%p)", p);
     }
 }
-
-#define package_close(_package) \
-        __package_close(_package, #_package)
 
 static struct uci_package *
 package_open(char *name)
@@ -178,25 +139,15 @@ __load_intf(char *ifname, struct blob_attr *tb[], int count, struct list_head *h
 {
     struct blob_attr *p;
     struct um_intf *intf = NULL;
-    bool disable = true;
-    bool um = false;
+    bool disable = false;
     
     p = tb[UM_INTFPOLICY_DISABLE];
     if (p) {
         disable = blobmsg_get_bool(p);
     }
+    
     if (disable) {
         debug_uci_trace("no load disabled intf(%s)", ifname);
-        
-        return NULL;
-    }
-    
-    p = tb[UM_INTFPOLICY_UM];
-    if (p) {
-        um = blobmsg_get_bool(p);
-    }
-    if (false==um) {
-        debug_uci_trace("no load um intf(%s)", ifname);
         
         return NULL;
     }
@@ -261,7 +212,6 @@ load_wlan(struct uci_section *s, struct blob_attr *tb[], int count, struct list_
     if (NULL==intf) {
         return -ENOMEM;
     }
-    
     os_sscanf(ifname, "wlan%d-%d", &radioid, &wlanid);
     intf->type      = UM_INTF_WLAN;
     intf->radioid   = radioid;
@@ -274,26 +224,27 @@ load_wlan(struct uci_section *s, struct blob_attr *tb[], int count, struct list_
 
 static void
 load_intf(
-    struct uci_package *package,
+    struct uci_package *wireless,
     struct um_uci *uci,
     int (*load)(struct uci_section *s, struct blob_attr *tb[], int count, struct list_head *head)
 )
 {
     struct uci_element *e = NULL;
     int count = uci->param.n_params;
-    struct blob_attr **tb = (struct blob_attr **)os_zalloc(count * sizeof(struct blob_attr *));
-    if (tb) {
-    	uci_foreach_element(&package->sections, e) {
-    		struct uci_section *s = uci_to_section(e);
-    		
-    		if (0==os_strcmp(s->type, uci->uci_type)) {
-        		section_to_blob(s, &uci->param, tb, count);
-        		(*load)(s, tb, count, &uci->tmp);
-    		}
-    	}
+    struct blob_attr **tb = (struct blob_attr **)os_alloca(count * sizeof(struct blob_attr *));
+    
+    if (NULL==tb) {
+        return;
+    }
+    
+	uci_foreach_element(&wireless->sections, e) {
+		struct uci_section *s = uci_to_section(e);
+		
+		if (0==os_strcmp(s->type, uci->uci_type)) {
+    		section_to_blob(s, &uci->param, tb, count);
+    		(*load)(s, tb, count, &uci->tmp);
+		}
 	}
-
-	os_free(tb);
 }
 
 static int
@@ -305,12 +256,12 @@ intf_compare(int type)
 
     switch(type) {
         case UM_INTF_RADIO:
-            cfg = &umc.uci.intf.radio.cfg;
-            tmp = &umc.uci.intf.radio.tmp;
+            cfg = &umc.uci.radio.cfg;
+            tmp = &umc.uci.radio.tmp;
             break;
         case UM_INTF_WLAN:
-            cfg = &umc.uci.intf.wlan.cfg;
-            tmp = &umc.uci.intf.wlan.tmp;
+            cfg = &umc.uci.wlan.cfg;
+            tmp = &umc.uci.wlan.tmp;
             break;
         default:
             return -EINVAL0;
@@ -373,167 +324,30 @@ intf_compare(int type)
 }
 
 static int
-load_wireless(struct uci_package *package)
+load_wireless(struct uci_package *wireless)
 {
-	load_intf(package, &umc.uci.intf.radio, load_radio);
+	load_intf(wireless, &umc.uci.radio, load_radio);
 	debug_uci_trace("load radio to tmp");
-
+	
+	load_intf(wireless, &umc.uci.wlan, load_wlan);
+    debug_uci_trace("load wlan to tmp");
+    
 	intf_compare(UM_INTF_RADIO);
 	debug_uci_trace("radio compare(tmp==>cfg)");
-
-	load_intf(package, &umc.uci.intf.wlan, load_wlan);
-    debug_uci_trace("load wlan to tmp");
-
+	
 	intf_compare(UM_INTF_WLAN);
 	debug_uci_trace("wlan compare(tmp==>cfg)");
     
 	return 0;
 }
 
-static void
-load_global(struct um_uci *uci, struct blob_attr *tb[], void *addr[])
-{
-    struct blob_attr *p;
-    int count = uci->param.n_params;
-    int i;
-
-    for (i=0; i<count; i++) {
-        p = tb[i];
-
-        switch(uci->param.params->type) {
-            case BLOBMSG_TYPE_INT32:
-                if (p) {
-                    *(uint32_t *)addr[i] = blobmsg_get_u32(p);
-                }
-                
-                break;
-            case BLOBMSG_TYPE_INT64:
-                if (p) {
-                    *(uint64_t *)addr[i] = blobmsg_get_u64(p);
-                }
-                
-                break;
-            default:
-                break;
-        }
-    }
-}
-
-#define UM_LIMITPOLICY_MAP(_obj, _class, _level) { \
-    [UM_LIMITPOLICY_ONLINE]     = &umc.limit[_class][_level]._obj.online,       \
-    [UM_LIMITPOLICY_UPFLOWMAX]  = &umc.limit[_class][_level]._obj.up.flow.max,  \
-    [UM_LIMITPOLICY_UPRATEMAX]  = &umc.limit[_class][_level]._obj.up.rate.max,  \
-    [UM_LIMITPOLICY_UPRATEAVG]  = &umc.limit[_class][_level]._obj.up.rate.avg,  \
-    [UM_LIMITPOLICY_DOWNFLOWMAX]= &umc.limit[_class][_level]._obj.down.flow.max,\
-    [UM_LIMITPOLICY_DOWNRATEMAX]= &umc.limit[_class][_level]._obj.down.rate.max,\
-    [UM_LIMITPOLICY_DOWNRATEAVG]= &umc.limit[_class][_level]._obj.down.rate.avg,\
-    [UM_LIMITPOLICY_ALLFLOWMAX] = &umc.limit[_class][_level]._obj.all.flow.max, \
-    [UM_LIMITPOLICY_ALLRATEMAX] = &umc.limit[_class][_level]._obj.all.rate.max, \
-    [UM_LIMITPOLICY_ALLRATEAVG] = &umc.limit[_class][_level]._obj.all.rate.avg, \
-}   /* end */
-
-#define load_obj_limit(_obj, _class, _level, _tb) do { \
-    void *addr[UM_LIMITPOLICY_END] = UM_LIMITPOLICY_MAP(_obj, _class, _level); \
-                                                        \
-    os_objzero(&umc.limit[_class][_level]._obj);        \
-    load_global(&umc.uci.limit[_class][_level]._obj, _tb, addr); \
-}while(0)
-
-static int
-load_wifi_limit(int class, int level, struct blob_attr *tb[])
-{
-    load_obj_limit(wifi, class, level, tb);
-
-    return 0;
-}
-
-static int
-load_auth_limit(int class, int level, struct blob_attr *tb[])
-{
-    load_obj_limit(auth, class, level, tb);
-
-    return 0;
-}
-
-static void
-load_limit(
-    struct uci_package *package,
-    struct um_uci *uci,
-    char *name,
-    int class,
-    int level,
-    int (*load)(int class, int level, struct blob_attr *tb[])
-)
-{
-    struct uci_element *e = NULL;    
-    struct blob_attr *tb[UM_LIMITPOLICY_END] = {NULL};
-    char uci_name[1+OS_LINE_LEN];
-    
-    os_saprintf(uci_name, "%s_%s_%s", 
-        name,
-        um_user_class_string(class),
-        um_user_level_string(level));
-    
-	uci_foreach_element(&package->sections, e) {
-		struct uci_section *s = uci_to_section(e);
-		
-		if (0==os_strcmp(s->type, uci->uci_type) &&
-		    0==os_strcmp(s->e.name, uci_name)) {
-		    
-    		section_to_blob(s, &uci->param, tb, UM_LIMITPOLICY_END);
-
-    		debug_uci_trace("load limit %s", uci_name);
-    		
-    		(*load)(class, level, tb);
-		}
-	}
-}
-
-static int
-load_um(struct uci_package *package)
-{
-    int i, j;
-
-    for (i=0; i<UM_CLASS_END; i++) {
-        for (j=0; j<UM_LEVEL_END; j++) {
-        	load_limit(package, &umc.uci.limit[i][j].wifi, "wifi", i, j, load_wifi_limit);
-        	load_limit(package, &umc.uci.limit[i][j].auth, "auth", i, j, load_auth_limit);
-    	}
-    }
-    
-    um_user_update_limit();
-    
-	return 0;
-}
-
-struct um_intf *
-um_intf_get(char *ifname)
-{
-    if (NULL==ifname) {
-        return NULL;
-    }
-    
-    struct um_intf *intf = intf_get(ifname, &umc.uci.intf.wlan.cfg);
-    if (NULL==intf) {
-        intf = intf_get(ifname, &umc.uci.intf.radio.cfg);
-    }
-
-    return intf;
-}
-
 int
 um_uci_load(void)
 {
     struct uci_package *wireless = NULL;
-    struct uci_package *um = NULL;
     int err = 0;
     
-    err = uci_init();
-    if (err) {
-        debug_uci_error("uci init failed(%d)", err);
-        
-        goto error;
-    }
+    uci_init();
     
     wireless = package_open("wireless");
     if (NULL==wireless) {
@@ -544,36 +358,17 @@ um_uci_load(void)
     }
 
     err = load_wireless(wireless);
-    if (err) {
+    if (err<0) {
         debug_uci_error("wireless load failed(%d)", err);
-        
-        goto error;
-    }
-    
-    um = package_open("um");
-    if (NULL==um) {
-        err = -EINVAL1;
-        debug_uci_error("um open failed(%d)", err);
-        
-        goto error;
-    }
-    
-    err = load_um(um);
-    if (err) {
-        debug_uci_error("um load failed(%d)", err);
         
         goto error;
     }
 
     debug_uci_ok("uci load");
+
     /* go down */
 error:
-    if (wireless) {
-        package_close(wireless);
-    }
-    if (um) {
-        package_close(um);
-    }
+    package_close(wireless);
     uci_fini();
     
     return err;
