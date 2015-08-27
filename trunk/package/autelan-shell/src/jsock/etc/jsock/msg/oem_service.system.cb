@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. ${__ROOTFS__}/etc/jsock/msg/msg.in
+. /etc/platform/bin/check_oem_function.in
+
+#
+#call by jsock.cb
+#
+#$1:body...
+#
+main() {
+	local body="$*"
+	local self="$(basename $0)"
+	local lms=""
+	local portal=""
+	
+	jmsg_logger "recive message:${self%%.*}, body:${body}"
+	
+	lms=$(echo ${body} | jq -j ".lms|strings")
+	portal=$(echo ${body} | jq -j ".portal|strings")
+	
+	set_md_lms ${lms}
+	set_md_portal ${portal}
+}
+main "$@"

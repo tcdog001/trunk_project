@@ -17,8 +17,23 @@ uci_apply_defaults() {
 	uci commit
 }
 
+autelan_at_ctrl() {
+        local devices_file=/tmp/.devices
+        local info=$1
+        local model_3g=$2
+        local ttyUSB_infer=$3; shift 3
+
+        AT_RETURN=$(/bin/cat ${devices_file} | /bin/grep "${info}")      
+        if [ "$AT_RETURN" ]; then                                                        
+                echo "${model_3g}" > /tmp/3g_model
+                ln -sf ${ttyUSB_infer} /usr/sbin/at_ctrl                            
+                return                                                                                 
+        fi
+}
+
 autelan_func() {
 	PRODUCT_INFO=/tmp/.productinfo
+        local devices_file=/tmp/.devices
 	
 	if [ -f "$PRODUCT_INFO" ]; then
         	cat "$PRODUCT_INFO"
@@ -42,30 +57,15 @@ autelan_func() {
 	fi
 	                                                                                   
 	rm -r /usr/sbin/at_ctrl
-	AT_RETURN=$(/bin/cat /sys/kernel/debug/usb/devices | /bin/grep "Vendor=19d2 ProdID=ffed")
-	if [ "$AT_RETURN" ]; then
-		echo "MC271X" > /tmp/3g_model
-		ln -sf /usr/sbin/at_ttyUSB1 /usr/sbin/at_ctrl
-		return
-	fi
-	AT_RETURN=$(cat /sys/kernel/debug/usb/devices | grep "Vendor=1435 ProdID=d111")
-	if [ "$AT_RETURN" ]; then
-		echo "DM111" > /tmp/3g_model
-		ln -sf /usr/sbin/at_ttyUSB1 /usr/sbin/at_ctrl
-		return
-	fi
-	AT_RETURN=$(cat /sys/kernel/debug/usb/devices | grep "Vendor=05c6 ProdID=9000")
-        if [ "$AT_RETURN" ]; then
-                echo "SIM6320C" > /tmp/3g_model
-                ln -sf /usr/sbin/at_ttyUSB3 /usr/sbin/at_ctrl
-        	return
-	fi
-	AT_RETURN=$(/bin/cat /sys/kernel/debug/usb/devices  | /bin/grep "Vendor=1c9e ProdID=9e00")
-	if [ "$AT_RETURN" ]; then                                                                            
-		echo "C5300V" > /tmp/3g_model
-		ln -sf /usr/sbin/at_ttyUSB3 /usr/sbin/at_ctrl
-		return
-	fi
+        /bin/cat /sys/kernel/debug/usb/devices > ${devices_file}
+
+        autelan_at_ctrl "Vendor=19d2 ProdID=ffed" "MC271X" "/usr/sbin/at_ttyUSB1"
+        autelan_at_ctrl "Vendor=1435 ProdID=d111" "DM111" "/usr/sbin/at_ttyUSB1"
+        autelan_at_ctrl "Vendor=05c6 ProdID=9000" "SIM6320C" "/usr/sbin/at_ttyUSB3"
+        autelan_at_ctrl "Vendor=1c9e ProdID=9e00" "C5300V" "/usr/sbin/at_ttyUSB3"
+        autelan_at_ctrl "Vendor=1c9e ProdID=9b05" "U8300C" "/usr/sbin/at_ttyUSB2"
+
+        rm -f ${devices_file}
 }
 
 boot() {

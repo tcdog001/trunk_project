@@ -164,7 +164,7 @@ get_sim_iccid() {
 	local sim_iccid=""
 
 	case ${model} in
-		"C5300V")
+		"C5300V" | "U8300C")
 			sim_iccid=$(at_ctrl at+iccid | awk '/SCID:/{print $2}' 2> /dev/null)			
 			;;
 		"DM111")
@@ -266,6 +266,9 @@ get_company_of3g() {
 		"MC271X")
 			company_of3g="ZTEMT INCORPORATED"
 			;;
+		"C5300V" | "U8300C")
+			company_of3g="LONG SUNG"
+			;;
 		*)
 			#company_of3g=$(at_ctrl AT+CGMI 2> /dev/null)
 			logger -t $0 "Model=${model} Not Support" 
@@ -279,9 +282,8 @@ get_3g_net() {
 	local net=""
 	
 	[[ "${code}" = "01" ]] && net=WCDMA
-	[[ "${code}" = "03" ]] && net=CDMA2000
-	[[ "${code}" = "00" ]] && net=GSM/TD-SCDMA
-	[[ "${code}" = "02" ]] && net=GSM/TD-SCDMA
+	[[ "${code}" = "03" || "${code}" = "11" ]] && net=CDMA2000
+	[[ "${code}" = "00" || "${code}" = "02" ]] && net=GSM/TD-SCDMA
 	[[ "${code}" = "07" ]] && net=TD-SCDMA
 	echo ${net}
 }
