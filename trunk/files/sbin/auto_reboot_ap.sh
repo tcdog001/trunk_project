@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 
 off_delay() {
     ppp_json_string

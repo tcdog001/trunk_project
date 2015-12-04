@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 FILENAME=/tmp/vcc.log
 local_file_path=/root/vcc
 

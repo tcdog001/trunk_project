@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 
 [ "$ACTION" = ifup -o "$ACTION" = ifupdate ] || exit 0
 [ "$ACTION" = ifupdate -a -z "$IFUPDATE_ADDRESSES" -a -z "$IFUPDATE_DATA" ] && exit 0

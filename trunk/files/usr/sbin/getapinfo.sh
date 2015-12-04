@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 
 get_device_company() {
 	device_company=$(partool -part mtd7 -show product.vendor 2>/dev/null)

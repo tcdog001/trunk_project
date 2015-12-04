@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 
 get_cpu_Frequency() {
 	cpuFrequency=$(cat /proc/cpuinfo |awk -F ':' '/BogoMIPS/{print $2}')

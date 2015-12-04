@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 
 tftp_vcc() {                 
 	local PEER_TMP_PATH=/tmp/tftp/log/vcc

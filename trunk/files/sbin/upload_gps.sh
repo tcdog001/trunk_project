@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 LOCAL_GPS_FILE=/tmp/gps.log
 REP_INTVAL=30
 

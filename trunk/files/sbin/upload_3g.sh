@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 LOCAL_TMP_LOG=/tmp/3g-flow.log
 upload_3g_downflow=
 upload_3g_upflow=
@@ -57,7 +57,7 @@ json_string() {
 	local STTIME=$(cat $PPPTMPPATH/starttime)
 	local EDTIME=$(cat $PPPTMPPATH/endtime)
 
-	JSstring={\"device\":\"cdma\",\"starttime\":\"$STTIME\",\"endtime\":\"$EDTIME\",\"up\":"${upload_3g_upflow}",\"down\":"${upload_3g_downflow}"}
+	JSstring={\"device\":\"cdma\",\"starttime\":\"$STTIME\",\"endtime\":\"$EDTIME\",\"up\":${upload_3g_upflow},\"down\":${upload_3g_downflow}}
 	echo $JSstring >> $LOCAL_TMP_LOG
 }
 

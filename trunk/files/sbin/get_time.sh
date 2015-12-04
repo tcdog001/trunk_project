@@ -1,6 +1,6 @@
 #!/bin/bash       
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 offtime_file=/root/onoff/ap-off
 ontime_file=/root/onoff/ap-on
 

@@ -4,6 +4,8 @@
 START=10
 STOP=98
 
+readonly devices_file=/tmp/.devices
+
 uci_apply_defaults() {
 	. /lib/functions/system.sh
 
@@ -18,7 +20,6 @@ uci_apply_defaults() {
 }
 
 autelan_at_ctrl() {
-        local devices_file=/tmp/.devices
         local info=$1
         local model_3g=$2
         local ttyUSB_infer=$3; shift 3
@@ -33,7 +34,6 @@ autelan_at_ctrl() {
 
 autelan_func() {
 	PRODUCT_INFO=/tmp/.productinfo
-        local devices_file=/tmp/.devices
 	
 	if [ -f "$PRODUCT_INFO" ]; then
         	cat "$PRODUCT_INFO"
