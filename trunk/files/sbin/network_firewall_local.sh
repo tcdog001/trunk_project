@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 
 main() {
 	cp /rom/etc/config/network.dev /etc/config/network

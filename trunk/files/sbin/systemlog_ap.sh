@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ${__ROOTFS__}/sbin/autelan_functions.sh
+. ${__ROOTFS__}/sbin/autelan_functions.in
 . ${__ROOTFS__}/etc/jsock/msg/msg.in
 ERROR_NOSUPPORT="Not supported"
 

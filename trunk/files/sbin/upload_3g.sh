@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /sbin/autelan_functions.sh
+. /sbin/autelan_functions.in
 LOCAL_TMP_LOG=/tmp/3g-flow.log
 upload_3g_downflow=
 upload_3g_upflow=

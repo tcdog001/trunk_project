@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . ${__ROOTFS__}/etc/jsock/msg/msg.in
+. ${__ROOTFS__}/etc/utils/dir.in
 
 #
 #call by jsock.cb
@@ -9,14 +10,17 @@
 #
 main() {
 	local body="$*"
-
+	
 	jsock_md_recive_check || {
 		return ${e_bad_board}
 	}
 
 	local ap_json="${body}"
 	local md_json="{$(/usr/sbin/getmdinfo.sh)}"
-	echo "${ap_json}" | jq -j ". * ${md_json}" > ${file_register}; fsync ${file_register}
+	local file_register=$(echo "${ap_json}" | jq -j ". * ${md_json}")
+
+	echo ${file_register} > ${file_register_data}; fsync ${file_register_data}
+	echo ${file_register} > ${file_register_tmp}; fsync ${file_register_tmp}
 }
 
 main "$@"
