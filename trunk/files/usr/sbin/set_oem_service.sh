@@ -80,7 +80,9 @@ check_evdo_service() {
 	fi
 	if [[ ${model_3g} == SIM6320C ]]; then
 		set_option_value ${string_device} "/dev/ttyUSB2"; operation1=$?
-	else
+	elif [[ ${model_3g} == U8300C ]]; then
+		set_option_value ${string_device} "/dev/ttyUSB1"; operation1=$? 
+        else
 		set_option_value ${string_device} "/dev/ttyUSB0"; operation1=$?
 	fi
 	if [[ ${operation} -eq 1 || ${operation1} -eq 1 ]]; then

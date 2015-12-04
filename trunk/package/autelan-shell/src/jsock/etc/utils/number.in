@@ -10,9 +10,12 @@ fi
 #$1:number
 #
 number_check() {
-	local number=$1
+	local number="$1"
+	local err=1
 
-	expr ${number} + 1 > /dev/null 2>&1
+	if [[ -n "${number}" ]]; then
+		expr ${number} + 1 &> /dev/null; err=$?
+	fi
 
-	return $?
+	return ${err}
 }

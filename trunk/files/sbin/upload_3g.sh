@@ -57,7 +57,7 @@ json_string() {
 	local STTIME=$(cat $PPPTMPPATH/starttime)
 	local EDTIME=$(cat $PPPTMPPATH/endtime)
 
-	JSstring={\"device\":\"cdma\",\"starttime\":\"$STTIME\",\"endtime\":\"$EDTIME\",\"up\":\"${upload_3g_upflow}\",\"down\":\"${upload_3g_downflow}\"}
+	JSstring={\"device\":\"cdma\",\"starttime\":\"$STTIME\",\"endtime\":\"$EDTIME\",\"up\":${upload_3g_upflow},\"down\":${upload_3g_downflow}}
 	echo $JSstring >> $LOCAL_TMP_LOG
 }
 
