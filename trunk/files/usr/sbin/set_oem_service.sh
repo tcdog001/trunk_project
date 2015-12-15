@@ -58,6 +58,32 @@ check_wireless_ssid() {
 	return ${operation}
 }
 
+#
+# $1: device, $2: username, $3: password
+#
+set_uci_network_evdo() {
+	local device="$1"
+	local username="$2"
+	local password="$3"
+
+	local ret1 ret2 ret3 ret
+	local string_device=network.evdo.device
+	local string_username=network.evdo.username
+	local string_password=network.evdo.password
+
+	set_option_value ${string_device} "${device}"; ret1=$?
+	set_option_value "${string_username}" "${username}"; ret2=$?
+	set_option_value "${string_password}" "${password}"; ret3=$?
+	
+	if [[ ${ret1} = 1 || ${ret2} = 1 || ${ret3} = 1 ]]; then
+		ret=1
+	else
+		ret=0
+	fi
+	
+	return ${ret}
+}
+
 check_evdo_service() {
 	local net=""
 	local service=""
@@ -66,8 +92,7 @@ check_evdo_service() {
 	local operation=0
 	local operation1=0
 	local string_service=network.evdo.service
-	local string_device=network.evdo.device
-
+	
 	net=$(get_3g_net)
 	[[ -z "${net}" ]] && $(exit_log $0 "cannot get iccid")
 	model_3g=$(get_3g_model)
@@ -78,12 +103,14 @@ check_evdo_service() {
 	elif [[ ${net} == "CDMA2000" ]]; then
 		set_option_value ${string_service} evdo; operation=$?
 	fi
-	if [[ ${model_3g} == SIM6320C ]]; then
-		set_option_value ${string_device} "/dev/ttyUSB2"; operation1=$?
-	elif [[ ${model_3g} == U8300C ]]; then
-		set_option_value ${string_device} "/dev/ttyUSB1"; operation1=$? 
-        else
-		set_option_value ${string_device} "/dev/ttyUSB0"; operation1=$?
+	if [[ "${model_3g}" = SIM6320C ]]; then
+		set_uci_network_evdo "/dev/ttyUSB2" "ctnet@mycdma.cn" "vnet.mobi"; operation1=$? 
+	elif [[ "${model_3g}" = U8300C ]]; then
+		set_uci_network_evdo "/dev/ttyUSB1" "ctnet@mycdma.cn" "vnet.mobi"; operation1=$? 
+	#elif [[ "${model_3g}" = MC271X ]]; then
+	#	set_uci_network_evdo "/dev/ttyUSB0" "hangmei.m2m" "vnet.mobi"; operation1=$? 
+	else
+		set_uci_network_evdo "/dev/ttyUSB0" "ctnet@mycdma.cn" "vnet.mobi"; operation1=$? 
 	fi
 	if [[ ${operation} -eq 1 || ${operation1} -eq 1 ]]; then
 		commit_option_value ${string_service}
