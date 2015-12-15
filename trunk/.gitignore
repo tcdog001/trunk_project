@@ -10,6 +10,8 @@
 /tmp
 /logs
 /package/openwrt-packages
+/package/autelan-shell/src/jsock
+/package/base-files/files/etc/.version
 *.orig
 *.rej
 *~

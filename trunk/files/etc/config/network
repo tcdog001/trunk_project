@@ -51,8 +51,8 @@ config interface 'evdo'
 	option proto '3g'
 	option device '/dev/ttyUSB0'
 	option service 'evdo'
-	option username 'card'
-	option password 'card'
+	option username 'hangmei.m2m'
+	option password 'vnet.mobi'
 
 config route
 	option interface 've0'
