@@ -107,8 +107,8 @@ check_evdo_service() {
 		set_uci_network_evdo "/dev/ttyUSB2" "ctnet@mycdma.cn" "vnet.mobi"; operation1=$? 
 	elif [[ "${model_3g}" = U8300C ]]; then
 		set_uci_network_evdo "/dev/ttyUSB1" "ctnet@mycdma.cn" "vnet.mobi"; operation1=$? 
-	elif [[ "${model_3g}" = MC271X ]]; then
-		set_uci_network_evdo "/dev/ttyUSB0" "hangmei.m2m" "vnet.mobi"; operation1=$? 
+	#elif [[ "${model_3g}" = MC271X ]]; then
+	#	set_uci_network_evdo "/dev/ttyUSB0" "hangmei.m2m" "vnet.mobi"; operation1=$? 
 	else
 		set_uci_network_evdo "/dev/ttyUSB0" "card" "card"; operation1=$? 
 	fi
