@@ -16,18 +16,9 @@ config wifi-device 'radio0'
 
 config wifi-iface
 	option device 'radio0'
-	option network 'v2'
-	option mode 'ap'
-	option ssid 'config.9797168.com'
-	option hidden '1'
-	option encryption 'psk-mixed'
-	option key 'Fayxzx00'
-
-config wifi-iface
-	option device 'radio0'
 	option network 'v1'
 	option mode 'ap'
-	option ssid '9797168.com'
+	option ssid 'DGFW'
 
 config wifi-device 'radio1'
 	option type 'mac80211'
@@ -46,5 +37,5 @@ config wifi-iface
 	option device 'radio1'
 	option network 'v1'
 	option mode 'ap'
-	option ssid '9797168.com'
+	option ssid 'DGFW'
 
