@@ -21,10 +21,19 @@ check_wireless_ssid() {
 	local option=""
 	local value=""
 	local i=0
+	local tmp_line=""
 
 	oem_ssid=$(get_part_mtd7 oem.ssid)
+
+	uci show wireless | sed -n 's/=/ /g;/ssid/p' > ${tmp}
+	tmp_line=$(cat ${tmp} |wc -l)
+
 	if [[ "${oem_ssid}" ]]; then
-		ssid0=config.${oem_ssid}
+		if [[ ${tmp_line} -eq 2 ]];then
+			ssid0=${oem_ssid}
+		else
+			ssid0=config.${oem_ssid}
+		fi
 		ssid1=${oem_ssid}	
 	else
 		ssid0=${DEF_SSID0}
@@ -33,7 +42,6 @@ check_wireless_ssid() {
 	echo "$0: ssid0=${ssid0}, ssid1=${ssid1}" >> ${DEBUG_LOG_LOCAL}
 
 	i=0
-	uci show wireless | sed -n 's/=/ /g;/ssid/p' > ${tmp}
 	while read option value; do
 		if [[ ${i} = 0 ]]; then
 			echo "$0: ${i}, opt=${option}, old=${value}, new=${ssid0}" >> ${DEBUG_LOG_LOCAL}
