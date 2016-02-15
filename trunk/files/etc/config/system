@@ -1,6 +1,6 @@
 
 config system
-	option hostname 'Autelan'
+	option hostname 'Welcome'
 	option timezone 'UTC-8'
 
 config timeserver 'ntp'
