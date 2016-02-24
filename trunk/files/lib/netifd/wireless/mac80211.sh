@@ -332,7 +332,7 @@ mac80211_generate_mac_autelan() {
 	local mask="$3"	
 	local oIFS="$IFS"; IFS=":"; set -- $mac; IFS="$oIFS"	
 	
-	printf "%02x:%s:%s:%s:%02x:%02x" \
+	printf "%s:%s:%s:%s:%02x:%02x" \
 	$1 $2 $3 $4 \
 	$(( (0x$5 + ($off / 0x100)) % 0x100 )) \
 	$(( (0x$6 + $off) % 0x100 ))
