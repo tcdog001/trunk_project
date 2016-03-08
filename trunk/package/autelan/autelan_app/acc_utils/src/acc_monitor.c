@@ -770,7 +770,7 @@ void default_config_init(void)
 	vcc.vcc_level = 0;
 	strncpy(acc.configfile, DEFAULT_CONFIGFILE, sizeof(acc.configfile));	
 
-	system("/bin/mv /root/acc_monitor.log /tmp/acc_monitor.log > /dev/null 2&>1");
+	system("/bin/mv /root/acc_monitor.log /tmp/acc_monitor.log 2> /dev/null");
 }
 
 #ifdef ACC_UCI
