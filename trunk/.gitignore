@@ -9,6 +9,7 @@
 /staging_dir
 /tmp
 /logs
+/package/capp
 /package/openwrt-packages
 /package/autelan-shell/src/jsock
 /package/base-files/files/etc/.version

@@ -14,8 +14,7 @@
 #include<sys/time.h>
 
 #define RD_SIZE 1024
-//#define TEST //if dont have the gps enviorment , use define TEST
-
+#define STR_SIZE 256
 static struct gps_struct {
 	char str_host[20];
 	char east_west;
@@ -32,6 +31,8 @@ static struct gps_struct {
 static FILE* logfp;
 int flag_GPGGA;
 int flag_GPRMC;
+char Timereport[50] = {0};
+const char *logpath = "/tmp/.gps";
 
 int print_timestr(char *str)
 {
@@ -153,7 +154,7 @@ void print_gpsinfo(char *buf)
 	while (ReceivingF)
 	{                
 //		printf("----------%c---------\n", *buf);
-		if (*buf == NULL) {
+		if (buf == NULL) {
 			return;
 		}
 		if (*buf == ',') {
@@ -581,11 +582,10 @@ int WEBQuest(const char * Url, const char * pUrl)
 	return ture;
 }
 
-char Timereport[50] = {0};
 int gps_report(char * url, int status)
 {
-	char temp_str[256] = {0};
-	char temp_str1[50] = {0};
+	char temp_str[STR_SIZE] = {0};
+	char temp_str1[STR_SIZE] = {0};
 	
 	struct tm *t;
 	time_t tt;
@@ -618,6 +618,7 @@ int gps_report(char * url, int status)
 	} else {
 		sprintf(temp_str, "{\"status\":\"%d\",\"latitude\":\"%s\",\"east_west\":\"%c\",\"date\":\"%s-%s\",\"speed\":\"%s\",\"north_south\":\"%c\",\"longitude\":\"%s\",\"height\":\"%s\"}",
 		status, rgps.gps_Lat, rgps.east_west, rgps.gps_Date, rgps.gps_Time, rgps.gps_Velocity, rgps.north_south, rgps.gps_Lng, rgps.gps_Elevation);
+		sprintf(Timereport, "%s-%s", rgps.gps_Date, rgps.gps_Time);
 		printf("%s\n", temp_str);
 		system("/sbin/gps_valid.sh");
 	}
@@ -633,16 +634,43 @@ int gps_report(char * url, int status)
 	return status;
 }
 
-const char *path_str = "/tmp/.gps";
-void tmp_gps_files(int status)
+void gps_debug(int status)
 {
-	char temp_str[256] = {0};
+	char temp_str[STR_SIZE] = {0};
 
-	sprintf(temp_str, "echo %s > %s/gps_time", Timereport, path_str);
+	sprintf(temp_str, "echo %d > %s/status", status, logpath);
 	system(temp_str);
 
 	memset(temp_str, 0, sizeof(temp_str));
-	sprintf(temp_str, "echo %d > %s/gps_satellite", rgps.gps_satellite, path_str); 	
+	sprintf(temp_str, "echo %c > %s/east_west", rgps.east_west, logpath);
+	system(temp_str);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	sprintf(temp_str, "echo %c > %s/north_south", rgps.north_south, logpath);
+	system(temp_str);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	sprintf(temp_str, "echo %s > %s/gps_Lat", rgps.gps_Lat, logpath);
+	system(temp_str);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	sprintf(temp_str, "echo %s > %s/gps_Lng", rgps.gps_Lng, logpath);
+	system(temp_str);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	sprintf(temp_str, "echo %s > %s/gps_Velocity", rgps.gps_Velocity, logpath);
+	system(temp_str);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	sprintf(temp_str, "echo %s > %s/gps_Elevation", rgps.gps_Elevation, logpath);
+	system(temp_str);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	sprintf(temp_str, "echo %s > %s/gps_time", Timereport, logpath);
+	system(temp_str);
+
+	memset(temp_str, 0, sizeof(temp_str));
+	sprintf(temp_str, "echo %d > %s/gps_satellite", rgps.gps_satellite, logpath); 	
 	system(temp_str);
 
 	return;
@@ -650,10 +678,10 @@ void tmp_gps_files(int status)
 
 int main(int argc, char *argv[])
 {
-	int opt, sleep_time = 15;
-	char temp_str[256] = {0};
-	char temp_str1[256] = {0};
-	int fd1, nread, i = 0, j = 0, status = 0;
+	int opt, intval = 15;
+	char temp_str[STR_SIZE] = {0};
+	char temp_str1[STR_SIZE] = {0};
+	int fd, nread, i = 0, j = 0, status = 0;
 	char buf[RD_SIZE];
 	char buf1[RD_SIZE] = {0};
 	char *dev_path = (char*)0;
@@ -664,15 +692,16 @@ int main(int argc, char *argv[])
 	struct timeval tv_begin, tv_end;
 	int tv_intval;
 	
-	while ((opt = getopt(argc,argv,"t:d:l:u:h")) != -1) {
+	while ((opt = getopt(argc,argv,"t:d:l:p:u:h")) != -1) {
 		switch (opt) {
 			case 'h':
 				printf("rgps [-t interval] [-u url] [-l logfile]\n");
 				printf("          -h (get help)\n");
-				printf("          -d [gps_device or gps_log] (ttyusb device /dev/ttyUSB3 or /tmp/run/nmea file)\n");
+				printf("          -d [gps_device or gps_log] (tty device or nmea file)\n");
 				printf("          -t 15 (report interval 5~300 sec)\n");
 				printf("          -u www.weizhigps.com (url for report)\n");
 				printf("          -l /tmp/gps.log (logfile for gps)\n");
+				printf("          -p /tmp/.gps/ (log path for gps)\n");
 				return 0;				
 			case 'd':
 				dev_path = optarg;
@@ -683,11 +712,15 @@ int main(int argc, char *argv[])
 			case 'l':
 				logfile = optarg;
 				break;
+			case 'p':
+				if (optarg != NULL)
+					logpath = optarg;
+				break;
 			case 't':
-				sleep_time = strtoul(optarg, NULL, 10);
-				if ((sleep_time < 5)||(sleep_time > 300)) {
+				intval = strtoul(optarg, NULL, 10);
+				if ((intval < 5)||(intval > 300)) {
 					printf("		  -t 15 (report interval 5~300 sec)\n");
-					sleep_time = 15;
+					intval = 15;
 				}
 				break;
 			default:
@@ -708,7 +741,7 @@ int main(int argc, char *argv[])
 			(void) fprintf( stderr, "%s: logfile is not an absolute path, you may not be able to re-open it\n", argv[0] );
 		}
 	}
-	sprintf(temp_str1, "mkdir -p %s", path_str);
+	sprintf(temp_str1, "mkdir -p %s", logpath);
 	system(temp_str1);
 
 #ifdef TEST
@@ -738,13 +771,13 @@ int main(int argc, char *argv[])
 	sprintf(temp_str1, "head -n 30 %s > %s ; cp %s %s", dev_path, dev_path1, dev_path1, dev_path2);
 
 #if 0
-	fd1 = open(dev_path, O_RDWR|O_NOCTTY|O_NDELAY);
-	if (fd1 == -1) {
+	fd = open(dev_path, O_RDWR|O_NOCTTY|O_NDELAY);
+	if (fd == -1) {
 		printf("open dev %s fail !!\n", dev_path);
 		exit(1);
 	}
-	serial_init(fd1);
-	close(fd1);
+	serial_init(fd);
+	close(fd);
 #endif
 
 	while(1) {
@@ -756,15 +789,15 @@ int main(int argc, char *argv[])
 		do {
 			printf("\n GPS reading ...\n");
 			system(temp_str1);
-			fd1 = open(dev_path1, O_RDONLY);
-			if (fd1 == -1) {
+			fd = open(dev_path1, O_RDONLY);
+			if (fd == -1) {
 				printf("open dev %s fail !!\n", dev_path1);
 				exit(1);
 			}
 			memset(buf, 0, RD_SIZE);
 			memset(buf1, 0, RD_SIZE);
-			nread = read(fd1, buf, RD_SIZE-1);
-			close(fd1);
+			nread = read(fd, buf, RD_SIZE-1);
+			close(fd);
 
 			if (nread > 0) {
 				printf("\n GPS DATALen=%d\n", nread);
@@ -788,7 +821,7 @@ int main(int argc, char *argv[])
 				}
 				if ((1 == flag_GPGGA)&&(1 == flag_GPRMC)) {
 					status = gps_report(url, 1);
-					tmp_gps_files(status);
+					gps_debug(status);
 					break;
 				}				
 			}
@@ -800,12 +833,12 @@ int main(int argc, char *argv[])
 			printf("begin:%d, end:%d, interval:%d\n", tv_begin.tv_sec, tv_end.tv_sec, tv_intval);
 			if (tv_intval > 3) {
 				status = gps_report(url, 0);				
-				tmp_gps_files(status);
+				gps_debug(status);
 				break;
 			}
 		} while ((1 != flag_GPGGA)||(1 != flag_GPRMC));
 		printf("\n GPS closeing ...\n");
-		sleep(sleep_time);
+		sleep(intval);
 	}
 
 #endif
