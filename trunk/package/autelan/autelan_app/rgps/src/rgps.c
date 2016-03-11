@@ -154,7 +154,7 @@ void print_gpsinfo(char *buf)
 	while (ReceivingF)
 	{                
 //		printf("----------%c---------\n", *buf);
-		if (buf == NULL) {
+		if (*buf == NULL) {
 			return;
 		}
 		if (*buf == ',') {
